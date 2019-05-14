@@ -171,13 +171,13 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				}
 				if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt31){
 					if(rc2 == MOSQ_ERR_SUCCESS || rc2 == MOSQ_ERR_SUB_EXISTS){
-						if(sub__retain_queue(db, context, sub, qos, 0)) rc = 1;
+						if(retain__queue(db, context, sub, qos, 0)) rc = 1;
 					}
 				}else{
 					if((retain_handling == MQTT_SUB_OPT_SEND_RETAIN_ALWAYS)
 							|| (rc2 == MOSQ_ERR_SUCCESS && retain_handling == MQTT_SUB_OPT_SEND_RETAIN_NEW)){
 
-						if(sub__retain_queue(db, context, sub, qos, subscription_identifier)) rc = 1;
+						if(retain__queue(db, context, sub, qos, subscription_identifier)) rc = 1;
 					}
 				}
 

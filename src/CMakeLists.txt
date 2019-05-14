@@ -40,6 +40,7 @@ set (MOSQ_SRCS
 	../lib/property_mosq.c ../lib/property_mosq.h
 	read_handle.c
 	../lib/read_handle.h
+	retain.c
 	security.c security_default.c
 	../lib/send_mosq.c ../lib/send_mosq.h
 	send_auth.c
@@ -57,6 +58,7 @@ set (MOSQ_SRCS
 	sys_tree.c sys_tree.h
 	../lib/time_mosq.c
 	../lib/tls_mosq.c
+	topic_tok.c
 	../lib/util_mosq.c ../lib/util_topic.c ../lib/util_mosq.h
 	../lib/utf8_mosq.c
 	websockets.c

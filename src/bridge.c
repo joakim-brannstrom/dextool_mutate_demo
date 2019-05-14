@@ -174,7 +174,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 						&db->subs) > 0){
 				return 1;
 			}
-			sub__retain_queue(db, context,
+			retain__queue(db, context,
 					context->bridge->topics[i].local_topic,
 					context->bridge->topics[i].qos, 0);
 		}
@@ -507,7 +507,7 @@ int bridge__on_connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
-			sub__retain_queue(db, context,
+			retain__queue(db, context,
 					context->bridge->topics[i].local_topic,
 					context->bridge->topics[i].qos, 0);
 		}

@@ -325,7 +325,7 @@ static int persist__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 	HASH_FIND(hh, db->msg_store_load, &chunk.F.store_id, sizeof(dbid_t), load);
 	if(load){
-		sub__messages_queue(db, NULL, load->store->topic, load->store->qos, load->store->retain, &load->store);
+		retain__store(db, load->store->topic, load->store, NULL);
 	}else{
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt database whilst restoring a retained message.");
 		return MOSQ_ERR_INVAL;

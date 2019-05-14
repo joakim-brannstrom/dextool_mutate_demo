@@ -9,7 +9,6 @@
 #include <send_mosq.h>
 #include <time_mosq.h>
 
-extern uint64_t last_retained;
 extern char *last_sub;
 extern int last_qos;
 extern uint32_t last_identifier;
@@ -125,6 +124,17 @@ int send__pingreq(struct mosquitto *mosq)
 	return MOSQ_ERR_SUCCESS;
 }
 
+int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, const char *topic, long payloadlen, void* payload, int qos, bool retain, int access)
+{
+	return MOSQ_ERR_SUCCESS;
+}
+
+int acl__find_acls(struct mosquitto_db *db, struct mosquitto *context)
+{
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, uint32_t identifier, int options, struct mosquitto__subhier **root)
 {
 	last_sub = strdup(sub);
@@ -134,14 +144,14 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 	return MOSQ_ERR_SUCCESS;
 }
 
-int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored)
+int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored, mosquitto_property *properties)
 {
-	if(retain){
-		last_retained = (*stored)->db_id;
-	}
 	return MOSQ_ERR_SUCCESS;
 }
 
+void db__msg_store_ref_dec(struct mosquitto_db *db, struct mosquitto_msg_store **store)
+{
+}
 
 void db__msg_store_ref_inc(struct mosquitto_msg_store *store)
 {

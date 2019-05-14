@@ -68,4 +68,3 @@ int send__pubrel(struct mosquitto *mosq, uint16_t mid)
 {
 	return MOSQ_ERR_SUCCESS;
 }
-

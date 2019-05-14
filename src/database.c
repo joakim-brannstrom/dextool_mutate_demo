@@ -135,6 +135,8 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 	subhier = sub__add_hier_entry(NULL, &db->subs, "$SYS", strlen("$SYS"));
 	if(!subhier) return MOSQ_ERR_NOMEM;
 
+	retain__init(db);
+
 	db->unpwd = NULL;
 
 #ifdef WITH_PERSISTENCE
@@ -156,9 +158,6 @@ static void subhier_clean(struct mosquitto_db *db, struct mosquitto__subhier **s
 			mosquitto__free(leaf);
 			leaf = nextleaf;
 		}
-		if(peer->retained){
-			db__msg_store_ref_dec(db, &peer->retained);
-		}
 		subhier_clean(db, &peer->children);
 		mosquitto__free(peer->topic);
 
@@ -170,6 +169,7 @@ static void subhier_clean(struct mosquitto_db *db, struct mosquitto__subhier **s
 int db__close(struct mosquitto_db *db)
 {
 	subhier_clean(db, &db->subs);
+	retain__clean(db, &db->retains);
 	db__msg_store_clean(db);
 
 	return MOSQ_ERR_SUCCESS;
@@ -626,6 +626,10 @@ int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, 
 	}
 	if(db__message_store(db, context, 0, topic_heap, qos, payloadlen, &payload_uhpa, retain, &stored, message_expiry_interval, local_properties, 0, origin)) return 1;
 
+	if(retain){
+		stored->ref_count++;
+	}
+
 	return sub__messages_queue(db, source_id, topic_heap, qos, retain, &stored);
 }
 
@@ -911,7 +915,10 @@ int db__message_release_incoming(struct mosquitto_db *db, struct mosquitto *cont
 			 * denied/dropped and is being processed so the client doesn't
 			 * keep resending it. That means we don't send it to other
 			 * clients. */
-			if(!topic){
+			if(retain){
+				tail->store->ref_count++;
+			}
+			if(topic == NULL){
 				db__message_remove(db, &context->msgs_in, tail);
 				deleted = true;
 			}else{

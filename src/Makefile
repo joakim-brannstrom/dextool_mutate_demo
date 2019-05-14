@@ -46,6 +46,7 @@ OBJS=	mosquitto.o \
 		persist_write_v5.o \
 		plugin.o \
 		read_handle.o \
+		retain.o \
 		security.o \
 		security_default.o \
 		send_auth.o \
@@ -64,6 +65,7 @@ OBJS=	mosquitto.o \
 		subs.o \
 		sys_tree.o \
 		time_mosq.o \
+		topic_tok.o \
 		tls_mosq.o \
 		utf8_mosq.o \
 		util_mosq.o \
@@ -189,6 +191,9 @@ plugin.o : plugin.c mosquitto_plugin.h mosquitto_broker_internal.h
 read_handle.o : read_handle.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
+retain.o : retain.c mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
+
 security.o : security.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
@@ -244,6 +249,9 @@ time_mosq.o : ../lib/time_mosq.c ../lib/time_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
 tls_mosq.o : ../lib/tls_mosq.c
+	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
+
+topic_tok.o : topic_tok.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
 util_mosq.o : ../lib/util_mosq.c ../lib/util_mosq.h

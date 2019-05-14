@@ -13,7 +13,6 @@
 #include "persist.h"
 #include "property_mosq.h"
 
-uint64_t last_retained;
 char *last_sub = NULL;
 int last_qos;
 uint32_t last_identifier;
@@ -307,12 +306,11 @@ static void TEST_v3_retain(void)
 	struct mosquitto__config config;
 	int rc;
 
-	last_retained = 0;
-
 	memset(&db, 0, sizeof(struct mosquitto_db));
 	memset(&config, 0, sizeof(struct mosquitto__config));
 	db.config = &config;
 
+	retain__init(&db);
 	config.persistence = true;
 	config.persistence_filepath = "files/persist_read/v3-retain.test-db";
 
@@ -337,7 +335,18 @@ static void TEST_v3_retain(void)
 			CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(db.msg_store), "payload", 7);
 		}
 	}
-	CU_ASSERT_EQUAL(last_retained, 0x54);
+	CU_ASSERT_PTR_NOT_NULL(db.retains);
+	if(db.retains){
+		CU_ASSERT_STRING_EQUAL(db.retains->topic, "");
+		CU_ASSERT_PTR_NOT_NULL(db.retains->children);
+		if(db.retains->children){
+			CU_ASSERT_STRING_EQUAL(db.retains->children->topic, "");
+			CU_ASSERT_PTR_NOT_NULL(db.retains->children->children);
+			if(db.retains->children->children){
+				CU_ASSERT_STRING_EQUAL(db.retains->children->children->topic, "topic");
+			}
+		}
+	}
 }
 
 static void TEST_v3_sub(void)
@@ -681,8 +690,6 @@ static void TEST_v5_retain(void)
 	struct mosquitto__config config;
 	int rc;
 
-	last_retained = 0;
-
 	memset(&db, 0, sizeof(struct mosquitto_db));
 	memset(&config, 0, sizeof(struct mosquitto__config));
 	db.config = &config;
@@ -690,6 +697,7 @@ static void TEST_v5_retain(void)
 	config.persistence = true;
 	config.persistence_filepath = "files/persist_read/v5-retain.test-db";
 
+	retain__init(&db);
 	rc = persist__restore(&db);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 	CU_ASSERT_EQUAL(db.msg_store_count, 1);
@@ -708,7 +716,18 @@ static void TEST_v5_retain(void)
 			CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(db.msg_store), "payload", 7);
 		}
 	}
-	CU_ASSERT_EQUAL(last_retained, 0x54);
+	CU_ASSERT_PTR_NOT_NULL(db.retains);
+	if(db.retains){
+		CU_ASSERT_STRING_EQUAL(db.retains->topic, "");
+		CU_ASSERT_PTR_NOT_NULL(db.retains->children);
+		if(db.retains->children){
+			CU_ASSERT_STRING_EQUAL(db.retains->children->topic, "");
+			CU_ASSERT_PTR_NOT_NULL(db.retains->children->children);
+			if(db.retains->children->children){
+				CU_ASSERT_STRING_EQUAL(db.retains->children->children->topic, "topic");
+			}
+		}
+	}
 }
 
 static void TEST_v5_sub(void)

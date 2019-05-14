@@ -353,6 +353,20 @@ struct mosquitto__subhier {
 	struct mosquitto__subhier *children;
 	struct mosquitto__subleaf *subs;
 	struct mosquitto__subshared *shared;
+	char *topic;
+	uint16_t topic_len;
+};
+
+struct sub__token {
+	struct sub__token *next;
+	char *topic;
+	uint16_t topic_len;
+};
+
+struct mosquitto__retainhier {
+	UT_hash_handle hh;
+	struct mosquitto__retainhier *parent;
+	struct mosquitto__retainhier *children;
 	struct mosquitto_msg_store *retained;
 	char *topic;
 	uint16_t topic_len;
@@ -428,6 +442,7 @@ struct mosquitto__acl_user{
 struct mosquitto_db{
 	dbid_t last_db_id;
 	struct mosquitto__subhier *subs;
+	struct mosquitto__retainhier *retains;
 	struct mosquitto__unpwd *unpwd;
 	struct mosquitto__unpwd *psk_id;
 	struct mosquitto *contexts_by_id;
@@ -650,6 +665,8 @@ void sub__tree_print(struct mosquitto__subhier *root, int level);
 int sub__clean_session(struct mosquitto_db *db, struct mosquitto *context);
 int sub__retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos, uint32_t subscription_identifier);
 int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored);
+int sub__topic_tokenise(const char *subtopic, struct sub__token **topics);
+void sub__topic_tokens_free(struct sub__token *tokens);
 
 /* ============================================================
  * Context functions
@@ -700,6 +717,14 @@ int bridge__remap_topic_in(struct mosquitto *context, char **topic);
 int property__process_connect(struct mosquitto *context, mosquitto_property **props);
 int property__process_will(struct mosquitto *context, struct mosquitto_message_all *msg, mosquitto_property **props);
 int property__process_disconnect(struct mosquitto *context, mosquitto_property **props);
+
+/* ============================================================
+ * Retain tree related functions
+ * ============================================================ */
+int retain__init(struct mosquitto_db *db);
+void retain__clean(struct mosquitto_db *db, struct mosquitto__retainhier **retainhier);
+int retain__queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos, uint32_t subscription_identifier);
+int retain__store(struct mosquitto_db *db, const char *topic, struct mosquitto_msg_store *stored, struct sub__token *tokens);
 
 /* ============================================================
  * Security related functions

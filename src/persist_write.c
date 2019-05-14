@@ -190,17 +190,15 @@ static int persist__client_save(struct mosquitto_db *db, FILE *db_fptr)
 }
 
 
-static int persist__subs_retain_save(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto__subhier *node, const char *topic, int level)
+static int persist__subs_save(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto__subhier *node, const char *topic, int level)
 {
 	struct mosquitto__subhier *subhier, *subhier_tmp;
 	struct mosquitto__subleaf *sub;
-	struct P_retain retain_chunk;
 	struct P_sub sub_chunk;
 	char *thistopic;
 	size_t slen;
 	int rc;
 
-	memset(&retain_chunk, 0, sizeof(struct P_retain));
 	memset(&sub_chunk, 0, sizeof(struct P_sub));
 
 	slen = strlen(topic) + node->topic_len + 2;
@@ -231,32 +229,57 @@ static int persist__subs_retain_save(struct mosquitto_db *db, FILE *db_fptr, str
 		}
 		sub = sub->next;
 	}
-	if(node->retained){
-		if(strncmp(node->retained->topic, "$SYS", 4)){
-			/* Don't save $SYS messages. */
-			retain_chunk.F.store_id = node->retained->db_id;
-			rc = persist__chunk_retain_write_v5(db_fptr, &retain_chunk);
-			if(rc){
-				mosquitto__free(thistopic);
-				return rc;
-			}
-		}
-	}
 
 	HASH_ITER(hh, node->children, subhier, subhier_tmp){
-		persist__subs_retain_save(db, db_fptr, subhier, thistopic, level+1);
+		persist__subs_save(db, db_fptr, subhier, thistopic, level+1);
 	}
 	mosquitto__free(thistopic);
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int persist__subs_retain_save_all(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__subs_save_all(struct mosquitto_db *db, FILE *db_fptr)
 {
 	struct mosquitto__subhier *subhier, *subhier_tmp;
 
 	HASH_ITER(hh, db->subs, subhier, subhier_tmp){
 		if(subhier->children){
-			persist__subs_retain_save(db, db_fptr, subhier->children, "", 0);
+			persist__subs_save(db, db_fptr, subhier->children, "", 0);
+		}
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+static int persist__retain_save(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto__retainhier *node, int level)
+{
+	struct mosquitto__retainhier *retainhier, *retainhier_tmp;
+	struct P_retain retain_chunk;
+	int rc;
+
+	memset(&retain_chunk, 0, sizeof(struct P_retain));
+
+	if(node->retained && strncmp(node->retained->topic, "$SYS", 4)){
+		/* Don't save $SYS messages. */
+		retain_chunk.F.store_id = node->retained->db_id;
+		rc = persist__chunk_retain_write_v5(db_fptr, &retain_chunk);
+		if(rc){
+			return rc;
+		}
+	}
+
+	HASH_ITER(hh, node->children, retainhier, retainhier_tmp){
+		persist__retain_save(db, db_fptr, retainhier, level+1);
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+static int persist__retain_save_all(struct mosquitto_db *db, FILE *db_fptr)
+{
+	struct mosquitto__retainhier *retainhier, *retainhier_tmp;
+
+	HASH_ITER(hh, db->retains, retainhier, retainhier_tmp){
+		if(retainhier->children){
+			persist__retain_save(db, db_fptr, retainhier->children, 0);
 		}
 	}
 	
@@ -342,7 +365,8 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 	}
 
 	persist__client_save(db, db_fptr);
-	persist__subs_retain_save_all(db, db_fptr);
+	persist__subs_save_all(db, db_fptr);
+	persist__retain_save_all(db, db_fptr);
 
 #ifndef WIN32
 	/**

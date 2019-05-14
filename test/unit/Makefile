@@ -44,6 +44,8 @@ PERSIST_READ_OBJS = \
 		persist_read_v234.o \
 		persist_read_v5.o \
 		property_mosq.o \
+		retain.o \
+		topic_tok.o \
 		utf8_mosq.o \
 		util_mosq.o
 
@@ -61,7 +63,9 @@ PERSIST_WRITE_OBJS = \
 		persist_write.o \
 		persist_write_v5.o \
 		property_mosq.o \
+		retain.o \
 		subs.o \
+		topic_tok.o \
 		utf8_mosq.o \
 		util_mosq.o
 
@@ -112,7 +116,13 @@ persist_write_v5.o : ../../src/persist_write_v5.c
 property_mosq.o : ../../lib/property_mosq.c
 	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
 
+retain.o : ../../src/retain.c
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
+
 subs.o : ../../src/subs.c
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
+
+topic_tok.o : ../../src/topic_tok.c
 	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 util_mosq.o : ../../lib/util_mosq.c
