@@ -36,7 +36,7 @@ Contributors:
 #include "time_mosq.h"
 #include "util_mosq.h"
 
-static uint32_t db_version;
+uint32_t db_version;
 
 const unsigned char magic[15] = {0x00, 0xB5, 0x00, 'm','o','s','q','u','i','t','t','o',' ','d','b'};
 
