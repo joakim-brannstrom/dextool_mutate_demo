@@ -182,15 +182,14 @@ void print__msg_store(struct P_msg_store *chunk, int length)
 	printf("\tPayload Length: %d\n", chunk->F.payloadlen);
 	printf("\tExpiry Time: %" PRIu64 "\n", chunk->F.expiry_time);
 
-	bool binary = false;
 	uint8_t *payload;
 
 	payload = UHPA_ACCESS(chunk->payload, chunk->F.payloadlen);
-	for(int i=0; i<chunk->F.payloadlen; i++){
-		if(payload[i] == 0) binary = true;
-	}
-	if(binary == false && chunk->F.payloadlen<256){
-		printf("\tPayload: %s\n", payload);
+	if(chunk->F.payloadlen < 256){
+		/* Print payloads with UTF-8 data below an arbitrary limit of 256 bytes */
+		if(mosquitto_validate_utf8((char *)payload, chunk->F.payloadlen) == MOSQ_ERR_SUCCESS){
+			printf("\tPayload: %s\n", payload);
+		}
 	}
 	print__properties(chunk->properties);
 }
