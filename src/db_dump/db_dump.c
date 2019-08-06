@@ -203,7 +203,6 @@ static int dump__client_msg_chunk_process(struct mosquitto_db *db, FILE *db_fd, 
 	if(client_stats){
 		HASH_FIND(hh_id, clients_by_id, chunk.client_id, strlen(chunk.client_id), cc);
 		if(cc){
-			printf("FOUND %s\n", chunk.client_id);
 			cc->messages++;
 			cc->message_size += length;
 
@@ -301,7 +300,6 @@ static int dump__msg_store_chunk_process(struct mosquitto_db *db, FILE *db_fptr,
 		}
 		mcs->store_id = chunk.F.store_id;
 		mcs->length = length;
-		printf("ADD msgs %" PRIu64 "\n", mcs->store_id);
 		HASH_ADD(hh, msgs_by_id, store_id, sizeof(dbid_t), mcs);
 	}
 
@@ -361,7 +359,6 @@ static int dump__sub_chunk_process(struct mosquitto_db *db, FILE *db_fd, uint32_
 	if(client_stats){
 		HASH_FIND(hh_id, clients_by_id, chunk.client_id, strlen(chunk.client_id), cc);
 		if(cc){
-			printf("FOUND S %s\n", chunk.client_id);
 			cc->subscriptions++;
 			cc->subscription_size += length;
 		}
