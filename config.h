@@ -1,4 +1,5 @@
 #ifndef CONFIG_H
+#define CONFIG_H
 /* ============================================================
  * Platform options
  * ============================================================ */
@@ -15,7 +16,10 @@
 #  define _POSIX_C_SOURCE 200809L
 #endif
 
-#define _GNU_SOURCE
+
+#ifndef _GNU_SOURCE
+#  define _GNU_SOURCE
+#endif
 
 #define OPENSSL_LOAD_CONF
 
@@ -59,5 +63,10 @@
 #endif
 
 #define UNUSED(A) (void)(A)
+
+/* Android Bionic libpthread implementation doesn't have pthread_cancel */
+#ifndef ANDROID
+#  define HAVE_PTHREAD_CANCEL
+#endif
 
 #endif

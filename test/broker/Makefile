@@ -64,6 +64,7 @@ endif
 	./02-subpub-qos1-nolocal.py
 	./02-subpub-qos1-v5.py
 	./02-subpub-qos1.py
+	./02-subpub-qos2-1322.py
 	./02-subpub-qos2-bad-puback-1.py
 	./02-subpub-qos2-bad-puback-2.py
 	./02-subpub-qos2-bad-pubcomp.py
@@ -101,6 +102,7 @@ endif
 	./03-publish-qos1-no-subscribers-v5.py
 	./03-publish-qos1-retain-disabled.py
 	./03-publish-qos1.py
+	./03-publish-qos2-max-inflight.py
 	./03-publish-qos2.py
 
 04 :
@@ -129,6 +131,7 @@ endif
 	./06-bridge-br2b-remapping.py
 	./06-bridge-fail-persist-resend-qos1.py
 	./06-bridge-fail-persist-resend-qos2.py
+	./06-bridge-no-local.py
 	./06-bridge-per-listener-settings.py
 	./06-bridge-reconnect-local-out.py
 
@@ -143,6 +146,7 @@ endif
 	./07-will-null.py
 	./07-will-properties.py
 	./07-will-qos0.py
+	./07-will-reconnect-1273.py
 
 08 :
 ifeq ($(WITH_TLS),yes)

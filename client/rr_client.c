@@ -121,8 +121,12 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 		mosquitto_subscribe_v5(mosq, NULL, cfg.response_topic, cfg.qos, 0, cfg.subscribe_props);
 	}else{
 		client_state = rr_s_disconnect;
-		if(result && !cfg.quiet){
-			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
+		if(result){
+			if(result == MQTT_RC_UNSUPPORTED_PROTOCOL_VERSION){
+				err_printf(&cfg, "Connection error: %s. mosquitto_rr only supports connecting to an MQTT v5 broker\n", mosquitto_reason_string(result));
+			}else{
+				err_printf(&cfg, "Connection error: %s\n", mosquitto_reason_string(result));
+			}
 		}
 		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
 	}
@@ -135,10 +139,8 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_c
 		client_state = rr_s_ready_to_publish;
 	}else{
 		client_state = rr_s_disconnect;
-		if(!cfg.quiet){
-			fprintf(stderr, "%s\n", mosquitto_reason_string(granted_qos[0]));
-			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
-		}
+		err_printf(&cfg, "%s\n", mosquitto_reason_string(granted_qos[0]));
+		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
 	}
 }
 
@@ -158,7 +160,7 @@ void print_usage(void)
 	printf("             Defaults to MQTT v5, where the Request-Response feature will be used, but v3.1.1 can also be used\n");
 	printf("             with v3.1.1 brokers.\n");
 	printf("mosquitto_rr version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
-	printf("Usage: mosquitto_rr {[-h host] [-p port] [-u username [-P password]] -t topic | -L URL} -e response-topic\n");
+	printf("Usage: mosquitto_rr {[-h host] [-p port] [-u username] [-P password] -t topic | -L URL} -e response-topic\n");
 	printf("                    [-c] [-k keepalive] [-q qos] [-R]\n");
 	printf("                    [-F format]\n");
 #ifndef WIN32
@@ -254,8 +256,6 @@ int main(int argc, char *argv[])
 #ifndef WIN32
 		struct sigaction sigact;
 #endif
-	
-	memset(&cfg, 0, sizeof(struct mosq_config));
 
 	mosquitto_lib_init();
 
@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
 	}
 	rc = mosquitto_property_check_all(CMD_PUBLISH, cfg.publish_props);
 	if(rc){
-		if(!cfg.quiet) fprintf(stderr, "Error in PUBLISH properties: Duplicate response topic.\n");
+		err_printf(&cfg, "Error in PUBLISH properties: Duplicate response topic.\n");
 		goto cleanup;
 	}
 
@@ -294,10 +294,10 @@ int main(int argc, char *argv[])
 	if(!mosq){
 		switch(errno){
 			case ENOMEM:
-				if(!cfg.quiet) fprintf(stderr, "Error: Out of memory.\n");
+				err_printf(&cfg, "Error: Out of memory.\n");
 				break;
 			case EINVAL:
-				if(!cfg.quiet) fprintf(stderr, "Error: Invalid id and/or clean_session.\n");
+				err_printf(&cfg, "Error: Invalid id and/or clean_session.\n");
 				break;
 		}
 		goto cleanup;
@@ -360,7 +360,7 @@ int main(int argc, char *argv[])
 	}
 	client_config_cleanup(&cfg);
 	if(rc){
-		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
+		err_printf(&cfg, "Error: %s\n", mosquitto_strerror(rc));
 	}
 	return rc;
 
