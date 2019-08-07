@@ -104,8 +104,17 @@ int drop_privileges(struct mosquitto__config *config, bool temporary)
 		if(config->user && strcmp(config->user, "root")){
 			pwd = getpwnam(config->user);
 			if(!pwd){
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid user '%s'.", config->user);
-				return 1;
+				if(strcmp(config->user, "mosquitto")){
+					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to drop privileges to '%s' because this user does not exist.", config->user);
+					return 1;
+				}else{
+					log__printf(NULL, MOSQ_LOG_ERR, "Warning: Unable to drop privileges to '%s' because this user does not exist. Trying 'nobody' instead.", config->user);
+					pwd = getpwnam("nobody");
+					if(!pwd){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to drop privileges to 'nobody'.");
+						return 1;
+					}
+				}
 			}
 			if(initgroups(config->user, pwd->pw_gid) == -1){
 				err = strerror(errno);

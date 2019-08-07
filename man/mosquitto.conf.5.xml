@@ -845,12 +845,15 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 				<term><option>user</option> <replaceable>username</replaceable></term>
 				<listitem>
 					<para>When run as root, change to this user and its primary
-						group on startup.  If mosquitto is unable to change to
-						this user and group, it will exit with an error. The
-						user specified must have read/write access to the
-						persistence database if it is to be written. If run as
-						a non-root user, this setting has no effect. Defaults
-						to mosquitto.</para>
+						group on startup. If set to "mosquitto" or left unset,
+						and if the "mosquitto" user does not exist, then
+						mosquitto will change to the "nobody" user instead.
+						If this is set to another value and mosquitto is unable
+						to change to this user and group, it will exit with an
+						error. The user specified must have read/write access
+						to the persistence database if it is to be written. If
+						run as a non-root user, this setting has no effect.
+						Defaults to mosquitto.</para>
 					<para>This setting has no effect on Windows and so you
 						should run mosquitto as the user you wish it to run
 						as.</para>
