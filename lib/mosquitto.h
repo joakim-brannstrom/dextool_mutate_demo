@@ -98,6 +98,7 @@ enum mosq_err_t {
 	MOSQ_ERR_QOS_NOT_SUPPORTED = 24,
 	MOSQ_ERR_OVERSIZE_PACKET = 25,
 	MOSQ_ERR_OCSP = 26,
+	MOSQ_ERR_TIMEOUT = 27,
 };
 
 /* Option values */

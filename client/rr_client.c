@@ -51,6 +51,7 @@ struct mosq_config cfg;
 bool process_messages = true;
 int msg_count = 0;
 struct mosquitto *mosq = NULL;
+static bool timed_out = false;
 
 #ifndef WIN32
 void my_signal_handler(int signum)
@@ -58,6 +59,7 @@ void my_signal_handler(int signum)
 	if(signum == SIGALRM){
 		process_messages = false;
 		mosquitto_disconnect_v5(mosq, MQTT_RC_DISCONNECT_WITH_WILL_MSG, cfg.disconnect_props);
+		timed_out = true;
 	}
 }
 #endif
@@ -359,7 +361,10 @@ int main(int argc, char *argv[])
 		rc = 0;
 	}
 	client_config_cleanup(&cfg);
-	if(rc){
+	if(timed_out){
+		err_printf(&cfg, "Timed out\n");
+		return MOSQ_ERR_TIMEOUT;
+	}else if(rc){
 		err_printf(&cfg, "Error: %s\n", mosquitto_strerror(rc));
 	}
 	return rc;

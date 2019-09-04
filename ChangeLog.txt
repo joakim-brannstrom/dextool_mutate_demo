@@ -3,6 +3,9 @@ Broker:
   then try "nobody" instead. This reduces the burden on users installing
   Mosquitto themselves.
 
+Clients:
+- Add timeout return code (27) for `mosquitto_sub -W <secs>` and
+  `mosquitto_rr -W <secs>`. Closes #275.
 
 1.6.4 - 20190801
 ================

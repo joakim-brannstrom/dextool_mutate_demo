@@ -784,6 +784,24 @@
 	</refsect1>
 
 	<refsect1>
+		<title>Exit Values</title>
+		<variablelist>
+			<varlistentry>
+				<term><option>0</option></term>
+				<listitem><para>Success</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>27</option></term>
+				<listitem><para>Timed out waiting for message</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>Other non-zero value</option></term>
+				<listitem><para>Unspecified failure</para></listitem>
+			</varlistentry>
+		</variablelist>
+	</refsect1>
+
+	<refsect1>
 		<title>Files</title>
 		<variablelist>
 			<varlistentry>
