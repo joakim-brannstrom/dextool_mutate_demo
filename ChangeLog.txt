@@ -3,6 +3,11 @@ Broker:
   then try "nobody" instead. This reduces the burden on users installing
   Mosquitto themselves.
 
+Client library:
+- Client no longer generates random client ids for v3.1.1 clients, these are
+  now expected to be generated on the broker. This matches the behaviour for
+  v5 clients. Closes #291.
+
 Clients:
 - Add timeout return code (27) for `mosquitto_sub -W <secs>` and
   `mosquitto_rr -W <secs>`. Closes #275.

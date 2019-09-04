@@ -44,7 +44,8 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(!host || port <= 0) return MOSQ_ERR_INVAL;
 
-	if(mosq->id == NULL && (mosq->protocol == mosq_p_mqtt31 || mosq->protocol == mosq_p_mqtt311)){
+	/* Only MQTT v3.1 requires a client id to be sent */
+	if(mosq->id == NULL && (mosq->protocol == mosq_p_mqtt31)){
 		mosq->id = (char *)mosquitto__calloc(24, sizeof(char));
 		if(!mosq->id){
 			return MOSQ_ERR_NOMEM;
