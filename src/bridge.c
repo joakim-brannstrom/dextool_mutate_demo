@@ -100,6 +100,8 @@ int bridge__new(struct mosquitto_db *db, struct mosquitto__bridge *bridge)
 	new_context->tls_version = new_context->bridge->tls_version;
 	new_context->tls_insecure = new_context->bridge->tls_insecure;
 	new_context->tls_alpn = new_context->bridge->tls_alpn;
+	new_context->tls_engine = db->config->default_listener.tls_engine;
+	new_context->tls_keyform = db->config->default_listener.tls_keyform;
 #ifdef FINAL_WITH_TLS_PSK
 	new_context->tls_psk_identity = new_context->bridge->tls_psk_identity;
 	new_context->tls_psk = new_context->bridge->tls_psk;
@@ -137,7 +139,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 
 	if(!context || !context->bridge) return MOSQ_ERR_INVAL;
 
-	context__set_state(context, mosq_cs_new);
+	mosquitto__set_state(context, mosq_cs_new);
 	context->sock = INVALID_SOCKET;
 	context->last_msg_in = mosquitto_time();
 	context->next_msg_out = mosquitto_time() + context->bridge->keepalive;
@@ -257,7 +259,7 @@ int bridge__connect_step2(struct mosquitto_db *db, struct mosquitto *context)
 	HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);
 
 	if(rc == MOSQ_ERR_CONN_PENDING){
-		context__set_state(context, mosq_cs_connect_pending);
+		mosquitto__set_state(context, mosq_cs_connect_pending);
 	}
 	return rc;
 }
@@ -316,7 +318,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	if(!context || !context->bridge) return MOSQ_ERR_INVAL;
 
-	context__set_state(context, mosq_cs_new);
+	mosquitto__set_state(context, mosq_cs_new);
 	context->sock = INVALID_SOCKET;
 	context->last_msg_in = mosquitto_time();
 	context->next_msg_out = mosquitto_time() + context->bridge->keepalive;
@@ -410,7 +412,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 		return rc;
 	}else if(rc == MOSQ_ERR_CONN_PENDING){
-		context__set_state(context, mosq_cs_connect_pending);
+		mosquitto__set_state(context, mosq_cs_connect_pending);
 	}
 
 	HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);

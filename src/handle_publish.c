@@ -54,7 +54,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	int topic_alias = -1;
 	uint8_t reason_code = 0;
 
-	if(context->state != mosq_cs_connected){
+	if(context->state != mosq_cs_active){
 		return MOSQ_ERR_PROTOCOL;
 	}
 

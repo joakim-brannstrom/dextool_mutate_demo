@@ -31,6 +31,9 @@ Contributors:
 static void connack_callback(struct mosquitto *mosq, uint8_t reason_code, uint8_t connect_flags, const mosquitto_property *properties)
 {
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK (%d)", mosq->id, reason_code);
+	if(reason_code == MQTT_RC_SUCCESS){
+		mosq->reconnects = 0;
+	}
 	pthread_mutex_lock(&mosq->callback_mutex);
 	if(mosq->on_connect){
 		mosq->in_callback = true;
@@ -108,7 +111,7 @@ int handle__connack(struct mosquitto *mosq)
 		case 0:
 			pthread_mutex_lock(&mosq->state_mutex);
 			if(mosq->state != mosq_cs_disconnecting){
-				mosq->state = mosq_cs_connected;
+				mosq->state = mosq_cs_active;
 			}
 			pthread_mutex_unlock(&mosq->state_mutex);
 			message__retry_check(mosq);

@@ -74,6 +74,9 @@ Contributors:
 
 #define WEBSOCKET_CLIENT -2
 
+
+#define TOPIC_HIERARCHY_LIMIT 200
+
 /* ========================================
  * UHPA data types
  * ======================================== */
@@ -586,6 +589,8 @@ void net__broker_cleanup(void);
 int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock);
 int net__socket_listen(struct mosquitto__listener *listener);
 int net__socket_get_address(mosq_sock_t sock, char *buf, int len);
+int net__tls_load_verify(struct mosquitto__listener *listener);
+int net__tls_server_ctx(struct mosquitto__listener *listener);
 
 /* ============================================================
  * Read handling functions
@@ -652,7 +657,6 @@ void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context)
 void context__free_disused(struct mosquitto_db *db);
 void context__send_will(struct mosquitto_db *db, struct mosquitto *context);
 void context__remove_from_by_id(struct mosquitto_db *db, struct mosquitto *context);
-void context__set_state(struct mosquitto *context, enum mosquitto_client_state state);
 
 int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, void *auth_data_out, uint16_t auth_data_out_len);
 
