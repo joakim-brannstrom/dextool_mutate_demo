@@ -144,15 +144,20 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
 	int i;
-
+	bool some_sub_allowed = (granted_qos[0] < 128);
+	bool should_print = cfg.debug && !cfg.quiet;
 	UNUSED(obj);
 
-	if(cfg.debug){
-		if(!cfg.quiet) printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
-		for(i=1; i<qos_count; i++){
-			if(!cfg.quiet) printf(", %d", granted_qos[i]);
-		}
-		if(!cfg.quiet) printf("\n");
+	if(should_print) printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
+	for(i=1; i<qos_count; i++){
+		if(should_print) printf(", %d", granted_qos[i]);
+		some_sub_allowed |= (granted_qos[i] < 128);
+	}
+	if(should_print) printf("\n");
+
+	if(some_sub_allowed == false){
+		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+		err_printf(&cfg, "Not a single subscription was granted\n");
 	}
 
 	if(cfg.exit_after_sub){
