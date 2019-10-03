@@ -29,7 +29,6 @@ int send__unsuback(struct mosquitto *mosq, uint16_t mid, int reason_code_count, 
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
-	int proplen, varbytes;
 
 	assert(mosq);
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
@@ -39,9 +38,8 @@ int send__unsuback(struct mosquitto *mosq, uint16_t mid, int reason_code_count, 
 	packet->remaining_length = 2;
 
 	if(mosq->protocol == mosq_p_mqtt5){
-		proplen = property__get_length_all(properties);
-		varbytes = packet__varint_bytes(proplen);
-		packet->remaining_length += varbytes + proplen + reason_code_count;
+		packet->remaining_length += property__get_remaining_length(properties);
+		packet->remaining_length += reason_code_count;
 	}
 
 	rc = packet__alloc(packet);

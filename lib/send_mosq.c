@@ -120,7 +120,6 @@ int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
-	int proplen, varbytes;
 
 	assert(mosq);
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
@@ -138,9 +137,7 @@ int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid
 		}
 
 		if(properties){
-			proplen = property__get_length_all(properties);
-			varbytes = packet__varint_bytes(proplen);
-			packet->remaining_length += varbytes + proplen;
+			packet->remaining_length += property__get_remaining_length(properties);
 		}
 	}
 

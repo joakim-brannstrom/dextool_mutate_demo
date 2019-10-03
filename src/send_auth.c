@@ -28,7 +28,6 @@ int send__auth(struct mosquitto_db *db, struct mosquitto *context, int reason_co
 	struct mosquitto__packet *packet = NULL;
 	int rc;
 	mosquitto_property *properties = NULL;
-	int proplen, varbytes;
 	uint32_t remaining_length;
 
 	if(context->auth_method == NULL) return MOSQ_ERR_INVAL;
@@ -52,9 +51,7 @@ int send__auth(struct mosquitto_db *db, struct mosquitto *context, int reason_co
 		}
 	}
 
-	proplen = property__get_length_all(properties);
-	varbytes = packet__varint_bytes(proplen);
-	remaining_length += proplen + varbytes;
+	remaining_length += property__get_remaining_length(properties);
 
 	if(packet__check_oversize(context, remaining_length)){
 		mosquitto_property_free_all(&properties);

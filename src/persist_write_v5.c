@@ -87,8 +87,7 @@ int persist__chunk_client_msg_write_v5(FILE *db_fptr, struct P_client_msg *chunk
 
 	memset(&prop_packet, 0, sizeof(struct mosquitto__packet));
 	if(chunk->properties){
-		proplen = property__get_length_all(chunk->properties);
-		proplen += packet__varint_bytes(proplen);
+		proplen += property__get_remaining_length(chunk->properties);
 	}
 
 	chunk->F.mid = htons(chunk->F.mid);
@@ -136,8 +135,7 @@ int persist__chunk_message_store_write_v5(FILE *db_fptr, struct P_msg_store *chu
 
 	memset(&prop_packet, 0, sizeof(struct mosquitto__packet));
 	if(chunk->properties){
-		proplen = property__get_length_all(chunk->properties);
-		proplen += packet__varint_bytes(proplen);
+		proplen += property__get_remaining_length(chunk->properties);
 	}
 
 	chunk->F.payloadlen = htonl(chunk->F.payloadlen);

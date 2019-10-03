@@ -28,7 +28,6 @@ int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, i
 	struct mosquitto__packet *packet = NULL;
 	int rc;
 	mosquitto_property *connack_props = NULL;
-	int proplen, varbytes;
 	uint32_t remaining_length;
 
 	rc = mosquitto_property_copy_all(&connack_props, properties);
@@ -60,9 +59,7 @@ int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, i
 			}
 		}
 
-		proplen = property__get_length_all(connack_props);
-		varbytes = packet__varint_bytes(proplen);
-		remaining_length += proplen + varbytes;
+		remaining_length += property__get_remaining_length(connack_props);
 	}
 
 	if(packet__check_oversize(context, remaining_length)){

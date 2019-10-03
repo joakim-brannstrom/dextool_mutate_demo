@@ -40,7 +40,6 @@ int send__unsubscribe(struct mosquitto *mosq, int *mid, int topic_count, char *c
 	uint32_t packetlen;
 	uint16_t local_mid;
 	int rc;
-	int proplen, varbytes;
 	int i;
 
 	assert(mosq);
@@ -55,9 +54,7 @@ int send__unsubscribe(struct mosquitto *mosq, int *mid, int topic_count, char *c
 		packetlen += 2+strlen(topic[i]);
 	}
 	if(mosq->protocol == mosq_p_mqtt5){
-		proplen = property__get_length_all(properties);
-		varbytes = packet__varint_bytes(proplen);
-		packetlen += proplen + varbytes;
+		packetlen += property__get_remaining_length(properties);
 	}
 
 	packet->command = CMD_UNSUBSCRIBE | (1<<1);

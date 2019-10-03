@@ -341,6 +341,18 @@ int property__get_length_all(const mosquitto_property *property)
 }
 
 
+/* Return the number of bytes we need to add on to the remaining length when
+ * encoding these properties. */
+int property__get_remaining_length(const mosquitto_property *props)
+{
+	int proplen, varbytes;
+
+	proplen = property__get_length_all(props);
+	varbytes = packet__varint_bytes(proplen);
+	return proplen + varbytes;
+}
+
+
 int property__write(struct mosquitto__packet *packet, const mosquitto_property *property)
 {
 	int rc;

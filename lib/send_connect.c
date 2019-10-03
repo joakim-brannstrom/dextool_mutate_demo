@@ -41,7 +41,7 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	uint8_t version;
 	char *clientid, *username, *password;
 	int headerlen;
-	int proplen = 0, will_proplen, varbytes;
+	int proplen = 0, varbytes;
 	mosquitto_property *local_props = NULL;
 	uint16_t receive_maximum;
 
@@ -106,9 +106,7 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 
 		payloadlen += 2+strlen(mosq->will->msg.topic) + 2+mosq->will->msg.payloadlen;
 		if(mosq->protocol == mosq_p_mqtt5){
-			will_proplen = property__get_length_all(mosq->will->properties);
-			varbytes = packet__varint_bytes(will_proplen);
-			payloadlen += will_proplen + varbytes;
+			payloadlen += property__get_remaining_length(mosq->will->properties);
 		}
 	}
 

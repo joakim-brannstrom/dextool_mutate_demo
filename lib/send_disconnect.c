@@ -36,7 +36,6 @@ int send__disconnect(struct mosquitto *mosq, uint8_t reason_code, const mosquitt
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
-	int proplen, varbytes;
 
 	assert(mosq);
 #ifdef WITH_BROKER
@@ -60,9 +59,7 @@ int send__disconnect(struct mosquitto *mosq, uint8_t reason_code, const mosquitt
 	if(mosq->protocol == mosq_p_mqtt5 && (reason_code != 0 || properties)){
 		packet->remaining_length = 1;
 		if(properties){
-			proplen = property__get_length_all(properties);
-			varbytes = packet__varint_bytes(proplen);
-			packet->remaining_length += proplen + varbytes;
+			packet->remaining_length += property__get_remaining_length(properties);
 		}
 	}else{
 		packet->remaining_length = 0;

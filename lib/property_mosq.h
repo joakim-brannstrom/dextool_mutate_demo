@@ -47,4 +47,6 @@ void property__free(mosquitto_property **property);
 int property__get_length(const mosquitto_property *property);
 int property__get_length_all(const mosquitto_property *property);
 
+int property__get_remaining_length(const mosquitto_property *props);
+
 #endif

@@ -40,7 +40,6 @@ int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const cha
 	uint16_t local_mid;
 	int rc;
 	int i;
-	int proplen, varbytes;
 
 	assert(mosq);
 	assert(topic);
@@ -50,9 +49,7 @@ int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const cha
 
 	packetlen = 2;
 	if(mosq->protocol == mosq_p_mqtt5){
-		proplen = property__get_length_all(properties);
-		varbytes = packet__varint_bytes(proplen);
-		packetlen += proplen + varbytes;
+		packetlen += property__get_remaining_length(properties);
 	}
 	for(i=0; i<topic_count; i++){
 		packetlen += 2+strlen(topic[i]) + 1;
