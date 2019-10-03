@@ -685,7 +685,8 @@ void bridge_check(struct mosquitto_db *db);
 void bridge_check(struct mosquitto_db *db, struct pollfd *pollfds, int *pollfd_index);
 #endif
 int bridge__register_local_connections(struct mosquitto_db *db);
-int bridge__remap_topic(struct mosquitto *context, char **topic);
+int bridge__add_topic(struct mosquitto__bridge *bridge, const char *topic, enum mosquitto__bridge_direction direction, int qos, const char *local_prefix, const char *remote_prefix);
+int bridge__remap_topic_in(struct mosquitto *context, char **topic);
 #endif
 
 /* ============================================================

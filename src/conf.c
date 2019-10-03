@@ -785,8 +785,6 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #ifdef WITH_BRIDGE
 	char *tmp_char;
 	struct mosquitto__bridge *cur_bridge = NULL;
-	struct mosquitto__bridge_topic *cur_topic;
-	int len;
 #endif
 	struct mosquitto__auth_plugin_config *cur_auth_plugin_config = NULL;
 
@@ -1973,29 +1971,14 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
+					char *topic = NULL;
+					enum mosquitto__bridge_direction direction = bd_out;
+					int qos = 0;
+					char *local_prefix = NULL, *remote_prefix = NULL;
+
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
-						cur_bridge->topic_count++;
-						cur_bridge->topics = mosquitto__realloc(cur_bridge->topics,
-								sizeof(struct mosquitto__bridge_topic)*cur_bridge->topic_count);
-						if(!cur_bridge->topics){
-							log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-						cur_topic = &cur_bridge->topics[cur_bridge->topic_count-1];
-						if(!strcmp(token, "\"\"")){
-							cur_topic->topic = NULL;
-						}else{
-							cur_topic->topic = mosquitto__strdup(token);
-							if(!cur_topic->topic){
-								log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-								return MOSQ_ERR_NOMEM;
-							}
-						}
-						cur_topic->direction = bd_out;
-						cur_topic->qos = 0;
-						cur_topic->local_prefix = NULL;
-						cur_topic->remote_prefix = NULL;
+						topic = token;
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty topic value in configuration.");
 						return MOSQ_ERR_INVAL;
@@ -2003,11 +1986,11 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(!strcasecmp(token, "out")){
-							cur_topic->direction = bd_out;
+							direction = bd_out;
 						}else if(!strcasecmp(token, "in")){
-							cur_topic->direction = bd_in;
+							direction = bd_in;
 						}else if(!strcasecmp(token, "both")){
-							cur_topic->direction = bd_both;
+							direction = bd_both;
 						}else{
 							log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic direction '%s'.", token);
 							return MOSQ_ERR_INVAL;
@@ -2017,105 +2000,36 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 							if (token[0] == '#'){
 								strtok_r(NULL, "", &saveptr);
 							}
-							cur_topic->qos = atoi(token);
-							if(cur_topic->qos < 0 || cur_topic->qos > 2){
+							qos = atoi(token);
+							if(qos < 0 || qos > 2){
 								log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge QoS level '%s'.", token);
 								return MOSQ_ERR_INVAL;
 							}
 
 							token = strtok_r(NULL, " ", &saveptr);
 							if(token){
-								cur_bridge->topic_remapping = true;
 								if(!strcmp(token, "\"\"") || token[0] == '#'){
-									cur_topic->local_prefix = NULL;
+									local_prefix = NULL;
 									if (token[0] == '#'){
 										strtok_r(NULL, "", &saveptr);
 									}
 								}else{
-									if(mosquitto_pub_topic_check(token) != MOSQ_ERR_SUCCESS){
-										log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic local prefix '%s'.", token);
-										return MOSQ_ERR_INVAL;
-									}
-									cur_topic->local_prefix = mosquitto__strdup(token);
-									if(!cur_topic->local_prefix){
-										log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-										return MOSQ_ERR_NOMEM;
-									}
+									local_prefix = token;
 								}
 
 								token = strtok_r(NULL, " ", &saveptr);
 								if(token){
 									if(!strcmp(token, "\"\"") || token[0] == '#'){
-										cur_topic->remote_prefix = NULL;
+										remote_prefix = NULL;
 									}else{
-										if(mosquitto_pub_topic_check(token) != MOSQ_ERR_SUCCESS){
-											log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic remote prefix '%s'.", token);
-											return MOSQ_ERR_INVAL;
-										}
-										cur_topic->remote_prefix = mosquitto__strdup(token);
-										if(!cur_topic->remote_prefix){
-											log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-											return MOSQ_ERR_NOMEM;
-										}
+										remote_prefix = mosquitto__strdup(token);
 									}
 								}
 							}
 						}
 					}
-					if(cur_topic->topic == NULL &&
-							(cur_topic->local_prefix == NULL || cur_topic->remote_prefix == NULL)){
-
-						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge remapping.");
+					if(bridge__add_topic(cur_bridge, topic, direction, qos, local_prefix, remote_prefix)){
 						return MOSQ_ERR_INVAL;
-					}
-					if(cur_topic->local_prefix){
-						if(cur_topic->topic){
-							len = strlen(cur_topic->topic) + strlen(cur_topic->local_prefix)+1;
-							cur_topic->local_topic = mosquitto__malloc(len+1);
-							if(!cur_topic->local_topic){
-								log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-								return MOSQ_ERR_NOMEM;
-							}
-							snprintf(cur_topic->local_topic, len+1, "%s%s", cur_topic->local_prefix, cur_topic->topic);
-							cur_topic->local_topic[len] = '\0';
-						}else{
-							cur_topic->local_topic = mosquitto__strdup(cur_topic->local_prefix);
-							if(!cur_topic->local_topic){
-								log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-								return MOSQ_ERR_NOMEM;
-							}
-						}
-					}else{
-						cur_topic->local_topic = mosquitto__strdup(cur_topic->topic);
-						if(!cur_topic->local_topic){
-							log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}
-
-					if(cur_topic->remote_prefix){
-						if(cur_topic->topic){
-							len = strlen(cur_topic->topic) + strlen(cur_topic->remote_prefix)+1;
-							cur_topic->remote_topic = mosquitto__malloc(len+1);
-							if(!cur_topic->remote_topic){
-								log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-								return MOSQ_ERR_NOMEM;
-							}
-							snprintf(cur_topic->remote_topic, len, "%s%s", cur_topic->remote_prefix, cur_topic->topic);
-							cur_topic->remote_topic[len] = '\0';
-						}else{
-							cur_topic->remote_topic = mosquitto__strdup(cur_topic->remote_prefix);
-							if(!cur_topic->remote_topic){
-								log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-								return MOSQ_ERR_NOMEM;
-							}
-						}
-					}else{
-						cur_topic->remote_topic = mosquitto__strdup(cur_topic->topic);
-						if(!cur_topic->remote_topic){
-							log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
 					}
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");

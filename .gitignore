@@ -68,6 +68,7 @@ test/ssl/signingCA/
 test/lib/c/*.test
 test/lib/cpp/*.test
 
+test/unit/bridge_topic_test
 test/unit/coverage.info
 test/unit/mosq_test
 test/unit/persist_read_test

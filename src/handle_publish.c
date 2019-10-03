@@ -184,7 +184,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 #ifdef WITH_BRIDGE
-	rc = bridge__remap_topic(context, &topic);
+	rc = bridge__remap_topic_in(context, &topic);
 	if(rc) return rc;
 
 #endif
