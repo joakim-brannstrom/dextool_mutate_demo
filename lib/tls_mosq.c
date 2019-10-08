@@ -56,7 +56,11 @@ int mosquitto__server_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 	mosq = SSL_get_ex_data(ssl, tls_ex_index_mosq);
 	if(!mosq) return 0;
 
-	if(mosq->tls_insecure == false){
+	if(mosq->tls_insecure == false
+#ifndef WITH_BROKER
+			&& mosq->port != 0 /* no hostname checking for unix sockets */
+#endif
+			){
 		if(X509_STORE_CTX_get_error_depth(ctx) == 0){
 			/* FIXME - use X509_check_host() etc. for sufficiently new openssl (>=1.1.x) */
 			cert = X509_STORE_CTX_get_current_cert(ctx);

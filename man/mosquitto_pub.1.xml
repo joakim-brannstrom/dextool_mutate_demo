@@ -20,6 +20,7 @@
 			<group choice='req'>
 				<arg choice='plain'>
 					<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
+					<arg><option>--unix</option> <replaceable>socket path</replaceable></arg>
 					<arg><option>-p</option> <replaceable>port-number</replaceable></arg>
 					<arg><option>-u</option> <replaceable>username</replaceable></arg>
 					<arg><option>-P</option> <replaceable>password</replaceable></arg>
@@ -535,6 +536,21 @@
 					<para>Provide a username to be used for authenticating with
 						the broker.  See also the <option>--pw</option>
 						argument.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--unix</option></term>
+				<listitem>
+					<para>Connect to a broker through a local unix domain socket
+						instead of a TCP socket. This is a replacement for
+						<option>-h</option> and <option>-L</option>. For example:
+						<option>mosquitto_pub --unix /tmp/mosquitto.sock ...</option>
+					</para>
+					<para>See the <option>socket_domain</option> option in
+						<refentrytitle>
+							<link xlink:href="mosquitto-conf-5.html">mosquitto.conf</link>
+						</refentrytitle><manvolnum>5</manvolnum>
+						to configure Mosquitto to listen on a unix socket.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

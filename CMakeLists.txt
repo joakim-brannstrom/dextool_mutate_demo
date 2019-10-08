@@ -43,6 +43,12 @@ else (WITH_TLS)
 	set (OPENSSL_INCLUDE_DIR "")
 endif (WITH_TLS)
 
+
+option(WITH_UNIX_SOCKETS "Include Unix Domain Socket support?" ON)
+if (WITH_UNIX_SOCKETS AND NOT WIN32)
+	add_definitions("-DWITH_UNIX_SOCKETS")
+endif (WITH_UNIX_SOCKETS AND NOT WIN32)
+
 option(WITH_SOCKS "Include SOCKS5 support?" ON)
 if (WITH_SOCKS)
 	add_definitions("-DWITH_SOCKS")

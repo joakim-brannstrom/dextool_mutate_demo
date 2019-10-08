@@ -1159,7 +1159,7 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 					</listitem>
 				</varlistentry>
 				<varlistentry>
-					<term><option>socket_domain</option> [ ipv4 | ipv6 ]</term>
+					<term><option>socket_domain</option> [ ipv4 | ipv6 | unix ] [path to unix socket]</term>
 					<listitem>
 						<para>By default, a listener will attempt to listen on
 							all supported IP protocol versions. If you do not
@@ -1176,6 +1176,10 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 							use IPv6. If you want support for both IPv4 and
 							IPv6, then do not use the
 							<option>socket_domain</option> option.</para>
+						<para>On systems that support Unix Domain Sockets, this
+							option can also be used to create a Unix socket rather
+							than opening a TCP socket. In this case, the option
+							should be in the form: <option>socket_domain unix &lt;path to socket&gt;</option>. For example: <option>socket_domain unix /tmp/mosquitto.sock</option></para>
 						<para>Not reloaded on reload signal.</para>
 					</listitem>
 				</varlistentry>

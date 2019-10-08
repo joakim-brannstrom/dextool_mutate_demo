@@ -38,6 +38,9 @@ Contributors:
 #define CLIENT_RR 3
 #define CLIENT_RESPONSE_TOPIC 4
 
+#define PORT_UNDEFINED -1
+#define PORT_UNIX 0
+
 struct mosq_config {
 	char *id;
 	char *id_prefix;

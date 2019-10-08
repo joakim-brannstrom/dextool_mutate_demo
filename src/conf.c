@@ -323,6 +323,9 @@ void config__cleanup(struct mosquitto__config *config)
 #ifdef WITH_WEBSOCKETS
 			mosquitto__free(config->listeners[i].http_dir);
 #endif
+#ifdef WITH_UNIX_SOCKETS
+			mosquitto__free(config->listeners[i].unix_socket_path);
+#endif
 		}
 		mosquitto__free(config->listeners);
 	}
@@ -1894,6 +1897,21 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 							cur_listener->socket_domain = AF_INET;
 						}else if(!strcmp(token, "ipv6")){
 							cur_listener->socket_domain = AF_INET6;
+#ifdef WITH_UNIX_SOCKETS
+						}else if(!strcmp(token, "unix")){
+							cur_listener->socket_domain = AF_UNIX;
+							token = strtok_r(NULL, " ", &saveptr);
+							if(token){
+								cur_listener->unix_socket_path = mosquitto__strdup(token);
+								if(cur_listener->unix_socket_path == NULL){
+									log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+									return MOSQ_ERR_NOMEM;
+								}
+							}else{
+								log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty socket_domain unix socket path in configuration.");
+								return MOSQ_ERR_INVAL;
+							}
+#endif
 						}else{
 							log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid socket_domain value \"%s\" in configuration.", token);
 							return MOSQ_ERR_INVAL;

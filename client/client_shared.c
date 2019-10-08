@@ -125,7 +125,7 @@ static int check_format(const char *str)
 void init_config(struct mosq_config *cfg, int pub_or_sub)
 {
 	memset(cfg, 0, sizeof(*cfg));
-	cfg->port = -1;
+	cfg->port = PORT_UNDEFINED;
 	cfg->max_inflight = 20;
 	cfg->keepalive = 60;
 	cfg->clean_session = true;
@@ -742,7 +742,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}else{
 				cfg->port = atoi(argv[i+1]);
-				if(cfg->port<1 || cfg->port>65535){
+				if(cfg->port<0 || cfg->port>65535){
 					fprintf(stderr, "Error: Invalid port given: %d\n", cfg->port);
 					return 1;
 				}
@@ -974,6 +974,15 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->username = strdup(argv[i+1]);
 			}
 			i++;
+		}else if(!strcmp(argv[i], "--unix")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --unix argument given but no socket path specified.\n\n");
+				return 1;
+			}else{
+				cfg->host = strdup(argv[i+1]);
+				cfg->port = 0;
+			}
+			i++;
 		}else if(!strcmp(argv[i], "-V") || !strcmp(argv[i], "--protocol-version")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --protocol-version argument given but no version specified.\n\n");
@@ -1174,7 +1183,7 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	int rc;
 	int port;
 
-	if(cfg->port < 0){
+	if(cfg->port == PORT_UNDEFINED){
 #ifdef WITH_TLS
 		if(cfg->cafile || cfg->capath
 #  ifdef FINAL_WITH_TLS_PSK

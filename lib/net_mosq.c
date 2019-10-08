@@ -42,6 +42,10 @@ Contributors:
 #  include <netinet/in.h>
 #endif
 
+#ifdef WITH_UNIX_SOCKETS
+#  include <sys/un.h>
+#endif
+
 #ifdef __QNX__
 #include <net/netbyte.h>
 #endif
@@ -364,7 +368,7 @@ int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *s
 #endif
 
 
-int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const char *bind_address, bool blocking)
+static int net__try_connect_tcp(const char *host, uint16_t port, mosq_sock_t *sock, const char *bind_address, bool blocking)
 {
 	struct addrinfo hints;
 	struct addrinfo *ainfo, *rp;
@@ -458,6 +462,55 @@ int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const c
 		return MOSQ_ERR_ERRNO;
 	}
 	return rc;
+}
+
+
+#ifdef WITH_UNIX_SOCKETS
+static int net__try_connect_unix(const char *host, mosq_sock_t *sock)
+{
+	struct sockaddr_un addr;
+	int s;
+	int rc;
+
+	if(host == NULL || strlen(host) == 0 || strlen(host) > sizeof(addr.sun_path)-1){
+		return MOSQ_ERR_INVAL;
+	}
+
+	memset(&addr, 0, sizeof(struct sockaddr_un));
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, host, sizeof(addr.sun_path)-1);
+
+	s = socket(AF_UNIX, SOCK_STREAM, 0);
+	if(s < 0){
+		return MOSQ_ERR_ERRNO;
+	}
+	rc = net__socket_nonblock(&s);
+	if(rc) return rc;
+
+	rc = connect(s, (struct sockaddr *)&addr, sizeof(struct sockaddr_un));
+	if(rc < 0){
+		close(s);
+		return MOSQ_ERR_ERRNO;
+	}
+
+	*sock = s;
+
+	return 0;
+}
+#endif
+
+
+int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const char *bind_address, bool blocking)
+{
+	if(port == 0){
+#ifdef WITH_UNIX_SOCKETS
+		return net__try_connect_unix(host, sock);
+#else
+		return MOSQ_ERR_NOT_SUPPORTED;
+#endif
+	}else{
+		return net__try_connect_tcp(host, port, sock, bind_address, blocking);
+	}
 }
 
 
@@ -827,7 +880,7 @@ int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port,
 	mosq_sock_t sock = INVALID_SOCKET;
 	int rc, rc2;
 
-	if(!mosq || !host || !port) return MOSQ_ERR_INVAL;
+	if(!mosq || !host || port < 0) return MOSQ_ERR_INVAL;
 
 	rc = net__try_connect(host, port, &sock, bind_address, blocking);
 	if(rc > 0) return rc;

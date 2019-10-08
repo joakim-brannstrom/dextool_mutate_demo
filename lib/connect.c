@@ -42,7 +42,7 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 	int rc;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
-	if(!host || port <= 0) return MOSQ_ERR_INVAL;
+	if(!host || port < 0) return MOSQ_ERR_INVAL;
 
 	/* Only MQTT v3.1 requires a client id to be sent */
 	if(mosq->id == NULL && (mosq->protocol == mosq_p_mqtt31)){
@@ -160,7 +160,7 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mos
 	int rc;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
-	if(!mosq->host || mosq->port <= 0) return MOSQ_ERR_INVAL;
+	if(!mosq->host || mosq->port < 0) return MOSQ_ERR_INVAL;
 	if(mosq->protocol != mosq_p_mqtt5 && properties) return MOSQ_ERR_NOT_SUPPORTED;
 
 	if(properties){

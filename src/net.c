@@ -41,6 +41,10 @@ Contributors:
 #  include <netinet/in.h>
 #endif
 
+#ifdef WITH_UNIX_SOCKETS
+#  include "sys/un.h"
+#endif
+
 #ifdef __QNX__
 #include <net/netbyte.h>
 #endif
@@ -551,11 +555,7 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 }
 
 
-/* Creates a socket and listens on port 'port'.
- * Returns 1 on failure
- * Returns 0 on success.
- */
-int net__socket_listen(struct mosquitto__listener *listener)
+static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 {
 	mosq_sock_t sock = INVALID_SOCKET;
 	struct addrinfo hints;
@@ -655,17 +655,92 @@ int net__socket_listen(struct mosquitto__listener *listener)
 	}
 	freeaddrinfo(ainfo);
 
+	return 0;
+}
+
+
+#ifdef WITH_UNIX_SOCKETS
+static int net__socket_listen_unix(struct mosquitto__listener *listener)
+{
+	struct sockaddr_un addr;
+	int sock;
+
+	if(listener->unix_socket_path == NULL){
+		return MOSQ_ERR_INVAL;
+	}
+	if(strlen(listener->unix_socket_path) > sizeof(addr.sun_path)-1){
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Path to unix socket is too long \"%s\".", listener->unix_socket_path);
+		return MOSQ_ERR_INVAL;
+	}
+
+	unlink(listener->unix_socket_path);
+	log__printf(NULL, MOSQ_LOG_INFO, "Opening unix listen socket on path %s.", listener->unix_socket_path);
+	memset(&addr, 0, sizeof(struct sockaddr_un));
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, listener->unix_socket_path, sizeof(addr.sun_path)-1);
+
+	sock = socket(AF_UNIX, SOCK_STREAM, 0);
+	if(sock == INVALID_SOCKET){
+		net__print_error(MOSQ_LOG_ERR, "Error creating unix socket: %s");
+		return 1;
+	}
+	listener->sock_count++;
+	listener->socks = mosquitto__realloc(listener->socks, sizeof(mosq_sock_t)*listener->sock_count);
+	if(!listener->socks){
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		return MOSQ_ERR_NOMEM;
+	}
+	listener->socks[listener->sock_count-1] = sock;
+
+
+	if(bind(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1){
+		net__print_error(MOSQ_LOG_ERR, "Error binding unix socket: %s");
+		return 1;
+	}
+
+	if(listen(sock, 10) == -1){
+		net__print_error(MOSQ_LOG_ERR, "Error listening to unix socket: %s");
+		return 1;
+	}
+
+	if(net__socket_nonblock(&sock)){
+		return 1;
+	}
+
+	return 0;
+}
+#endif
+
+
+/* Creates a socket and listens on port 'port'.
+ * Returns 1 on failure
+ * Returns 0 on success.
+ */
+int net__socket_listen(struct mosquitto__listener *listener)
+{
+	int rc;
+
+	if(!listener) return MOSQ_ERR_INVAL;
+
+#ifdef WITH_UNIX_SOCKETS
+	if(listener->socket_domain == AF_UNIX){
+		rc = net__socket_listen_unix(listener);
+	}else
+#endif
+	{
+		rc = net__socket_listen_tcp(listener);
+	}
+	if(rc) return rc;
+
 	/* We need to have at least one working socket. */
 	if(listener->sock_count > 0){
 #ifdef WITH_TLS
 		if((listener->cafile || listener->capath) && listener->certfile && listener->keyfile){
 			if(net__tls_server_ctx(listener)){
-				COMPAT_CLOSE(sock);
 				return 1;
 			}
 
 			if(net__tls_load_verify(listener)){
-				COMPAT_CLOSE(sock);
 				return 1;
 			}
 #  ifdef FINAL_WITH_TLS_PSK
@@ -678,7 +753,6 @@ int net__socket_listen(struct mosquitto__listener *listener)
 			}
 
 			if(net__tls_server_ctx(listener)){
-				COMPAT_CLOSE(sock);
 				return 1;
 			}
 			SSL_CTX_set_psk_server_callback(listener->ssl_ctx, psk_server_callback);
@@ -687,7 +761,6 @@ int net__socket_listen(struct mosquitto__listener *listener)
 				if(rc == 0){
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS PSK hint.");
 					net__print_error(MOSQ_LOG_ERR, "Error: %s");
-					COMPAT_CLOSE(sock);
 					return 1;
 				}
 			}
@@ -716,6 +789,17 @@ int net__socket_get_address(mosq_sock_t sock, char *buf, int len)
 			if(inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&addr)->sin6_addr.s6_addr, buf, len)){
 				return 0;
 			}
+#ifdef WITH_UNIX_SOCKETS
+		}else if(addr.ss_family == AF_UNIX){
+			struct sockaddr_un un;
+			addrlen = sizeof(struct sockaddr_un);
+			if(!getsockname(sock, (struct sockaddr *)&un, &addrlen)){
+				snprintf(buf, len, "%s", un.sun_path);
+			}else{
+				snprintf(buf, len, "unix-socket");
+			}
+			return 0;
+#endif
 		}
 	}
 	return 1;

@@ -2,15 +2,19 @@ Broker:
 - When running as root, if dropping privileges to the "mosquitto" user fails,
   then try "nobody" instead. This reduces the burden on users installing
   Mosquitto themselves.
+- Add support for Unix domain socket listeners.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are
   now expected to be generated on the broker. This matches the behaviour for
   v5 clients. Closes #291.
+- Add support for connecting to brokers through Unix domain sockets.
 
 Clients:
 - Add timeout return code (27) for `mosquitto_sub -W <secs>` and
   `mosquitto_rr -W <secs>`. Closes #275.
+- Add support for connecting to brokers through Unix domain sockets with the
+  `--unix` argument.
 
 
 1.6.7 - 20190925

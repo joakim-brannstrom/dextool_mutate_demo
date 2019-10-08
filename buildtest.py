@@ -18,6 +18,7 @@ build_variants = [
     'WITH_THREADING',
     'WITH_TLS',
     'WITH_TLS_PSK',
+    'WITH_UNIX_SOCKETS',
     'WITH_WEBSOCKETS',
     'WITH_WRAP',
 ]

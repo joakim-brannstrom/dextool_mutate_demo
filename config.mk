@@ -97,6 +97,9 @@ WITH_BUNDLED_DEPS:=yes
 # Build with coverage options
 WITH_COVERAGE:=no
 
+# Build with unix domain socket support
+WITH_UNIX_SOCKETS:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -270,6 +273,12 @@ endif
 MAKE_ALL:=mosquitto
 ifeq ($(WITH_DOCS),yes)
 	MAKE_ALL:=$(MAKE_ALL) docs
+endif
+
+ifeq ($(WITH_UNIX_SOCKETS),yes)
+	BROKER_CPPFLAGS:=$(BROKER_CPPFLAGS) -DWITH_UNIX_SOCKETS
+	LIB_CPPFLAGS:=$(LIB_CPPFLAGS) -DWITH_UNIX_SOCKETS
+	CLIENT_CPPFLAGS:=$(CLIENT_CPPFLAGS) -DWITH_UNIX_SOCKETS
 endif
 
 ifeq ($(WITH_WEBSOCKETS),yes)

@@ -272,6 +272,9 @@ struct mosquitto__listener {
 	struct mosquitto__security_options security_options;
 	struct mosquitto__unpwd *unpwd;
 	struct mosquitto__unpwd *psk_id;
+#ifdef WITH_UNIX_SOCKETS
+	char *unix_socket_path;
+#endif
 };
 
 struct mosquitto__config {
