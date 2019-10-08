@@ -4,6 +4,7 @@ include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/src
 
 set (MOSQ_SRCS
 	../lib/alias_mosq.c ../lib/alias_mosq.h
+	bridge.c bridge_topic.c
 	conf.c
 	conf_includedir.c
 	context.c
