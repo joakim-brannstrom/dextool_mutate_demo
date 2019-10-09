@@ -751,8 +751,16 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 
 #ifdef WITH_BRIDGE
 	for(i=0; i<config->bridge_count; i++){
-		if(!config->bridges[i].name || !config->bridges[i].addresses || !config->bridges[i].topic_count){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+		if(!config->bridges[i].name){
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: bridge name not defined.");
+			return MOSQ_ERR_INVAL;
+		}
+		if(config->bridges[i].addresses  == 0){
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: no remote addresses defined.");
+			return MOSQ_ERR_INVAL;
+		}
+		if(config->bridges[i].topic_count == 0){
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: no topics defined.");
 			return MOSQ_ERR_INVAL;
 		}
 #ifdef FINAL_WITH_TLS_PSK
