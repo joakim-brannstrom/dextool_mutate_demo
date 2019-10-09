@@ -42,6 +42,7 @@ Contributors:
 #endif
 
 #ifdef WITH_UNIX_SOCKETS
+#  include "sys/stat.h"
 #  include "sys/un.h"
 #endif
 
@@ -664,6 +665,8 @@ static int net__socket_listen_unix(struct mosquitto__listener *listener)
 {
 	struct sockaddr_un addr;
 	int sock;
+	int rc;
+	mode_t old_mask;
 
 	if(listener->unix_socket_path == NULL){
 		return MOSQ_ERR_INVAL;
@@ -693,7 +696,11 @@ static int net__socket_listen_unix(struct mosquitto__listener *listener)
 	listener->socks[listener->sock_count-1] = sock;
 
 
-	if(bind(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1){
+	old_mask = umask(0007);
+	rc = bind(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr_un));
+	umask(old_mask);
+
+	if(rc == -1){
 		net__print_error(MOSQ_LOG_ERR, "Error binding unix socket: %s");
 		return 1;
 	}
