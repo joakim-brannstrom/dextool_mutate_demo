@@ -681,6 +681,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context);
 int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context);
 int bridge__connect_step2(struct mosquitto_db *db, struct mosquitto *context);
 int bridge__connect_step3(struct mosquitto_db *db, struct mosquitto *context);
+int bridge__on_connect(struct mosquitto_db *db, struct mosquitto *context);
 void bridge__packet_cleanup(struct mosquitto *context);
 #ifdef WITH_EPOLL
 void bridge_check(struct mosquitto_db *db);

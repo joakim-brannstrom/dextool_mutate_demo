@@ -439,6 +439,71 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 #endif
 
 
+int bridge__on_connect(struct mosquitto_db *db, struct mosquitto *context)
+{
+	int i;
+	char *notification_topic;
+	int notification_topic_len;
+	char notification_payload;
+
+	if(context->bridge->notifications){
+		notification_payload = '1';
+		if(context->bridge->notification_topic){
+			if(!context->bridge->notifications_local_only){
+				if(send__real_publish(context, mosquitto__mid_generate(context),
+						context->bridge->notification_topic, 1, &notification_payload, 1, true, 0, NULL, NULL, 0)){
+
+					return 1;
+				}
+			}
+			db__messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1, 0, NULL);
+		}else{
+			notification_topic_len = strlen(context->bridge->remote_clientid)+strlen("$SYS/broker/connection//state");
+			notification_topic = mosquitto__malloc(sizeof(char)*(notification_topic_len+1));
+			if(!notification_topic) return MOSQ_ERR_NOMEM;
+
+			snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->bridge->remote_clientid);
+			notification_payload = '1';
+			if(!context->bridge->notifications_local_only){
+				if(send__real_publish(context, mosquitto__mid_generate(context),
+						notification_topic, 1, &notification_payload, 1, true, 0, NULL, NULL, 0)){
+
+					mosquitto__free(notification_topic);
+					return 1;
+				}
+			}
+			db__messages_easy_queue(db, context, notification_topic, 1, 1, &notification_payload, 1, 0, NULL);
+			mosquitto__free(notification_topic);
+		}
+	}
+	for(i=0; i<context->bridge->topic_count; i++){
+		if(context->bridge->topics[i].direction == bd_in || context->bridge->topics[i].direction == bd_both){
+			if(send__subscribe(context, NULL, 1, &context->bridge->topics[i].remote_topic, context->bridge->topics[i].qos, NULL)){
+				return 1;
+			}
+		}else{
+			if(context->bridge->attempt_unsubscribe){
+				if(send__unsubscribe(context, NULL, 1, &context->bridge->topics[i].remote_topic, NULL)){
+					/* direction = inwards only. This means we should not be subscribed
+					* to the topic. It is possible that we used to be subscribed to
+					* this topic so unsubscribe. */
+					return 1;
+				}
+			}
+		}
+	}
+	for(i=0; i<context->bridge->topic_count; i++){
+		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
+			sub__retain_queue(db, context,
+					context->bridge->topics[i].local_topic,
+					context->bridge->topics[i].qos, 0);
+		}
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 int bridge__register_local_connections(struct mosquitto_db *db)
 {
 #ifdef WITH_EPOLL
