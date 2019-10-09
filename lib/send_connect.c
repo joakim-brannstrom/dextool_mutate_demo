@@ -141,7 +141,7 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 		packet__write_string(packet, PROTOCOL_NAME, strlen(PROTOCOL_NAME));
 	}
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
-	if(mosq->bridge && mosq->bridge->try_private && mosq->bridge->try_private_accepted){
+	if(mosq->bridge && mosq->bridge->protocol_version != mosq_p_mqtt5 && mosq->bridge->try_private && mosq->bridge->try_private_accepted){
 		version |= 0x80;
 	}else{
 	}

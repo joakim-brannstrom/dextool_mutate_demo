@@ -445,6 +445,7 @@ int bridge__on_connect(struct mosquitto_db *db, struct mosquitto *context)
 	char *notification_topic;
 	int notification_topic_len;
 	char notification_payload;
+	int sub_opts;
 
 	if(context->bridge->notifications){
 		notification_payload = '1';
@@ -478,7 +479,14 @@ int bridge__on_connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_in || context->bridge->topics[i].direction == bd_both){
-			if(send__subscribe(context, NULL, 1, &context->bridge->topics[i].remote_topic, context->bridge->topics[i].qos, NULL)){
+			sub_opts = context->bridge->topics[i].qos;
+			if(context->bridge->protocol_version == mosq_p_mqtt5){
+				sub_opts = sub_opts
+					| MQTT_SUB_OPT_NO_LOCAL
+					| MQTT_SUB_OPT_RETAIN_AS_PUBLISHED
+					| MQTT_SUB_OPT_SEND_RETAIN_ALWAYS;
+			}
+			if(send__subscribe(context, NULL, 1, &context->bridge->topics[i].remote_topic, sub_opts, NULL)){
 				return 1;
 			}
 		}else{

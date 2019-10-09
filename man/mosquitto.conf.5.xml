@@ -1505,9 +1505,10 @@ openssl dhparam -out dhparam.pem 2048</programlisting>
 				<listitem>
 					<para>Set the version of the MQTT protocol to use with for
 						this bridge. Can be one of
-						<replaceable>mqttv31</replaceable> or
-						<replaceable>mqttv311</replaceable>. Defaults to
-						<replaceable>mqttv31</replaceable>.</para>
+						<replaceable>mqttv50</replaceable>,
+						<replaceable>mqttv311</replaceable> or
+						<replaceable>mqttv31</replaceable>. Defaults to
+						<replaceable>mqttv311</replaceable>.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

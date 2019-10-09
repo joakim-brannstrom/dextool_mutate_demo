@@ -1121,6 +1121,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 							cur_bridge->protocol_version = mosq_p_mqtt31;
 						}else if(!strcmp(token, "mqttv311")){
 							cur_bridge->protocol_version = mosq_p_mqtt311;
+						}else if(!strcmp(token, "mqttv50")){
+							cur_bridge->protocol_version = mosq_p_mqtt5;
 						}else{
 							log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge_protocol_version value (%s).", token);
 							return MOSQ_ERR_INVAL;
