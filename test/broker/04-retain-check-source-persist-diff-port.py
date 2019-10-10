@@ -29,7 +29,7 @@ def write_acl_2(filename, username):
         f.write('topic read test/topic\n')
 
 
-def do_test(per_listener, username):
+def do_test(proto_ver, per_listener, username):
     conf_file = os.path.basename(__file__).replace('.py', '.conf')
     write_config(conf_file, port1, port2, per_listener)
 
@@ -45,8 +45,8 @@ def do_test(per_listener, username):
 
     rc = 1
     keepalive = 60
-    connect_packet = mosq_test.gen_connect("retain-check", keepalive=keepalive, username=username)
-    connack_packet = mosq_test.gen_connack(rc=0)
+    connect_packet = mosq_test.gen_connect("retain-check", keepalive=keepalive, username=username, proto_ver=proto_ver)
+    connack_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
 
     if per_listener == "true":
         u = None
@@ -55,13 +55,13 @@ def do_test(per_listener, username):
         # unless we provide a username
         u = username
 
-    connect2_packet = mosq_test.gen_connect("retain-recv", keepalive=keepalive, username=u)
-    connack2_packet = mosq_test.gen_connack(rc=0)
+    connect2_packet = mosq_test.gen_connect("retain-recv", keepalive=keepalive, username=u, proto_ver=proto_ver)
+    connack2_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
 
     mid = 1
-    publish_packet = mosq_test.gen_publish("test/topic", qos=0, payload="retained message", retain=True)
-    subscribe_packet = mosq_test.gen_subscribe(mid, "test/topic", 0)
-    suback_packet = mosq_test.gen_suback(mid, 0)
+    publish_packet = mosq_test.gen_publish("test/topic", qos=0, payload="retained message", retain=True, proto_ver=proto_ver)
+    subscribe_packet = mosq_test.gen_subscribe(mid, "test/topic", 0, proto_ver=proto_ver)
+    suback_packet = mosq_test.gen_suback(mid, 0, proto_ver=proto_ver)
 
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port1)
 
@@ -108,7 +108,12 @@ def do_test(per_listener, username):
 
 
 (port1, port2) = mosq_test.get_port(2)
-do_test("true", username=None)
-do_test("true", username="test")
-do_test("false", username=None)
-do_test("false", username="test")
+do_test(proto_ver=4, per_listener="true", username=None)
+do_test(proto_ver=4, per_listener="true", username="test")
+do_test(proto_ver=4, per_listener="false", username=None)
+do_test(proto_ver=4, per_listener="false", username="test")
+
+do_test(proto_ver=5, per_listener="true", username=None)
+do_test(proto_ver=5, per_listener="true", username="test")
+do_test(proto_ver=5, per_listener="false", username=None)
+do_test(proto_ver=5, per_listener="false", username="test")
