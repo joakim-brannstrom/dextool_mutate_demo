@@ -23,15 +23,12 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10 11 12
 	./01-connect-anon-denied.py
 	./01-connect-bad-packet.py
 	./01-connect-disconnect-v5.py
-	./01-connect-duplicate-v5.py
 	./01-connect-duplicate.py
-	./01-connect-invalid-id-0-311.py
 	./01-connect-invalid-id-0.py
 	./01-connect-invalid-id-missing.py
 	./01-connect-invalid-id-utf8.py
 	./01-connect-invalid-protonum.py
 	./01-connect-invalid-reserved.py
-	./01-connect-success-v5.py
 	./01-connect-success.py
 	./01-connect-uname-invalid-utf8.py
 	./01-connect-uname-no-flag.py
