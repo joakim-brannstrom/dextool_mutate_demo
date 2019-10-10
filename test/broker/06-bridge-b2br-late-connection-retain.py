@@ -24,10 +24,6 @@ def write_config2(filename, persistence_file, port1, port2, protocol_version):
         f.write("persistence true\n")
         f.write("persistence_file %s\n" % (persistence_file))
 
-(port1, port2) = mosq_test.get_port(2)
-conf_file = os.path.basename(__file__).replace('.py', '.conf')
-persistence_file = os.path.basename(__file__).replace('.py', '.db')
-
 def do_test(proto_ver):
     if proto_ver == 4:
         bridge_protocol = "mqttv311"
@@ -35,6 +31,10 @@ def do_test(proto_ver):
     else:
         bridge_protocol = "mqttv50"
         proto_ver_connect = 5
+
+    (port1, port2) = mosq_test.get_port(2)
+    conf_file = os.path.basename(__file__).replace('.py', '.conf')
+    persistence_file = os.path.basename(__file__).replace('.py', '.db')
 
     rc = 1
     keepalive = 60

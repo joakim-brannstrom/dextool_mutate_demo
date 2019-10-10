@@ -19,9 +19,6 @@ def write_config(filename, port1, port2, protocol_version):
         f.write("try_private false\n")
         f.write("bridge_protocol_version %s\n" % (protocol_version))
 
-(port1, port2) = mosq_test.get_port(2)
-conf_file = os.path.basename(__file__).replace('.py', '.conf')
-
 
 def do_test(proto_ver):
     if proto_ver == 4:
@@ -31,6 +28,8 @@ def do_test(proto_ver):
         bridge_protocol = "mqttv50"
         proto_ver_connect = 5
 
+    (port1, port2) = mosq_test.get_port(2)
+    conf_file = os.path.basename(__file__).replace('.py', '.conf')
     write_config(conf_file, port1, port2, bridge_protocol)
 
     rc = 1

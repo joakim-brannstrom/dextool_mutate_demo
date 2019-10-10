@@ -20,9 +20,6 @@ def write_config(filename, port1, port2, protocol_version):
         f.write("restart_timeout 5\n")
         f.write("bridge_protocol_version %s\n" % (protocol_version))
 
-(port1, port2) = mosq_test.get_port(2)
-conf_file = os.path.basename(__file__).replace('.py', '.conf')
-
 connect_packet = None
 connack_packet = None
 
@@ -34,6 +31,11 @@ def inner_test(bridge, sock, proto_ver):
         return 1
     bridge.send(connack_packet)
 
+    if proto_ver == 5:
+        opts = mqtt5_opts.MQTT_SUB_OPT_NO_LOCAL | mqtt5_opts.MQTT_SUB_OPT_RETAIN_AS_PUBLISHED
+    else:
+        opts = 0
+
     mid = 0
     patterns = [
         "remote/topic/#",
@@ -44,14 +46,14 @@ def inner_test(bridge, sock, proto_ver):
     ]
     for pattern in ("remote/topic/#", "remote2/topic/prefix/#", "remote3/topic/+/value"):
         mid += 1
-        subscribe_packet = mosq_test.gen_subscribe(mid, pattern, 0, proto_ver=proto_ver)
+        subscribe_packet = mosq_test.gen_subscribe(mid, pattern, 0 | opts, proto_ver=proto_ver)
         suback_packet = mosq_test.gen_suback(mid, 0, proto_ver=proto_ver)
         if not mosq_test.expect_packet(bridge, "subscribe", subscribe_packet):
             return 1
         bridge.send(suback_packet)
 
     mid += 1
-    subscribe_packet = mosq_test.gen_subscribe(mid, "#", 0, proto_ver=proto_ver)
+    subscribe_packet = mosq_test.gen_subscribe(mid, "#", 0 | opts, proto_ver=proto_ver)
     suback_packet = mosq_test.gen_suback(mid, 0, proto_ver=proto_ver)
     sock.send(subscribe_packet)
     if not mosq_test.expect_packet(sock, "suback", suback_packet):
@@ -96,6 +98,8 @@ def do_test(proto_ver):
         bridge_protocol = "mqttv50"
         proto_ver_connect = 5
 
+    (port1, port2) = mosq_test.get_port(2)
+    conf_file = os.path.basename(__file__).replace('.py', '.conf')
     write_config(conf_file, port1, port2, bridge_protocol)
 
     rc = 1

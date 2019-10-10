@@ -15,10 +15,6 @@ def write_config(filename, port1, port2, protocol_version):
         f.write("restart_timeout 5\n")
         f.write("bridge_protocol_version %s\n" %(protocol_version))
 
-(port1, port2) = mosq_test.get_port(2)
-conf_file = os.path.basename(__file__).replace('.py', '.conf')
-
-
 def do_test(proto_ver):
     if proto_ver == 4:
         bridge_protocol = "mqttv311"
@@ -27,6 +23,8 @@ def do_test(proto_ver):
         bridge_protocol = "mqttv50"
         proto_ver_connect = 5
 
+    (port1, port2) = mosq_test.get_port(2)
+    conf_file = os.path.basename(__file__).replace('.py', '.conf')
     write_config(conf_file, port1, port2, bridge_protocol)
 
     rc = 1
@@ -36,11 +34,16 @@ def do_test(proto_ver):
     connack_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
 
     mid = 1
-    subscribe_packet = mosq_test.gen_subscribe(mid, "bridge/#", 1, proto_ver=proto_ver)
+    if proto_ver == 5:
+        opts = mqtt5_opts.MQTT_SUB_OPT_NO_LOCAL | mqtt5_opts.MQTT_SUB_OPT_RETAIN_AS_PUBLISHED
+    else:
+        opts = 0
+
+    subscribe_packet = mosq_test.gen_subscribe(mid, "bridge/#", 1 | opts, proto_ver=proto_ver)
     suback_packet = mosq_test.gen_suback(mid, 1, proto_ver=proto_ver)
 
     mid = 2
-    subscribe2_packet = mosq_test.gen_subscribe(mid, "bridge/#", 1, proto_ver=proto_ver)
+    subscribe2_packet = mosq_test.gen_subscribe(mid, "bridge/#", 1 | opts, proto_ver=proto_ver)
     suback2_packet = mosq_test.gen_suback(mid, 1, proto_ver=proto_ver)
 
     mid = 3
@@ -109,4 +112,3 @@ do_test(proto_ver=4)
 do_test(proto_ver=5)
 
 exit(0)
-
