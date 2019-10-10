@@ -17,9 +17,8 @@ write_config(conf_file, port)
 
 rc = 1
 keepalive = 60
-props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_SESSION_EXPIRY_INTERVAL, 100)
 connect_packet = mosq_test.gen_connect(
-    "persistent-subscription-test", keepalive=keepalive, clean_session=False, proto_ver=5, properties=props
+    "persistent-subscription-test", keepalive=keepalive, clean_session=False, proto_ver=5, session_expiry=60
 )
 connack_packet = mosq_test.gen_connack(rc=0, proto_ver=5)
 connack_packet2 = mosq_test.gen_connack(rc=0, flags=1, proto_ver=5)  # session present

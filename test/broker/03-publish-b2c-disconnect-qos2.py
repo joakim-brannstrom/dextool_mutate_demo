@@ -27,12 +27,7 @@ def do_test(proto_ver):
     rc = 1
     mid = 3265
     keepalive = 60
-    if proto_ver == 5:
-        props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_SESSION_EXPIRY_INTERVAL, 60)
-    else:
-        props = None
-
-    connect_packet = mosq_test.gen_connect("pub-qos2-disco-test", keepalive=keepalive, clean_session=False, proto_ver=proto_ver, properties=props)
+    connect_packet = mosq_test.gen_connect("pub-qos2-disco-test", keepalive=keepalive, clean_session=False, proto_ver=proto_ver, session_expiry=60)
     connack1_packet = mosq_test.gen_connack(flags=0, rc=0, proto_ver=proto_ver)
     connack2_packet = mosq_test.gen_connack(flags=1, rc=0, proto_ver=proto_ver)
 
