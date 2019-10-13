@@ -39,3 +39,4 @@ def do_test(proto_ver):
 
 do_test(4)
 do_test(5)
+exit(0)
