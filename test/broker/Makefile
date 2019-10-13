@@ -51,7 +51,6 @@ endif
 	./02-subpub-qos0-subscription-id.py
 	./02-subpub-qos0-topic-alias-unknown.py
 	./02-subpub-qos0-topic-alias.py
-	./02-subpub-qos0-v5.py
 	./02-subpub-qos0.py
 	./02-subpub-qos1-bad-pubcomp.py
 	./02-subpub-qos1-bad-pubrec.py
@@ -59,7 +58,6 @@ endif
 	./02-subpub-qos1-message-expiry-will.py
 	./02-subpub-qos1-message-expiry.py
 	./02-subpub-qos1-nolocal.py
-	./02-subpub-qos1-v5.py
 	./02-subpub-qos1.py
 	./02-subpub-qos2-1322.py
 	./02-subpub-qos2-bad-puback-1.py
@@ -68,7 +66,6 @@ endif
 	./02-subpub-qos2-pubrec-error.py
 	./02-subpub-qos2-receive-maximum-1.py
 	./02-subpub-qos2-receive-maximum-2.py
-	./02-subpub-qos2-v5.py
 	./02-subpub-qos2.py
 	./02-subscribe-dollar-v5.py
 	./02-subscribe-invalid-utf8.py
