@@ -59,9 +59,7 @@ tests = [
     (1, './02-unsubscribe-invalid-no-topic.py'),
     (1, './02-unsubscribe-qos0.py'),
     (1, './02-unsubscribe-qos1.py'),
-    (1, './02-unsubscribe-qos2-multiple-v5.py'),
     (1, './02-unsubscribe-qos2-multiple.py'),
-    (1, './02-unsubscribe-qos2-v5.py'),
     (1, './02-unsubscribe-qos2.py'),
 
     #(1, './03-publish-qos1-queued-bytes.py'),
