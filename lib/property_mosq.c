@@ -1023,7 +1023,7 @@ const mosquitto_property *mosquitto_property_read_binary(const mosquitto_propert
 
 	if(value){
 		*len = p->value.bin.len;
-		*value = malloc(*len);
+		*value = calloc(1, *len + 1);
 		if(!(*value)) return NULL;
 
 		memcpy(*value, p->value.bin.v, *len);
