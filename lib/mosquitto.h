@@ -2695,6 +2695,44 @@ libmosq_EXPORT int mosquitto_property_add_string(mosquitto_property **proplist, 
  */
 libmosq_EXPORT int mosquitto_property_add_string_pair(mosquitto_property **proplist, int identifier, const char *name, const char *value);
 
+
+/*
+ * Function: mosquitto_property_identifier
+ *
+ * Return the property identifier for a single property.
+ *
+ * Parameters:
+ *	property - pointer to a valid mosquitto_property pointer.
+ *
+ * Returns:
+ *  A valid property identifier on success
+ *  0 - on error
+ */
+libmosq_EXPORT int mosquitto_property_identifier(const mosquitto_property *property);
+
+
+/*
+ * Function: mosquitto_property_next
+ *
+ * Return the next property in a property list. Use to iterate over a property
+ * list, e.g.:
+ *
+ * for(prop = proplist; prop != NULL; prop = mosquitto_property_next(prop)){
+ *		if(mosquitto_property_identifier(prop) == MQTT_PROP_CONTENT_TYPE){
+ *			...
+ *		}
+ * }
+ *
+ * Parameters:
+ *	proplist - pointer to mosquitto_property pointer, the list of properties
+ *
+ * Returns:
+ *	Pointer to the next item in the list
+ *	NULL, if proplist is NULL, or if there are no more items in the list.
+ */
+libmosq_EXPORT const mosquitto_property *mosquitto_property_next(const mosquitto_property *proplist);
+
+
 /*
  * Function: mosquitto_property_read_byte
  *
@@ -2964,6 +3002,23 @@ libmosq_EXPORT int mosquitto_property_check_command(int command, int identifier)
  *	MOSQ_ERR_PROTOCOL - if any property is invalid
  */
 libmosq_EXPORT int mosquitto_property_check_all(int command, const mosquitto_property *properties);
+
+/*
+ * Function: mosquitto_property_identifier_to_string
+ *
+ * Return the property name as a string for a property identifier.
+ * The property name is as defined in the MQTT specification, with - as a
+ * separator, for example: payload-format-indicator.
+ *
+ * Parameters:
+ *	identifier - valid MQTT property identifier integer
+ *
+ * Returns:
+ *  A const string to the property name on success
+ *  NULL on failure
+ */
+libmosq_EXPORT const char *mosquitto_property_identifier_to_string(int identifier);
+
 
 /* Function: mosquitto_string_to_property_info
  *

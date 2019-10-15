@@ -132,3 +132,10 @@ MOSQ_1.6 {
 		mosquitto_void_option;
 		mosquitto_will_set_v5;
 } MOSQ_1.5;
+
+MOSQ_1.7 {
+	global:
+		mosquitto_property_identifier;
+		mosquitto_property_identifier_to_string;
+		mosquitto_property_next;
+} MOSQ_1.6;

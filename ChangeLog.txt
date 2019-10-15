@@ -9,6 +9,12 @@ Client library:
   now expected to be generated on the broker. This matches the behaviour for
   v5 clients. Closes #291.
 - Add support for connecting to brokers through Unix domain sockets.
+- Add `mosquitto_property_identifier()`, for retrieving the identifier integer
+  for a property.
+- Add `mosquitto_property_identifier_to_string()` for converting a property
+  identifier integer to the corresponding property name string.
+- Add `mosquitto_property_next()` to retrieve the next property in a list, for
+  iterating over property lists.
 
 Clients:
 - Add timeout return code (27) for `mosquitto_sub -W <secs>` and

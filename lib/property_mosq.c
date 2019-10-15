@@ -534,6 +534,69 @@ int mosquitto_property_check_command(int command, int identifier)
 }
 
 
+const char *mosquitto_property_identifier_to_string(int identifier)
+{
+	switch(identifier){
+		case MQTT_PROP_PAYLOAD_FORMAT_INDICATOR:
+			return "payload-format-indicator";
+		case MQTT_PROP_MESSAGE_EXPIRY_INTERVAL:
+			return "message-expiry-interval";
+		case MQTT_PROP_CONTENT_TYPE:
+			return "content-type";
+		case MQTT_PROP_RESPONSE_TOPIC:
+			return "response-topic";
+		case MQTT_PROP_CORRELATION_DATA:
+			return "correlation-data";
+		case MQTT_PROP_SUBSCRIPTION_IDENTIFIER:
+			return "subscription-identifier";
+		case MQTT_PROP_SESSION_EXPIRY_INTERVAL:
+			return "session-expiry-interval";
+		case MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER:
+			return "assigned-client-identifier";
+		case MQTT_PROP_SERVER_KEEP_ALIVE:
+			return "server-keep-alive";
+		case MQTT_PROP_AUTHENTICATION_METHOD:
+			return "authentication-method";
+		case MQTT_PROP_AUTHENTICATION_DATA:
+			return "authentication-data";
+		case MQTT_PROP_REQUEST_PROBLEM_INFORMATION:
+			return "request-problem-information";
+		case MQTT_PROP_WILL_DELAY_INTERVAL:
+			return "will-delay-interval";
+		case MQTT_PROP_REQUEST_RESPONSE_INFORMATION:
+			return "request-response-information";
+		case MQTT_PROP_RESPONSE_INFORMATION:
+			return "response-information";
+		case MQTT_PROP_SERVER_REFERENCE:
+			return "server-reference";
+		case MQTT_PROP_REASON_STRING:
+			return "reason-string";
+		case MQTT_PROP_RECEIVE_MAXIMUM:
+			return "receive-maximum";
+		case MQTT_PROP_TOPIC_ALIAS_MAXIMUM:
+			return "topic-alias-maximum";
+		case MQTT_PROP_TOPIC_ALIAS:
+			return "topic-alias";
+		case MQTT_PROP_MAXIMUM_QOS:
+			return "maximum-qos";
+		case MQTT_PROP_RETAIN_AVAILABLE:
+			return "retain-available";
+		case MQTT_PROP_USER_PROPERTY:
+			return "user-property";
+		case MQTT_PROP_MAXIMUM_PACKET_SIZE:
+			return "maximum-packet-size";
+		case MQTT_PROP_WILDCARD_SUB_AVAILABLE:
+			return "wildcard-subscription-available";
+		case MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE:
+			return "subscription-identifier-available";
+		case MQTT_PROP_SHARED_SUB_AVAILABLE:
+			return "shared-subscription-available";
+		default:
+			return NULL;
+	}
+}
+
+
 int mosquitto_string_to_property_info(const char *propname, int *identifier, int *type)
 {
 	if(!propname) return MOSQ_ERR_INVAL;
@@ -923,6 +986,22 @@ const mosquitto_property *property__get_property(const mosquitto_property *propl
 		p = p->next;
 	}
 	return NULL;
+}
+
+
+int mosquitto_property_identifier(const mosquitto_property *property)
+{
+	if(property == NULL) return 0;
+
+	return property->identifier;
+}
+
+
+const mosquitto_property *mosquitto_property_next(const mosquitto_property *proplist)
+{
+	if(proplist == NULL) return NULL;
+
+	return proplist->next;
 }
 
 
