@@ -23,10 +23,11 @@ Clients:
   `--unix` argument.
 - Use cJSON library for producing JSON output, where available. Closes #1222.
 - Add support for outputting MQTT v5 property information to mosquitto_sub/rr
-  JSON output.
+  JSON output. Closes #1416.
 - Add `--pretty` option to mosquitto_sub/rr for formatted/unformatted JSON
   output.
 - Add support for v5 property printing to mosquitto_sub/rr in non-JSON mode.
+  Closes #1416.
 
 
 1.6.7 - 20190925
