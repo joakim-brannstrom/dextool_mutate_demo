@@ -41,6 +41,7 @@
 			<arg><option>-I</option> <replaceable>client-id-prefix</replaceable></arg>
 			<arg><option>-k</option> <replaceable>keepalive-time</replaceable></arg>
 			<arg><option>-N</option></arg>
+			<arg><option>--pretty</option></arg>
 			<arg><option>-q</option> <replaceable>message-QoS</replaceable></arg>
 			<arg><option>--remove-retained</option></arg>
 			<group choice='opt'>
@@ -403,6 +404,16 @@
 						the broker. Using this argument without also specifying
 						a username is invalid when using MQTT v3.1 or v3.1.1.
 						See also the <option>--username</option> option.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--pretty</option></term>
+				<listitem>
+                    <para>
+						When using the JSON output format %j or %J, the default
+						is to print in an unformatted fashion. Specifying
+						<option>--pretty</option> prints messages in a prettier,
+						more human readable format.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

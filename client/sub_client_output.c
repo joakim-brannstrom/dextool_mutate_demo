@@ -208,7 +208,7 @@ static int json_print_properties(cJSON *root, const mosquitto_property *properti
 #endif
 
 
-static int json_print(const struct mosquitto_message *message, const mosquitto_property *properties, const struct tm *ti, bool escaped)
+static int json_print(const struct mosquitto_message *message, const mosquitto_property *properties, const struct tm *ti, bool escaped, bool pretty)
 {
 #ifdef WITH_CJSON
 	cJSON *root;
@@ -292,8 +292,11 @@ static int json_print(const struct mosquitto_message *message, const mosquitto_p
 		cJSON_AddItemToObject(root, "payload", tmp);
 	}
 
-	//json_str = cJSON_PrintUnformatted(root);
-	json_str = cJSON_Print(root);
+	if(pretty){
+		json_str = cJSON_Print(root);
+	}else{
+		json_str = cJSON_PrintUnformatted(root);
+	}
 	cJSON_Delete(root);
 
 	fputs(json_str, stdout);
@@ -363,7 +366,7 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 								return;
 							}
 						}
-						if(json_print(message, properties, ti, true) != MOSQ_ERR_SUCCESS){
+						if(json_print(message, properties, ti, true, lcfg->pretty) != MOSQ_ERR_SUCCESS){
 							err_printf(lcfg, "Error: Out of memory.\n");
 							return;
 						}
@@ -376,7 +379,7 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 								return;
 							}
 						}
-						rc = json_print(message, properties, ti, false);
+						rc = json_print(message, properties, ti, false, lcfg->pretty);
 						if(rc == MOSQ_ERR_NOMEM){
 							err_printf(lcfg, "Error: Out of memory.\n");
 							return;

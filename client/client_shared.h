@@ -89,8 +89,8 @@ struct mosq_config {
 #  endif
 #endif
 	bool clean_session;
-	char **topics; /* sub */
-	int topic_count; /* sub */
+	char **topics; /* sub, rr */
+	int topic_count; /* sub, rr */
 	bool exit_after_sub; /* sub */
 	bool no_retain; /* sub */
 	bool retained_only; /* sub */
@@ -102,7 +102,8 @@ struct mosq_config {
 	bool verbose; /* sub */
 	bool eol; /* sub */
 	int msg_count; /* sub */
-	char *format; /* sub */
+	char *format; /* sub, rr */
+	bool pretty; /* sub, rr */
 	int timeout; /* sub */
 	int sub_opts; /* sub */
 #ifdef WITH_SOCKS

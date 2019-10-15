@@ -217,6 +217,8 @@ void print_usage(void)
 	printf(" -W : Specifies a timeout in seconds how long to wait for a response.\n");
 #endif
 	printf(" --help : display this message.\n");
+	printf(" --pretty : print formatted output rather than minimised output when using the\n");
+	printf("            JSON output format option.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --unix : connect to a broker through a unix domain socket instead of a TCP socket,\n");
 	printf("          e.g. /tmp/mosquitto.sock\n");

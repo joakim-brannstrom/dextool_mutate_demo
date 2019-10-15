@@ -748,6 +748,11 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				}
 			}
 			i++;
+		}else if(!strcmp(argv[i], "--pretty")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			cfg->pretty = true;
 		}else if(!strcmp(argv[i], "-P") || !strcmp(argv[i], "--pw")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -P argument given but no password specified.\n\n");
