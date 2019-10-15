@@ -57,6 +57,16 @@ static int check_format(const char *str)
 			}else{
 				if(str[i+1] == '%'){
 					// Print %, ignore
+				}else if(str[i+1] == 'A'){
+					// MQTT v5 property topic-alias
+				}else if(str[i+1] == 'C'){
+					// MQTT v5 property content-type
+				}else if(str[i+1] == 'D'){
+					// MQTT v5 property correlation-data
+				}else if(str[i+1] == 'E'){
+					// MQTT v5 property message-expiry-interval
+				}else if(str[i+1] == 'F'){
+					// MQTT v5 property payload-format-indicator
 				}else if(str[i+1] == 'I'){
 					// ISO 8601 date+time
 				}else if(str[i+1] == 'l'){
@@ -67,6 +77,10 @@ static int check_format(const char *str)
 					// payload
 				}else if(str[i+1] == 'q'){
 					// qos
+				}else if(str[i+1] == 'R'){
+					// MQTT v5 property response-topic
+				}else if(str[i+1] == 'S'){
+					// MQTT v5 property subscription-identifier
 				}else if(str[i+1] == 'r'){
 					// retain
 				}else if(str[i+1] == 't'){

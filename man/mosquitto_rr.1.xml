@@ -667,11 +667,19 @@
 			<title>MQTT related parameters</title>
 			<itemizedlist mark="circle">
 				<listitem><para><option>%%</option> a literal %.</para></listitem>
+				<listitem><para><option>%A</option> the MQTT v5 topic-alias property, if present.</para></listitem>
+				<listitem><para><option>%C</option> the MQTT v5 content-type property, if present.</para></listitem>
+				<listitem><para><option>%D</option> the MQTT v5 correlation-data property, if present. Note that this
+						property is specified as binary data, so may produce non-printable characters.</para></listitem>
+				<listitem><para><option>%E</option> the MQTT v5 message-expiry-interval property, if present.</para></listitem>
+				<listitem><para><option>%F</option> the MQTT v5 payload-format-indicator property, if present.</para></listitem>
 				<listitem><para><option>%l</option> the length of the payload in bytes.</para></listitem>
 				<listitem><para><option>%m</option> the message id (only relevant for messages with QoS>0).</para></listitem>
 				<listitem><para><option>%p</option> the payload raw bytes (may produce non-printable characters depending on the payload).</para></listitem>
 				<listitem><para><option>%q</option> the message QoS.</para></listitem>
+				<listitem><para><option>%R</option> the MQTT v5 response-topic property, if present.</para></listitem>
 				<listitem><para><option>%r</option> the retained flag for the message.</para></listitem>
+				<listitem><para><option>%S</option> the MQTT v5 subscription-identifier property, if present.</para></listitem>
 				<listitem><para><option>%t</option> the message topic.</para></listitem>
 				<listitem><para><option>%x</option> the payload with each byte as a hexadecimal number (lower case).</para></listitem>
 				<listitem><para><option>%X</option> the payload with each byte as a hexadecimal number (upper case).</para></listitem>

@@ -26,6 +26,7 @@ Clients:
   JSON output.
 - Add `--pretty` option to mosquitto_sub/rr for formatted/unformatted JSON
   output.
+- Add support for v5 property printing to mosquitto_sub/rr in non-JSON mode.
 
 
 1.6.7 - 20190925

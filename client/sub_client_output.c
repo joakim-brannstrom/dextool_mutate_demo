@@ -335,6 +335,10 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 	char strf[3];
 	char buf[100];
 	int rc;
+	uint8_t i8value;
+	uint16_t i16value;
+	uint32_t i32value;
+	char *binvalue, *strvalue;
 
 	len = strlen(lcfg->format);
 
@@ -345,6 +349,38 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 				switch(lcfg->format[i]){
 					case '%':
 						fputc('%', stdout);
+						break;
+
+					case 'A':
+						if(mosquitto_property_read_int16(properties, MQTT_PROP_TOPIC_ALIAS, &i16value, false)){
+							printf("%d", i16value);
+						}
+						break;
+
+					case 'C':
+						if(mosquitto_property_read_string(properties, MQTT_PROP_CONTENT_TYPE, &strvalue, false)){
+							printf("%s", strvalue);
+							free(strvalue);
+						}
+						break;
+
+					case 'D':
+						if(mosquitto_property_read_binary(properties, MQTT_PROP_CORRELATION_DATA, (void **)&binvalue, &i16value, false)){
+							fwrite(binvalue, 1, i16value, stdout);
+							free(binvalue);
+						}
+						break;
+
+					case 'E':
+						if(mosquitto_property_read_int32(properties, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL, &i32value, false)){
+							printf("%d", i32value);
+						}
+						break;
+
+					case 'F':
+						if(mosquitto_property_read_byte(properties, MQTT_PROP_PAYLOAD_FORMAT_INDICATOR, &i8value, false)){
+							printf("%d", i8value);
+						}
 						break;
 
 					case 'I':
@@ -405,11 +441,24 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 						fputc(message->qos + 48, stdout);
 						break;
 
+					case 'R':
+						if(mosquitto_property_read_string(properties, MQTT_PROP_RESPONSE_TOPIC, &strvalue, false)){
+							printf("%s", strvalue);
+							free(strvalue);
+						}
+						break;
+
 					case 'r':
 						if(message->retain){
 							fputc('1', stdout);
 						}else{
 							fputc('0', stdout);
+						}
+						break;
+
+					case 'S':
+						if(mosquitto_property_read_varint(properties, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, &i32value, false)){
+							printf("%d", i32value);
 						}
 						break;
 
