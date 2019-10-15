@@ -797,7 +797,10 @@ mosquitto_sub -t 'bbc/#' -T bbc/bbc1 --remove-retained</programlisting>
 						parameters and timestamp, with a non-quoted and
 						non-escaped payload - this means the payload must
 						itself be valid JSON. For example:
-						<code>{"tst":1470825369,"topic":"foo","qos":0,"retain":0,"payload":{"temperature":27.0,"humidity":57}}</code>.</para></listitem>
+						<code>{"tst":1470825369,"topic":"foo","qos":0,"retain":0,"payload":{"temperature":27.0,"humidity":57}}</code>.</para>
+					<para>If the payload is not valid JSON, then the error message "Error: Message payload is not valid JSON on topic
+						&lt;topic&gt;" will be printed to stderr.</para></listitem>
+
 				<listitem><para><option>%I</option> ISO-8601 format date and time, e.g. 2016-08-10T09:47:38+0100</para></listitem>
 				<listitem><para><option>%U</option> Unix timestamp with nanoseconds, e.g. 1470818943.786368637</para></listitem>
 			</itemizedlist>

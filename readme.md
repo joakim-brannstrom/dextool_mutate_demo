@@ -71,6 +71,7 @@ already be built. Use `make binary` to skip building the man pages, or install
 * openssl (libssl-dev on Debian based systems) - disable with `make WITH_TLS=no`
 * xsltproc (xsltproc and docbook-xsl on Debian based systems) - only needed when building from git sources - disable with `make WITH_DOCS=no`
 * uthash / utlist - bundled versions of these headers are provided, disable their use with `make WITH_BUNDLED_DEPS=no`
+* cJSON - for client JSON output support. Disable with `make WITH_CJSON=no` Auto detected with CMake.
 
 Equivalent options for enabling/disabling features are available when using the CMake build.
 

@@ -100,6 +100,9 @@ WITH_COVERAGE:=no
 # Build with unix domain socket support
 WITH_UNIX_SOCKETS:=yes
 
+# Build mosquitto_sub with cJSON support
+WITH_CJSON:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -320,4 +323,9 @@ ifeq ($(WITH_COVERAGE),yes)
 	LIB_LDFLAGS:=$(LIB_LDFLAGS) -coverage
 	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -coverage
 	CLIENT_LDFLAGS:=$(CLIENT_LDFLAGS) -coverage
+endif
+
+ifeq ($(WITH_CJSON),yes)
+	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_CJSON -I/usr/include/cjson
+	CLIENT_LDADD:=$(CLIENT_LDADD) -lcjson
 endif

@@ -30,6 +30,10 @@ Contributors:
 #define snprintf sprintf_s
 #endif
 
+#ifdef WITH_CJSON
+#  include <cJSON.h>
+#endif
+
 #ifdef __APPLE__
 #  include <sys/time.h>
 #endif
@@ -96,6 +100,7 @@ static void write_payload(const unsigned char *payload, int payloadlen, int hex)
 }
 
 
+#ifndef WITH_CJSON
 static void write_json_payload(const char *payload, int payloadlen)
 {
 	int i;
@@ -108,10 +113,91 @@ static void write_json_payload(const char *payload, int payloadlen)
 		}
 	}
 }
+#endif
 
 
-static void json_print(const struct mosquitto_message *message, const struct tm *ti, bool escaped)
+static int json_print(const struct mosquitto_message *message, const struct tm *ti, bool escaped)
 {
+#ifdef WITH_CJSON
+	cJSON *root;
+	cJSON *tmp;
+	char *json_str;
+	const char *return_parse_end;
+
+	root = cJSON_CreateObject();
+	if(root == NULL){
+		return MOSQ_ERR_NOMEM;
+	}
+
+	tmp = cJSON_CreateNumber(time(NULL));
+	if(tmp == NULL){
+		cJSON_Delete(root);
+		return MOSQ_ERR_NOMEM;
+	}
+	cJSON_AddItemToObject(root, "tst", tmp);
+
+	tmp = cJSON_CreateStringReference(message->topic);
+	if(tmp == NULL){
+		cJSON_Delete(root);
+		return MOSQ_ERR_NOMEM;
+	}
+
+	cJSON_AddItemToObject(root, "topic", tmp);
+
+	tmp = cJSON_CreateNumber(message->qos);
+	if(tmp == NULL){
+		cJSON_Delete(root);
+		return MOSQ_ERR_NOMEM;
+	}
+	cJSON_AddItemToObject(root, "qos", tmp);
+
+	tmp = cJSON_CreateNumber(message->retain);
+	if(tmp == NULL){
+		cJSON_Delete(root);
+		return MOSQ_ERR_NOMEM;
+	}
+	cJSON_AddItemToObject(root, "retain", tmp);
+
+	tmp = cJSON_CreateNumber(message->payloadlen);
+	if(tmp == NULL){
+		cJSON_Delete(root);
+		return MOSQ_ERR_NOMEM;
+	}
+	cJSON_AddItemToObject(root, "payloadlen", tmp);
+
+	if(message->qos > 0){
+		tmp = cJSON_CreateNumber(message->mid);
+		if(tmp == NULL){
+			cJSON_Delete(root);
+			return MOSQ_ERR_NOMEM;
+		}
+		cJSON_AddItemToObject(root, "mid", tmp);
+	}
+	if(escaped){
+		tmp = cJSON_CreateStringReference(message->payload);
+		if(tmp == NULL){
+			cJSON_Delete(root);
+			return MOSQ_ERR_NOMEM;
+		}
+		cJSON_AddItemToObject(root, "payload", tmp);
+	}else{
+		return_parse_end = NULL;
+		tmp = cJSON_ParseWithOpts(message->payload, &return_parse_end, true);
+		if(tmp == NULL || return_parse_end != message->payload + message->payloadlen){
+			cJSON_Delete(root);
+			return MOSQ_ERR_INVAL;
+		}
+		cJSON_AddItemToObject(root, "payload", tmp);
+	}
+
+	json_str = cJSON_PrintUnformatted(root);
+	cJSON_Delete(root);
+
+	fputs(json_str, stdout);
+	free(json_str);
+	
+	return MOSQ_ERR_SUCCESS;
+#else
 	char buf[100];
 
 	strftime(buf, 100, "%s", ti);
@@ -128,6 +214,9 @@ static void json_print(const struct mosquitto_message *message, const struct tm 
 		write_payload(message->payload, message->payloadlen, 0);
 		fputs("}", stdout);
 	}
+	
+	return MOSQ_ERR_SUCCESS;
+#endif
 }
 
 
@@ -139,6 +228,7 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 	long ns;
 	char strf[3];
 	char buf[100];
+	int rc;
 
 	len = strlen(lcfg->format);
 
@@ -170,7 +260,10 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 								return;
 							}
 						}
-						json_print(message, ti, true);
+						if(json_print(message, ti, true) != MOSQ_ERR_SUCCESS){
+							err_printf(lcfg, "Error: Out of memory.\n");
+							return;
+						}
 						break;
 
 					case 'J':
@@ -180,7 +273,14 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 								return;
 							}
 						}
-						json_print(message, ti, false);
+						rc = json_print(message, ti, false);
+						if(rc == MOSQ_ERR_NOMEM){
+							err_printf(lcfg, "Error: Out of memory.\n");
+							return;
+						}else if(rc == MOSQ_ERR_INVAL){
+							err_printf(lcfg, "Error: Message payload is not valid JSON on topic %s.\n", message->topic);
+							return;
+						}
 						break;
 
 					case 'l':

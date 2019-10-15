@@ -15,6 +15,7 @@ Clients:
   `mosquitto_rr -W <secs>`. Closes #275.
 - Add support for connecting to brokers through Unix domain sockets with the
   `--unix` argument.
+- Use cJSON library for producing JSON output, where available. Closes #1222.
 
 
 1.6.7 - 20190925
