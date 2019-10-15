@@ -34,6 +34,7 @@ Contributors:
 #include <mosquitto.h>
 #include <mqtt_protocol.h>
 #include "client_shared.h"
+#include "sub_client_output.h"
 
 struct mosq_config cfg;
 bool process_messages = true;
@@ -52,8 +53,6 @@ void my_signal_handler(int signum)
 	}
 }
 #endif
-
-void print_message(struct mosq_config *cfg, const struct mosquitto_message *message);
 
 
 void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
@@ -98,7 +97,7 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 		}
 	}
 
-	print_message(&cfg, message);
+	print_message(&cfg, message, properties);
 
 	if(cfg.msg_count>0){
 		msg_count++;

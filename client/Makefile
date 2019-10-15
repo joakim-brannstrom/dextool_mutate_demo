@@ -47,7 +47,7 @@ pub_shared.o : pub_shared.c ${SHARED_DEP}
 sub_client.o : sub_client.c ${SHARED_DEP}
 	${CROSS_COMPILE}${CC} $(CLIENT_CPPFLAGS) $(CLIENT_CFLAGS) -c $< -o $@
 
-sub_client_output.o : sub_client_output.c ${SHARED_DEP}
+sub_client_output.o : sub_client_output.c sub_client_output.h ${SHARED_DEP}
 	${CROSS_COMPILE}${CC} $(CLIENT_CPPFLAGS) $(CLIENT_CFLAGS) -c $< -o $@
 
 rr_client.o : rr_client.c ${SHARED_DEP}

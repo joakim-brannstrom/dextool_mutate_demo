@@ -22,6 +22,8 @@ Clients:
 - Add support for connecting to brokers through Unix domain sockets with the
   `--unix` argument.
 - Use cJSON library for producing JSON output, where available. Closes #1222.
+- Add support for outputting MQTT v5 property information to mosquitto_sub/rr
+  JSON output.
 
 
 1.6.7 - 20190925

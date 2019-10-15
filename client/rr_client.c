@@ -35,6 +35,7 @@ Contributors:
 #include <mqtt_protocol.h>
 #include "client_shared.h"
 #include "pub_shared.h"
+#include "sub_client_output.h"
 
 enum rr__state {
 	rr_s_new,
@@ -64,8 +65,6 @@ void my_signal_handler(int signum)
 }
 #endif
 
-void print_message(struct mosq_config *cfg, const struct mosquitto_message *message);
-
 
 int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, void *payload, int qos, bool retain)
 {
@@ -75,7 +74,7 @@ int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadl
 
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message, const mosquitto_property *properties)
 {
-	print_message(&cfg, message);
+	print_message(&cfg, message, properties);
 	switch(cfg.pub_mode){
 		case MSGMODE_CMD:
 		case MSGMODE_FILE:
