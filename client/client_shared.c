@@ -73,6 +73,8 @@ static int check_format(const char *str)
 					// payload length
 				}else if(str[i+1] == 'm'){
 					// mid
+				}else if(str[i+1] == 'P'){
+					// MQTT v5 property user-property
 				}else if(str[i+1] == 'p'){
 					// payload
 				}else if(str[i+1] == 'q'){

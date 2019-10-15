@@ -338,7 +338,8 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 	uint8_t i8value;
 	uint16_t i16value;
 	uint32_t i32value;
-	char *binvalue, *strvalue;
+	char *binvalue, *strname, *strvalue;
+	const mosquitto_property *prop;
 
 	len = strlen(lcfg->format);
 
@@ -431,6 +432,26 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 
 					case 'm':
 						printf("%d", message->mid);
+						break;
+
+					case 'P':
+						strname = NULL;
+						strvalue = NULL;
+						prop = mosquitto_property_read_string_pair(properties, MQTT_PROP_USER_PROPERTY, &strname, &strvalue, false);
+						while(prop){
+							printf("%s:%s", strname, strvalue);
+							free(strname);
+							free(strvalue);
+							strname = NULL;
+							strvalue = NULL;
+
+							prop = mosquitto_property_read_string_pair(prop, MQTT_PROP_USER_PROPERTY, &strname, &strvalue, true);
+							if(prop){
+								fputc(' ', stdout);
+							}
+						}
+						free(strname);
+						free(strvalue);
 						break;
 
 					case 'p':

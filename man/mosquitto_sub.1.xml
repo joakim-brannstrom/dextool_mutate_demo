@@ -792,6 +792,9 @@ mosquitto_sub -t 'bbc/#' -T bbc/bbc1 --remove-retained</programlisting>
 				<listitem><para><option>%F</option> the MQTT v5 payload-format-indicator property, if present.</para></listitem>
 				<listitem><para><option>%l</option> the length of the payload in bytes.</para></listitem>
 				<listitem><para><option>%m</option> the message id (only relevant for messages with QoS>0).</para></listitem>
+				<listitem><para><option>%P</option> the MQTT v5 user-property property, if present. This will be printed in the
+						form key:value. It is possible for any number of user properties to be attached to a message, and to
+						have duplicate keys.</para></listitem>
 				<listitem><para><option>%p</option> the payload raw bytes (may produce non-printable characters depending on the payload).</para></listitem>
 				<listitem><para><option>%q</option> the message QoS.</para></listitem>
 				<listitem><para><option>%R</option> the MQTT v5 response-topic property, if present.</para></listitem>
