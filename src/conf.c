@@ -1369,18 +1369,48 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						tmp_int = atoi(token);
+#ifdef WITH_UNIX_SOCKETS
+						if(tmp_int < 0 || tmp_int > 65535){
+#else
 						if(tmp_int < 1 || tmp_int > 65535){
+#endif
 							log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
 							return MOSQ_ERR_INVAL;
 						}
 
+						/* Look for bind address / unix socket path */
+						token = strtok_r(NULL, " ", &saveptr);
+						if (token != NULL && token[0] == '#'){
+							token = NULL;
+						}
+
+						if(tmp_int == 0 && token == NULL){
+							log__printf(NULL, MOSQ_LOG_ERR, "Error: A listener with port 0 must provide a Unix socket path.");
+							return MOSQ_ERR_INVAL;
+						}
+
 						if(reload){
-							/* We reload listeners settings based on port number.
-							 * If the port number doesn't already exist, exit with a complaint. */
+							/* We reload listeners settings based on port number/unix socket path.
+							 * If the port number/unix path doesn't already exist, exit with a complaint. */
 							cur_listener = NULL;
-							for(i=0; i<config->listener_count; i++){
-								if(config->listeners[i].port == tmp_int){
-									cur_listener = &config->listeners[i];
+#ifdef WITH_UNIX_SOCKETS
+							if(tmp_int == 0){
+								for(i=0; i<config->listener_count; i++){
+									if(config->listeners[i].unix_socket_path != NULL
+											&& strcmp(config->listeners[i].unix_socket_path, token) == 0){
+
+										cur_listener = &config->listeners[i];
+										break;
+									}
+								}
+							}else
+#endif
+							{
+								for(i=0; i<config->listener_count; i++){
+									if(config->listeners[i].port == tmp_int){
+										cur_listener = &config->listeners[i];
+										break;
+									}
 								}
 							}
 							if(!cur_listener){
@@ -1403,15 +1433,24 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						cur_listener->port = tmp_int;
 						cur_listener->maximum_qos = 2;
 						cur_listener->max_topic_alias = 10;
-						token = strtok_r(NULL, " ", &saveptr);
-						if (token != NULL && token[0] == '#'){
-							token = NULL;
-						}
+
 						mosquitto__free(cur_listener->host);
+						cur_listener->host = NULL;
+
+#ifdef WITH_UNIX_SOCKETS
+						mosquitto__free(cur_listener->unix_socket_path);
+						cur_listener->unix_socket_path = NULL;
+#endif
+
 						if(token){
-							cur_listener->host = mosquitto__strdup(token);
-						}else{
-							cur_listener->host = NULL;
+#ifdef WITH_UNIX_SOCKETS
+							if(cur_listener->port == 0){
+								cur_listener->unix_socket_path = mosquitto__strdup(token);
+							}else
+#endif
+							{
+								cur_listener->host = mosquitto__strdup(token);
+							}
 						}
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty listener value in configuration.");
@@ -1907,21 +1946,6 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 							cur_listener->socket_domain = AF_INET;
 						}else if(!strcmp(token, "ipv6")){
 							cur_listener->socket_domain = AF_INET6;
-#ifdef WITH_UNIX_SOCKETS
-						}else if(!strcmp(token, "unix")){
-							cur_listener->socket_domain = AF_UNIX;
-							token = strtok_r(NULL, " ", &saveptr);
-							if(token){
-								cur_listener->unix_socket_path = mosquitto__strdup(token);
-								if(cur_listener->unix_socket_path == NULL){
-									log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-									return MOSQ_ERR_NOMEM;
-								}
-							}else{
-								log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty socket_domain unix socket path in configuration.");
-								return MOSQ_ERR_INVAL;
-							}
-#endif
 						}else{
 							log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid socket_domain value \"%s\" in configuration.", token);
 							return MOSQ_ERR_INVAL;

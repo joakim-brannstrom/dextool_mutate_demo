@@ -730,7 +730,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 	if(!listener) return MOSQ_ERR_INVAL;
 
 #ifdef WITH_UNIX_SOCKETS
-	if(listener->socket_domain == AF_UNIX){
+	if(listener->port == 0 && listener->unix_socket_path != NULL){
 		rc = net__socket_listen_unix(listener);
 	}else
 #endif

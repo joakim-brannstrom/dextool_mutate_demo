@@ -1058,7 +1058,7 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 					</listitem>
 				</varlistentry>
 				<varlistentry>
-					<term><option>listener</option> <replaceable>port</replaceable> <replaceable><optional>bind address/host</optional></replaceable></term>
+					<term><option>listener</option> <replaceable>port</replaceable> <replaceable><optional>bind address/host/unix socket path</optional></replaceable></term>
 					<listitem>
 						<para>Listen for incoming network connection on the
 							specified port. A second optional argument allows
@@ -1067,11 +1067,18 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 							neither the global <option>bind_address</option>
 							nor <option>port</option> options are used then the
 							default listener will not be started.</para>
+
 						<para>The <option>bind address/host</option> option
 							allows this listener to be bound to a specific IP
 							address by passing an IP address or hostname. For
 							websockets listeners, it is only possible to pass
 							an IP address here.</para>
+
+						<para>On systems that support Unix Domain Sockets, this
+							option can also be used to create a Unix socket rather
+							than opening a TCP socket. In this case, the port must
+							be set to 0, and the unix socket path must be given.</para>
+
 						<para>This option may be specified multiple times. See
 							also the <option>mount_point</option>
 							option.</para>
@@ -1159,7 +1166,7 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 					</listitem>
 				</varlistentry>
 				<varlistentry>
-					<term><option>socket_domain</option> [ ipv4 | ipv6 | unix ] [path to unix socket]</term>
+					<term><option>socket_domain</option> [ ipv4 | ipv6 ]</term>
 					<listitem>
 						<para>By default, a listener will attempt to listen on
 							all supported IP protocol versions. If you do not
@@ -1176,10 +1183,6 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 							use IPv6. If you want support for both IPv4 and
 							IPv6, then do not use the
 							<option>socket_domain</option> option.</para>
-						<para>On systems that support Unix Domain Sockets, this
-							option can also be used to create a Unix socket rather
-							than opening a TCP socket. In this case, the option
-							should be in the form: <option>socket_domain unix &lt;path to socket&gt;</option>. For example: <option>socket_domain unix /tmp/mosquitto.sock</option></para>
 						<para>Not reloaded on reload signal.</para>
 					</listitem>
 				</varlistentry>
