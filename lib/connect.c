@@ -78,6 +78,7 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 	mosq->keepalive = keepalive;
 	mosq->msgs_in.inflight_quota = mosq->msgs_in.inflight_maximum;
 	mosq->msgs_out.inflight_quota = mosq->msgs_out.inflight_maximum;
+	mosq->retain_available = 1;
 
 	if(mosq->sockpairR != INVALID_SOCKET){
 		COMPAT_CLOSE(mosq->sockpairR);
