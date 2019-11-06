@@ -156,7 +156,7 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_c
 
 	if(some_sub_allowed == false){
 		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
-		err_printf(&cfg, "Not a single subscription was granted\n");
+		err_printf(&cfg, "All subscription requests were denied.\n");
 	}
 
 	if(cfg.exit_after_sub){

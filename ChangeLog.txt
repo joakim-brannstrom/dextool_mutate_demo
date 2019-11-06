@@ -28,6 +28,7 @@ Clients:
   output.
 - Add support for v5 property printing to mosquitto_sub/rr in non-JSON mode.
   Closes #1416.
+- mosquitto_sub will now exit if all subscriptions were denied.
 
 
 1.6.7 - 20190925
