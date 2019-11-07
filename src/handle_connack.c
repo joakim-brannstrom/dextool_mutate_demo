@@ -47,37 +47,51 @@ int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
-	switch(reason_code){
-		case CONNACK_ACCEPTED:
+	if(reason_code == MQTT_RC_SUCCESS){
 #ifdef WITH_BRIDGE
-			if(context->bridge){
-				rc = bridge__on_connect(db, context);
-				if(rc) return rc;
-			}
+		if(context->bridge){
+			rc = bridge__on_connect(db, context);
+			if(rc) return rc;
+		}
 #endif
-			mosquitto__set_state(context, mosq_cs_active);
-			return MOSQ_ERR_SUCCESS;
-		case CONNACK_REFUSED_PROTOCOL_VERSION:
-			if(context->bridge){
-				context->bridge->try_private_accepted = false;
+		mosquitto__set_state(context, mosq_cs_active);
+		return MOSQ_ERR_SUCCESS;
+	}else{
+		if(context->protocol == mosq_p_mqtt5){
+			switch(reason_code){
+				case MQTT_RC_RETAIN_NOT_SUPPORTED:
+					context->retain_available = 0;
+					log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: retain not available (will retry)");
+					return 1;
+				default:
+					log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: %s", "FIXME"); //mosquitto_reason_string(reason_code));
+					return 1;
 			}
-			log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: unacceptable protocol version");
-			return 1;
-		case CONNACK_REFUSED_IDENTIFIER_REJECTED:
-			log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: identifier rejected");
-			return 1;
-		case CONNACK_REFUSED_SERVER_UNAVAILABLE:
-			log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
-			return 1;
-		case CONNACK_REFUSED_BAD_USERNAME_PASSWORD:
-			log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
-			return 1;
-		case CONNACK_REFUSED_NOT_AUTHORIZED:
-			log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: not authorised");
-			return 1;
-		default:
-			log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: unknown reason");
-			return 1;
+		}else{
+			switch(reason_code){
+				case CONNACK_REFUSED_PROTOCOL_VERSION:
+					if(context->bridge){
+						context->bridge->try_private_accepted = false;
+					}
+					log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: unacceptable protocol version");
+					return 1;
+				case CONNACK_REFUSED_IDENTIFIER_REJECTED:
+					log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: identifier rejected");
+					return 1;
+				case CONNACK_REFUSED_SERVER_UNAVAILABLE:
+					log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
+					return 1;
+				case CONNACK_REFUSED_BAD_USERNAME_PASSWORD:
+					log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
+					return 1;
+				case CONNACK_REFUSED_NOT_AUTHORIZED:
+					log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: not authorised");
+					return 1;
+				default:
+					log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: unknown reason");
+					return 1;
+			}
+		}
 	}
 	return 1;
 }

@@ -149,7 +149,10 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	packet__write_byte(packet, version);
 	byte = (clean_session&0x1)<<1;
 	if(will){
-		byte = byte | ((mosq->will->msg.retain&0x1)<<5) | ((mosq->will->msg.qos&0x3)<<3) | ((will&0x1)<<2);
+		byte = byte | ((mosq->will->msg.qos&0x3)<<3) | ((will&0x1)<<2);
+		if(mosq->retain_available){
+			byte |= (mosq->will->msg.retain&0x1)<<5;
+		}
 	}
 	if(username){
 		byte = byte | 0x1<<7;

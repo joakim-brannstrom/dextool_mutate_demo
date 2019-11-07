@@ -6,6 +6,8 @@ Broker:
 - Add `bridge_outgoing_retain` option, to allow outgoing messages from a
   bridge to have the retain bit completely disabled, which is useful when
   bridging to e.g. Amazon or Google.
+- Add support for MQTT v5 bridges to handle the "retain-available" property
+  being false.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are

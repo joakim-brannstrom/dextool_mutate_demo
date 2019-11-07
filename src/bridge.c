@@ -447,13 +447,17 @@ int bridge__on_connect(struct mosquitto_db *db, struct mosquitto *context)
 	int notification_topic_len;
 	char notification_payload;
 	int sub_opts;
+	bool retain = true;
 
 	if(context->bridge->notifications){
+		if(!context->retain_available){
+			retain = false;
+		}
 		notification_payload = '1';
 		if(context->bridge->notification_topic){
 			if(!context->bridge->notifications_local_only){
 				if(send__real_publish(context, mosquitto__mid_generate(context),
-						context->bridge->notification_topic, 1, &notification_payload, 1, true, 0, NULL, NULL, 0)){
+						context->bridge->notification_topic, 1, &notification_payload, 1, retain, 0, NULL, NULL, 0)){
 
 					return 1;
 				}
@@ -468,7 +472,7 @@ int bridge__on_connect(struct mosquitto_db *db, struct mosquitto *context)
 			notification_payload = '1';
 			if(!context->bridge->notifications_local_only){
 				if(send__real_publish(context, mosquitto__mid_generate(context),
-						notification_topic, 1, &notification_payload, 1, true, 0, NULL, NULL, 0)){
+						notification_topic, 1, &notification_payload, 1, retain, 0, NULL, NULL, 0)){
 
 					mosquitto__free(notification_topic);
 					return 1;
