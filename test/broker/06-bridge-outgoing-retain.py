@@ -101,6 +101,7 @@ def do_test(proto_ver, outgoing_retain):
 
 do_test(proto_ver=4, outgoing_retain="true")
 do_test(proto_ver=4, outgoing_retain="false")
-#do_test(proto_ver=5)
+do_test(proto_ver=5, outgoing_retain="true")
+do_test(proto_ver=5, outgoing_retain="false")
 
 exit(0)
