@@ -523,6 +523,7 @@ struct mosquitto__bridge{
 	bool lazy_reconnect;
 	bool attempt_unsubscribe;
 	bool initial_notification_done;
+	bool outgoing_retain;
 #ifdef WITH_TLS
 	bool tls_insecure;
 	bool tls_ocsp_required;

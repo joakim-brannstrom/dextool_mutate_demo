@@ -58,6 +58,10 @@ int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint3
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 #endif
 
+	if(!mosq->retain_available){
+		retain = false;
+	}
+
 #ifdef WITH_BROKER
 	if(mosq->listener && mosq->listener->mount_point){
 		len = strlen(mosq->listener->mount_point);

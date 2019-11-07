@@ -109,6 +109,7 @@ int bridge__new(struct mosquitto_db *db, struct mosquitto__bridge *bridge)
 #endif
 
 	bridge->try_private_accepted = true;
+	new_context->retain_available = bridge->outgoing_retain;
 	new_context->protocol = bridge->protocol_version;
 
 	bridges = mosquitto__realloc(db->bridges, (db->bridge_count+1)*sizeof(struct mosquitto *));

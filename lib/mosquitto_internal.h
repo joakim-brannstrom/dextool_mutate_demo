@@ -329,7 +329,6 @@ struct mosquitto {
 	unsigned int reconnect_delay;
 	unsigned int reconnect_delay_max;
 	bool reconnect_exponential_backoff;
-	uint8_t retain_available;
 	char threaded;
 	struct mosquitto__packet *out_packet_last;
 #  ifdef WITH_SRV
@@ -337,6 +336,7 @@ struct mosquitto {
 #  endif
 #endif
 	uint8_t maximum_qos;
+	uint8_t retain_available;
 
 #ifdef WITH_BROKER
 	UT_hash_handle hh_id;

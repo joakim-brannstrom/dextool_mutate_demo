@@ -101,6 +101,7 @@ tests = [
     (2, './06-bridge-fail-persist-resend-qos1.py'),
     (2, './06-bridge-fail-persist-resend-qos2.py'),
     (1, './06-bridge-no-local.py'),
+    (2, './06-bridge-outgoing-retain.py'),
     (3, './06-bridge-per-listener-settings.py'),
     (2, './06-bridge-reconnect-local-out.py'),
 

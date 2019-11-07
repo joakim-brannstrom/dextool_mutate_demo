@@ -1504,6 +1504,20 @@ openssl dhparam -out dhparam.pem 2048</programlisting>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>bridge_outgoing_retain</option> [ true | false ]</term>
+				<listitem>
+					<para>Some MQTT brokers do not allow retained messages. MQTT v5 gives
+						a mechanism for brokers to tell clients that they do not support
+						retained messages, but this is not possible for MQTT v3.1.1 or v3.1.
+						If you need to bridge to a v3.1.1 or v3.1 broker that does not support
+						retained messages, set the <option>bridge_outgoing_retain</option>
+						option to <replaceable>false</replaceable>. This will remove the
+						retain bit on all outgoing messages to that bridge, regardless of any
+						other setting. Defaults to <replaceable>true</replaceable>.</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
 				<term><option>bridge_protocol_version</option> <replaceable>version</replaceable></term>
 				<listitem>
 					<para>Set the version of the MQTT protocol to use with for

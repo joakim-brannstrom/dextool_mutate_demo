@@ -1091,6 +1091,17 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
+				}else if(!strcmp(token, "bridge_outgoing_retain")){
+#if defined(WITH_BRIDGE)
+					if(reload) continue; // Listeners not valid for reloading.
+					if(!cur_bridge){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					if(conf__parse_bool(&token, "bridge_outgoing_retain", &cur_bridge->outgoing_retain, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
 				}else if(!strcmp(token, "bridge_keyfile")){
 #if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
@@ -1266,6 +1277,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						cur_bridge->attempt_unsubscribe = true;
 						cur_bridge->protocol_version = mosq_p_mqtt311;
 						cur_bridge->primary_retry_sock = INVALID_SOCKET;
+						cur_bridge->outgoing_retain = true;
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty connection value in configuration.");
 						return MOSQ_ERR_INVAL;

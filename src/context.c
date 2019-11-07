@@ -52,6 +52,7 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 	context->password = NULL;
 	context->listener = NULL;
 	context->acl_list = NULL;
+	context->retain_available = true;
 
 	/* is_bridge records whether this client is a bridge or not. This could be
 	 * done by looking at context->bridge for bridges that we create ourself,
