@@ -54,6 +54,10 @@ def do_test(proto_ver):
                 rc = 0
 
         sock.close()
+    except socket.error as e:
+        if e.errno == errno.ECONNRESET:
+            # Connection has been closed by peer, this is the expected behaviour
+            rc = 0
     finally:
         broker.terminate()
         broker.wait()

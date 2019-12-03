@@ -201,8 +201,11 @@ void context__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 
 	context__send_will(db, context);
 	if(context->session_expiry_interval == 0){
-
-		if(context->bridge == NULL){
+		/* Client session is due to be expired now */
+#ifdef WITH_BRIDGE
+		if(context->bridge == NULL)
+#endif
+		{
 			if(context->will_delay_interval == 0){
 				/* This will be done later, after the will is published for delay>0. */
 				context__add_to_disused(db, context);

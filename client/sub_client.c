@@ -46,7 +46,7 @@ static bool timed_out = false;
 #ifndef WIN32
 void my_signal_handler(int signum)
 {
-	if(signum == SIGALRM){
+	if(signum == SIGALRM || signum == SIGTERM || signum == SIGINT){
 		process_messages = false;
 		mosquitto_disconnect_v5(mosq, MQTT_RC_DISCONNECT_WITH_WILL_MSG, cfg.disconnect_props);
 		timed_out = true;
@@ -354,6 +354,16 @@ int main(int argc, char *argv[])
 		goto cleanup;
 	}
 
+	if(sigaction(SIGTERM, &sigact, NULL) == -1){
+		perror("sigaction");
+		goto cleanup;
+	}
+
+	if(sigaction(SIGINT, &sigact, NULL) == -1){
+		perror("sigaction");
+		goto cleanup;
+	}
+
 	if(cfg.timeout){
 		alarm(cfg.timeout);
 	}
@@ -377,6 +387,7 @@ int main(int argc, char *argv[])
 	return rc;
 
 cleanup:
+	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
 	client_config_cleanup(&cfg);
 	return 1;

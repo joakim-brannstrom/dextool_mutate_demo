@@ -151,6 +151,7 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 	}
 }
 
+
 static int sub__add_leaf(struct mosquitto *context, int qos, uint32_t identifier, int options, struct mosquitto__subleaf **head, struct mosquitto__subleaf **newleaf)
 {
 	struct mosquitto__subleaf *leaf;
@@ -539,7 +540,7 @@ struct mosquitto__subhier *sub__add_hier_entry(struct mosquitto__subhier *parent
 	}
 	child->parent = parent;
 	child->topic_len = len;
-	child->topic = malloc(len+1);
+	child->topic = mosquitto__malloc(len+1);
 	if(!child->topic){
 		child->topic_len = 0;
 		mosquitto__free(child);
@@ -829,4 +830,3 @@ void sub__tree_print(struct mosquitto__subhier *root, int level)
 		sub__tree_print(branch->children, level+1);
 	}
 }
-
