@@ -69,6 +69,16 @@ PERSIST_WRITE_OBJS = \
 		utf8_mosq.o \
 		util_mosq.o
 
+SUBS_TEST_OBJS = \
+		subs_test.o \
+		subs_stubs.o
+
+SUBS_OBJS = \
+		database.o \
+		memory_mosq.o \
+		subs.o \
+		topic_tok.o
+
 all : test
 
 check : test
@@ -83,6 +93,9 @@ persist_read_test : ${PERSIST_READ_TEST_OBJS} ${PERSIST_READ_OBJS}
 	$(CROSS_COMPILE)$(CC) $(LDFLAGS) -o $@ $^ $(LDADD)
 
 persist_write_test : ${PERSIST_WRITE_TEST_OBJS} ${PERSIST_WRITE_OBJS}
+	$(CROSS_COMPILE)$(CC) $(LDFLAGS) -o $@ $^ $(LDADD)
+
+subs_test : ${SUBS_TEST_OBJS} ${SUBS_OBJS}
 	$(CROSS_COMPILE)$(CC) $(LDFLAGS) -o $@ $^ $(LDADD)
 
 
@@ -134,13 +147,16 @@ util_topic.o : ../../lib/util_topic.c
 utf8_mosq.o : ../../lib/utf8_mosq.c
 	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
 
-test-lib : mosq_test
+build : mosq_test bridge_topic_test persist_read_test persist_write_test subs_test
+
+test-lib : build
 	./mosq_test
 
-test-broker : bridge_topic_test persist_read_test persist_write_test
+test-broker : build
 	./bridge_topic_test
 	./persist_read_test
 	./persist_write_test
+	./subs_test
 
 test : test-broker test-lib
 

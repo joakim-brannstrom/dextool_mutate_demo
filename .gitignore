@@ -73,6 +73,7 @@ test/unit/coverage.info
 test/unit/mosq_test
 test/unit/persist_read_test
 test/unit/persist_write_test
+test/unit/subs_test
 test/unit/out/
 
 www/cache/
