@@ -316,6 +316,8 @@ static int persist__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	struct mosquitto_msg_store_load *load;
 	struct P_retain chunk;
 	int rc;
+	char **split_topics;
+	char *local_topic;
 
 	memset(&chunk, 0, sizeof(struct P_retain));
 
@@ -331,7 +333,10 @@ static int persist__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 	HASH_FIND(hh, db->msg_store_load, &chunk.F.store_id, sizeof(dbid_t), load);
 	if(load){
-		retain__store(db, load->store->topic, load->store, NULL);
+		if(sub__topic_tokenise(load->store->topic, &local_topic, &split_topics, NULL)) return 1;
+		retain__store(db, load->store->topic, load->store, split_topics);
+		mosquitto__free(local_topic);
+		mosquitto__free(split_topics);
 	}else{
 		/* Can't find the message - probably expired */
 	}

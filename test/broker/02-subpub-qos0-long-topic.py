@@ -43,7 +43,7 @@ do_test("/"*200, True) # 200 max hierarchy limit
 do_test("abc/"*199+"d", True) # 200 max hierarchy limit, longer overall string than 200
 
 do_test("/"*201, False) # Exceeds 200 max hierarchy limit
-do_test("abc/"*200+"d", False) # Exceeds 200 max hierarchy limit, longer overall string than 200
+do_test("abc/"*201+"d", False) # Exceeds 200 max hierarchy limit, longer overall string than 200
 
 
 exit(0)

@@ -665,7 +665,7 @@ void sub__tree_print(struct mosquitto__subhier *root, int level);
 int sub__clean_session(struct mosquitto_db *db, struct mosquitto *context);
 int sub__retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos, uint32_t subscription_identifier);
 int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored);
-int sub__topic_tokenise(const char *subtopic, struct sub__token **topics);
+int sub__topic_tokenise(const char *subtopic, char **local_sub, char ***topics, const char **sharename);
 void sub__topic_tokens_free(struct sub__token *tokens);
 
 /* ============================================================
@@ -724,7 +724,7 @@ int property__process_disconnect(struct mosquitto *context, mosquitto_property *
 int retain__init(struct mosquitto_db *db);
 void retain__clean(struct mosquitto_db *db, struct mosquitto__retainhier **retainhier);
 int retain__queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos, uint32_t subscription_identifier);
-int retain__store(struct mosquitto_db *db, const char *topic, struct mosquitto_msg_store *stored, struct sub__token *tokens);
+int retain__store(struct mosquitto_db *db, const char *topic, struct mosquitto_msg_store *stored, char **split_topics);
 
 /* ============================================================
  * Security related functions

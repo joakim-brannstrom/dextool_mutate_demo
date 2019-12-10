@@ -28,117 +28,83 @@ Contributors:
 #include "utlist.h"
 
 
-static struct sub__token *sub__topic_append(struct sub__token **tail, struct sub__token **topics, char *topic)
+static char *strtok_hier(char *str, char **saveptr)
 {
-	struct sub__token *new_topic;
+	char *c;
 
-	if(!topic){
-		return NULL;
+	if(str != NULL){
+		*saveptr = str;
 	}
-	new_topic = mosquitto__malloc(sizeof(struct sub__token));
-	if(!new_topic){
-		return NULL;
-	}
-	new_topic->next = NULL;
-	new_topic->topic_len = strlen(topic);
-	new_topic->topic = mosquitto__malloc(new_topic->topic_len+1);
-	if(!new_topic->topic){
-		mosquitto__free(new_topic);
-		return NULL;
-	}
-	strncpy(new_topic->topic, topic, new_topic->topic_len+1);
 
-	if(*tail){
-		(*tail)->next = new_topic;
-		*tail = (*tail)->next;
-	}else{
-		*topics = new_topic;
-		*tail = new_topic;
+	if(*saveptr == NULL){
+		return NULL;
 	}
-	return new_topic;
+
+	c = strchr(*saveptr, '/');
+	if(c){
+		str = *saveptr;
+		*saveptr = c+1;
+		c[0] = '\0';
+	}else if(*saveptr){
+		/* No match, but surplus string */
+		str = *saveptr;
+		*saveptr = NULL;
+	}
+	return str;
 }
 
 
-int sub__topic_tokenise(const char *subtopic, struct sub__token **topics)
+int sub__topic_tokenise(const char *subtopic, char **local_sub, char ***topics, const char **sharename)
 {
-	struct sub__token *new_topic, *tail = NULL;
-	int len;
-	int start, stop, tlen;
+	char *saveptr = NULL;
+	char *token;
+	int count;
+	int topic_index = 0;
 	int i;
-	char *topic;
-	int count = 0;
 
-	assert(subtopic);
-	assert(topics);
+	*local_sub = mosquitto__strdup(subtopic);
+	if((*local_sub) == NULL) return MOSQ_ERR_NOMEM;
 
-	if(subtopic[0] != '$'){
-		new_topic = sub__topic_append(&tail, topics, "");
-		if(!new_topic) goto cleanup;
+	count = 0;
+	saveptr = *local_sub;
+	while(saveptr){
+		saveptr = strchr(&saveptr[1], '/');
+		count++;
+	}
+	*topics = mosquitto__calloc(count+3 /* 3=$,shared,sharename */, sizeof(char *));
+	if((*topics) == NULL){
+		mosquitto__free(*local_sub);
+		return MOSQ_ERR_NOMEM;
 	}
 
-	len = strlen(subtopic);
-
-	if(subtopic[0] == '/'){
-		new_topic = sub__topic_append(&tail, topics, "");
-		if(!new_topic) goto cleanup;
-
-		start = 1;
-	}else{
-		start = 0;
+	if((*local_sub)[0] != '$'){
+		(*topics)[topic_index] = "";
+		topic_index++;
 	}
 
-	stop = 0;
-	for(i=start; i<len+1; i++){
-		if(subtopic[i] == '/' || subtopic[i] == '\0'){
-			stop = i;
-			count++;
+	token = strtok_hier((*local_sub), &saveptr);
+	while(token){
+		(*topics)[topic_index] = token;
+		topic_index++;
+		token = strtok_hier(NULL, &saveptr);
+	}
 
-			if(start != stop){
-				tlen = stop-start;
-
-				topic = mosquitto__malloc(tlen+1);
-				if(!topic) goto cleanup;
-				memcpy(topic, &subtopic[start], tlen);
-				topic[tlen] = '\0';
-				new_topic = sub__topic_append(&tail, topics, topic);
-				mosquitto__free(topic);
-			}else{
-				new_topic = sub__topic_append(&tail, topics, "");
-			}
-			if(!new_topic) goto cleanup;
-			start = i+1;
+	if(!strcmp((*topics)[0], "$share")){
+		if(count < 2){
+			mosquitto__free(*local_sub);
+			mosquitto__free(*topics);
+			return MOSQ_ERR_PROTOCOL;
 		}
-	}
 
-	if(count > TOPIC_HIERARCHY_LIMIT){
-		/* Set limit on hierarchy levels, to restrict stack usage. */
-		goto cleanup;
-	}
+		if(sharename){
+			(*sharename) = (*topics)[1];
+		}
 
+		for(i=1; i<count-1; i++){
+			(*topics)[i] = (*topics)[i+1];
+		}
+		(*topics)[0] = "";
+		(*topics)[count-1] = NULL;
+	}
 	return MOSQ_ERR_SUCCESS;
-
-cleanup:
-	tail = *topics;
-	*topics = NULL;
-	while(tail){
-		mosquitto__free(tail->topic);
-		new_topic = tail->next;
-		mosquitto__free(tail);
-		tail = new_topic;
-	}
-	return 1;
 }
-
-
-void sub__topic_tokens_free(struct sub__token *tokens)
-{
-	struct sub__token *tail;
-
-	while(tokens){
-		tail = tokens->next;
-		mosquitto__free(tokens->topic);
-		mosquitto__free(tokens);
-		tokens = tail;
-	}
-}
-

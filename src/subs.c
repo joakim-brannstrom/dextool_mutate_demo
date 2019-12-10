@@ -190,14 +190,13 @@ static void sub__remove_shared_leaf(struct mosquitto__subhier *subhier, struct m
 	DL_DELETE(shared->subs, leaf);
 	if(shared->subs == NULL){
 		HASH_DELETE(hh, subhier->shared, shared);
-		mosquitto__free(shared->name);
 		mosquitto__free(shared);
 	}
 	mosquitto__free(leaf);
 }
 
 
-static int sub__add_shared(struct mosquitto_db *db, struct mosquitto *context, int qos, uint32_t identifier, int options, struct mosquitto__subhier *subhier, char *sharename)
+static int sub__add_shared(struct mosquitto_db *db, struct mosquitto *context, int qos, uint32_t identifier, int options, struct mosquitto__subhier *subhier, const char *sharename)
 {
 	struct mosquitto__subleaf *newleaf;
 	struct mosquitto__subshared *shared = NULL;
@@ -210,15 +209,16 @@ static int sub__add_shared(struct mosquitto_db *db, struct mosquitto *context, i
 	slen = strlen(sharename);
 
 	HASH_FIND(hh, subhier->shared, sharename, slen, shared);
-	if(shared){
-		mosquitto__free(sharename);
-	}else{
+	if(shared == NULL){
 		shared = mosquitto__calloc(1, sizeof(struct mosquitto__subshared));
 		if(!shared){
-			mosquitto__free(sharename);
 			return MOSQ_ERR_NOMEM;
 		}
-		shared->name = sharename;
+		shared->name = mosquitto__strdup(sharename);
+		if(shared->name == NULL){
+			mosquitto__free(shared);
+			return MOSQ_ERR_NOMEM;
+		}
 
 		HASH_ADD_KEYPTR(hh, subhier->shared, shared->name, slen, shared);
 	}
@@ -318,20 +318,21 @@ static int sub__add_normal(struct mosquitto_db *db, struct mosquitto *context, i
 }
 
 
-static int sub__add_context(struct mosquitto_db *db, struct mosquitto *context, int qos, uint32_t identifier, int options, struct mosquitto__subhier *subhier, struct sub__token *tokens, char *sharename)
+static int sub__add_context(struct mosquitto_db *db, struct mosquitto *context, int qos, uint32_t identifier, int options, struct mosquitto__subhier *subhier, char *const *const topics, const char *sharename)
 {
 	struct mosquitto__subhier *branch;
+	int topic_index = 0;
 
 	/* Find leaf node */
-	while(tokens){
-		HASH_FIND(hh, subhier->children, tokens->topic, tokens->topic_len, branch);
+	while(topics && topics[topic_index] != NULL){
+		HASH_FIND(hh, subhier->children, topics[topic_index], strlen(topics[topic_index]), branch);
 		if(!branch){
 			/* Not found */
-			branch = sub__add_hier_entry(subhier, &subhier->children, tokens->topic, tokens->topic_len);
+			branch = sub__add_hier_entry(subhier, &subhier->children, topics[topic_index], strlen(topics[topic_index]));
 			if(!branch) return MOSQ_ERR_NOMEM;
 		}
 		subhier = branch;
-		tokens = tokens ->next;
+		topic_index++;
 	}
 
 	/* Add add our context */
@@ -380,14 +381,13 @@ static int sub__remove_normal(struct mosquitto_db *db, struct mosquitto *context
 }
 
 
-static int sub__remove_shared(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto__subhier *subhier, uint8_t *reason, char *sharename)
+static int sub__remove_shared(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto__subhier *subhier, uint8_t *reason, const char *sharename)
 {
 	struct mosquitto__subshared *shared;
 	struct mosquitto__subleaf *leaf;
 	int i;
 
 	HASH_FIND(hh, subhier->shared, sharename, strlen(sharename), shared);
-	mosquitto__free(sharename);
 	if(shared){
 		leaf = shared->subs;
 		while(leaf){
@@ -431,11 +431,11 @@ static int sub__remove_shared(struct mosquitto_db *db, struct mosquitto *context
 }
 
 
-static int sub__remove_recurse(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto__subhier *subhier, struct sub__token *tokens, uint8_t *reason, char *sharename)
+static int sub__remove_recurse(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto__subhier *subhier, char **topics, uint8_t *reason, const char *sharename)
 {
 	struct mosquitto__subhier *branch;
 
-	if(!tokens){
+	if(topics == NULL || topics[0] == NULL){
 		if(sharename){
 			return sub__remove_shared(db, context, subhier, reason, sharename);
 		}else{
@@ -443,9 +443,9 @@ static int sub__remove_recurse(struct mosquitto_db *db, struct mosquitto *contex
 		}
 	}
 
-	HASH_FIND(hh, subhier->children, tokens->topic, tokens->topic_len, branch);
+	HASH_FIND(hh, subhier->children, topics[0], strlen(topics[0]), branch);
 	if(branch){
-		sub__remove_recurse(db, context, branch, tokens->next, reason, sharename);
+		sub__remove_recurse(db, context, branch, &(topics[1]), reason, sharename);
 		if(!branch->children && !branch->subs && !branch->shared){
 			HASH_DELETE(hh, subhier->children, branch);
 			mosquitto__free(branch->topic);
@@ -455,25 +455,26 @@ static int sub__remove_recurse(struct mosquitto_db *db, struct mosquitto *contex
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int sub__search(struct mosquitto_db *db, struct mosquitto__subhier *subhier, struct sub__token *tokens, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
+
+static int sub__search(struct mosquitto_db *db, struct mosquitto__subhier *subhier, char **split_topics, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
 {
 	/* FIXME - need to take into account source_id if the client is a bridge */
 	struct mosquitto__subhier *branch;
 	int rc;
 	bool have_subscribers = false;
 
-	if(tokens){
+	if(split_topics && split_topics[0]){
 		/* Check for literal match */
-		HASH_FIND(hh, subhier->children, tokens->topic, tokens->topic_len, branch);
+		HASH_FIND(hh, subhier->children, split_topics[0], strlen(split_topics[0]), branch);
 
 		if(branch){
-			rc = sub__search(db, branch, tokens->next, source_id, topic, qos, retain, stored);
+			rc = sub__search(db, branch, &(split_topics[1]), source_id, topic, qos, retain, stored);
 			if(rc == MOSQ_ERR_SUCCESS){
 				have_subscribers = true;
 			}else if(rc != MOSQ_ERR_NO_SUBSCRIBERS){
 				return rc;
 			}
-			if(!tokens->next){
+			if(split_topics[1] == NULL){ /* End of list */
 				rc = subs__process(db, branch, source_id, topic, qos, retain, stored);
 				if(rc == MOSQ_ERR_SUCCESS){
 					have_subscribers = true;
@@ -487,13 +488,13 @@ static int sub__search(struct mosquitto_db *db, struct mosquitto__subhier *subhi
 		HASH_FIND(hh, subhier->children, "+", 1, branch);
 
 		if(branch){
-			rc = sub__search(db, branch, tokens->next, source_id, topic, qos, retain, stored);
+			rc = sub__search(db, branch, &(split_topics[1]), source_id, topic, qos, retain, stored);
 			if(rc == MOSQ_ERR_SUCCESS){
 				have_subscribers = true;
 			}else if(rc != MOSQ_ERR_NO_SUBSCRIBERS){
 				return rc;
 			}
-			if(!tokens->next){
+			if(split_topics[1] == NULL){ /* End of list */
 				rc = subs__process(db, branch, source_id, topic, qos, retain, stored);
 				if(rc == MOSQ_ERR_SUCCESS){
 					have_subscribers = true;
@@ -540,14 +541,12 @@ struct mosquitto__subhier *sub__add_hier_entry(struct mosquitto__subhier *parent
 	}
 	child->parent = parent;
 	child->topic_len = len;
-	child->topic = mosquitto__malloc(len+1);
+	child->topic = mosquitto__strdup(topic);
 	if(!child->topic){
 		child->topic_len = 0;
 		mosquitto__free(child);
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return NULL;
-	}else{
-		strncpy(child->topic, topic, child->topic_len+1);
 	}
 
 	HASH_ADD_KEYPTR(hh, *sibling, child->topic, child->topic_len, child);
@@ -560,49 +559,32 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 {
 	int rc = 0;
 	struct mosquitto__subhier *subhier;
-	struct sub__token *tokens = NULL, *t;
-	char *sharename = NULL;
+	const char *sharename = NULL;
+	char *local_sub;
+	char **topics;
 
 	assert(root);
 	assert(*root);
 	assert(sub);
 
-	if(sub__topic_tokenise(sub, &tokens)) return 1;
+	rc = sub__topic_tokenise(sub, &local_sub, &topics, &sharename);
+	if(rc) return rc;
 
-	if(!strcmp(tokens->topic, "$share")){
-		if(!tokens->next || !tokens->next->next){
-			sub__topic_tokens_free(tokens);
-			return MOSQ_ERR_PROTOCOL;
-		}
-		t = tokens->next;
-		mosquitto__free(tokens->topic);
-		mosquitto__free(tokens);
-		tokens = t;
-
-		sharename = tokens->topic;
-
-		tokens->topic = mosquitto__strdup("");
-		if(!tokens->topic){
-			tokens->topic = sharename;
-			sub__topic_tokens_free(tokens);
-			return MOSQ_ERR_PROTOCOL;
-		}
-		tokens->topic_len = 0;
-	}
-
-	HASH_FIND(hh, *root, tokens->topic, tokens->topic_len, subhier);
+	HASH_FIND(hh, *root, topics[0], strlen(topics[0]), subhier);
 	if(!subhier){
-		subhier = sub__add_hier_entry(NULL, root, tokens->topic, tokens->topic_len);
+		subhier = sub__add_hier_entry(NULL, root, topics[0], strlen(topics[0]));
 		if(!subhier){
-			sub__topic_tokens_free(tokens);
+			mosquitto__free(local_sub);
+			mosquitto__free(topics);
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 
 	}
-	rc = sub__add_context(db, context, qos, identifier, options, subhier, tokens, sharename);
+	rc = sub__add_context(db, context, qos, identifier, options, subhier, topics, sharename);
 
-	sub__topic_tokens_free(tokens);
+	mosquitto__free(local_sub);
+	mosquitto__free(topics);
 
 	return rc;
 }
@@ -611,56 +593,39 @@ int sub__remove(struct mosquitto_db *db, struct mosquitto *context, const char *
 {
 	int rc = 0;
 	struct mosquitto__subhier *subhier;
-	struct sub__token *tokens = NULL, *t;
-	char *sharename = NULL;
+	const char *sharename = NULL;
+	char *local_sub = NULL;
+	char **topics = NULL;
 
 	assert(root);
 	assert(sub);
 
-	if(sub__topic_tokenise(sub, &tokens)) return 1;
+	rc = sub__topic_tokenise(sub, &local_sub, &topics, &sharename);
+	if(rc) return rc;
 
-	if(!strcmp(tokens->topic, "$share")){
-		if(!tokens->next || !tokens->next->next){
-			sub__topic_tokens_free(tokens);
-			return MOSQ_ERR_PROTOCOL;
-		}
-		t = tokens->next;
-		mosquitto__free(tokens->topic);
-		mosquitto__free(tokens);
-		tokens = t;
-
-		sharename = tokens->topic;
-
-		tokens->topic = mosquitto__strdup("");
-		if(!tokens->topic){
-			tokens->topic = sharename;
-			sub__topic_tokens_free(tokens);
-			return MOSQ_ERR_PROTOCOL;
-		}
-		tokens->topic_len = 0;
-	}
-
-	HASH_FIND(hh, root, tokens->topic, tokens->topic_len, subhier);
+	HASH_FIND(hh, root, topics[0], strlen(topics[0]), subhier);
 	if(subhier){
 		*reason = MQTT_RC_NO_SUBSCRIPTION_EXISTED;
-		rc = sub__remove_recurse(db, context, subhier, tokens, reason, sharename);
+		rc = sub__remove_recurse(db, context, subhier, topics, reason, sharename);
 	}
 
-	sub__topic_tokens_free(tokens);
+	mosquitto__free(local_sub);
+	mosquitto__free(topics);
 
 	return rc;
 }
 
 int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored)
 {
-	int rc = 0, rc2;
+	int rc = MOSQ_ERR_SUCCESS, rc2;
 	struct mosquitto__subhier *subhier;
-	struct sub__token *tokens = NULL;
+	char **split_topics = NULL;
+	char *local_topic = NULL;
 
 	assert(db);
 	assert(topic);
 
-	if(sub__topic_tokenise(topic, &tokens)) return 1;
+	if(sub__topic_tokenise(topic, &local_topic, &split_topics, NULL)) return 1;
 
 	/* Protect this message until we have sent it to all
 	clients - this is required because websockets client calls
@@ -668,20 +633,18 @@ int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const ch
 	*/
 	db__msg_store_ref_inc(*stored);
 
-	HASH_FIND(hh, db->subs, tokens->topic, tokens->topic_len, subhier);
+	HASH_FIND(hh, db->subs, split_topics[0], strlen(split_topics[0]), subhier);
 	if(subhier){
-		rc = sub__search(db, subhier, tokens, source_id, topic, qos, retain, *stored);
+		rc = sub__search(db, subhier, split_topics, source_id, topic, qos, retain, *stored);
 	}
 
 	if(retain){
-		rc2 = retain__store(db, topic, *stored, tokens);
-		if(rc2){
-			sub__topic_tokens_free(tokens);
-			db__msg_store_ref_dec(db, stored);
-			return rc2;
-		}
+		rc2 = retain__store(db, topic, *stored, split_topics);
+		if(rc2) rc = rc2;
 	}
-	sub__topic_tokens_free(tokens);
+
+	mosquitto__free(split_topics);
+	mosquitto__free(local_topic);
 	/* Remove our reference and free if needed. */
 	db__msg_store_ref_dec(db, stored);
 
