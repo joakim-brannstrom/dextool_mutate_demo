@@ -17,6 +17,12 @@ void on_connect(struct mosquitto *mosq, void *obj, int reason_code)
 	 * clients is mosquitto_reason_string().
 	 */
 	printf("on_connect: %s\n", mosquitto_connack_string(reason_code));
+	if(reason_code != 0){
+		/* If the connection fails for any reason, we don't want to keep on
+		 * retrying in this example, so disconnect. Without this, the client
+		 * will attempt to reconnect. */
+		mosquitto_disconnect(mosq);
+	}
 
 	/* You may wish to set a flag here to indicate to your application that the
 	 * client is now connected. */
