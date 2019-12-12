@@ -14,6 +14,9 @@ int db__message_store(struct mosquitto_db *db, const struct mosquitto *source, u
     return 0;
 }
 
+void db__msg_store_ref_inc(struct mosquitto_msg_store *store)
+{
+}
 
 int handle__packet(struct mosquitto_db *db, struct mosquitto *context)
 {
@@ -41,6 +44,11 @@ FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read)
 	return NULL;
 }
 
+enum mosquitto_client_state mosquitto__get_state(struct mosquitto *mosq)
+{
+	return mosq_cs_new;
+}
+
 void *mosquitto__malloc(size_t len)
 {
 	return malloc(len);
@@ -61,12 +69,12 @@ ssize_t net__write(struct mosquitto *mosq, void *buf, size_t count)
 	return 0;
 }
 
-int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, uint32_t identifier, int options, struct mosquitto__subhier **root)
+int retain__store(struct mosquitto_db *db, const char *topic, struct mosquitto_msg_store *stored, char **split_topics)
 {
 	return 0;
 }
 
-int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored)
+int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, uint32_t identifier, int options, struct mosquitto__subhier **root)
 {
 	return 0;
 }
