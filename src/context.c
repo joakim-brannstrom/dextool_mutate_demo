@@ -226,6 +226,10 @@ void context__send_will(struct mosquitto_db *db, struct mosquitto *ctxt)
 
 void context__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 {
+	if(mosquitto__get_state(context) == mosq_cs_disconnected){
+		return;
+	}
+
 	net__socket_close(db, context);
 
 	context__send_will(db, context);
