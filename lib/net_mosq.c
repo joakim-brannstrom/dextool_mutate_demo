@@ -25,6 +25,7 @@ Contributors:
 #ifndef WIN32
 #define _GNU_SOURCE
 #include <netdb.h>
+#include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #else
@@ -886,6 +887,13 @@ int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port,
 	if(rc > 0) return rc;
 
 	mosq->sock = sock;
+
+	if(mosq->tcp_nodelay){
+		int flag = 1;
+		if(setsockopt(mosq->sock, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0){
+			log__printf(mosq, MOSQ_LOG_WARNING, "Warning: Unable to set TCP_NODELAY.");
+		}
+	}
 
 #if defined(WITH_SOCKS) && !defined(WITH_BROKER)
 	if(!mosq->socks5_host)

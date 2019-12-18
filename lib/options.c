@@ -447,6 +447,10 @@ int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t option, int val
 #endif
 			break;
 
+		case MOSQ_OPT_TCP_NODELAY:
+			mosq->tcp_nodelay = (bool)value;
+			break;
+
 		default:
 			return MOSQ_ERR_INVAL;
 	}

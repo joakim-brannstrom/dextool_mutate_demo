@@ -113,6 +113,7 @@ enum mosq_opt_t {
 	MOSQ_OPT_TLS_ENGINE_KPASS_SHA1 = 8,
 	MOSQ_OPT_TLS_OCSP_REQUIRED = 9,
 	MOSQ_OPT_TLS_ALPN = 10,
+	MOSQ_OPT_TCP_NODELAY = 11,
 };
 
 
@@ -1432,6 +1433,12 @@ libmosq_EXPORT int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t op
  *	value -  the option specific value.
  *
  * Options:
+ *	MOSQ_OPT_TCP_NODELAY -
+ *	          Set to 1 to disable Nagle's algorithm on client sockets. This has
+ *	          the effect of reducing latency of individual messages at the
+ *	          potential cost of increasing the number of packets being sent.
+ *	          Defaults to 0, which means Nagle remains enabled.
+ *
  *	MOSQ_OPT_PROTOCOL_VERSION -
  *	          Value must be set to either MQTT_PROTOCOL_V31,
  *	          MQTT_PROTOCOL_V311, or MQTT_PROTOCOL_V5. Must be set before the

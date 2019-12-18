@@ -337,6 +337,7 @@ struct mosquitto {
 #endif
 	uint8_t maximum_qos;
 	uint8_t retain_available;
+	bool tcp_nodelay;
 
 #ifdef WITH_BROKER
 	UT_hash_handle hh_id;

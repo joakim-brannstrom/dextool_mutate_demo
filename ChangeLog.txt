@@ -22,6 +22,8 @@ Client library:
   iterating over property lists.
 - mosquitto_pub now handles the MQTT v5 retain-available property by never
   setting the retain bit.
+- Added MOSQ_OPT_TCP_NODELAY, to allow disabling Nagle's algorithm on client
+  sockets. Closes #1526.
 
 Clients:
 - Add timeout return code (27) for `mosquitto_sub -W <secs>` and
@@ -36,6 +38,8 @@ Clients:
 - Add support for v5 property printing to mosquitto_sub/rr in non-JSON mode.
   Closes #1416.
 - mosquitto_sub will now exit if all subscriptions were denied.
+- Add `--nodelay` to all clients to allow them to use the MOSQ_OPT_TCP_NODELAY
+  option.
 
 
 1.6.8 - 20191128

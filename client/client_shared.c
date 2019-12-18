@@ -737,6 +737,8 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->max_inflight = atoi(argv[i+1]);
 			}
 			i++;
+		}else if(!strcmp(argv[i], "--nodelay")){
+			cfg->tcp_nodelay = true;
 		}else if(!strcmp(argv[i], "-n") || !strcmp(argv[i], "--null-message")){
 			if(pub_or_sub == CLIENT_SUB){
 				goto unknown_option;
@@ -1177,6 +1179,9 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		}
 	}
 #endif
+	if(cfg->tcp_nodelay){
+		mosquitto_int_option(mosq, MOSQ_OPT_TCP_NODELAY, 1);
+	}
 	return MOSQ_ERR_SUCCESS;
 }
 

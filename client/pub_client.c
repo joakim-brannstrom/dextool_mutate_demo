@@ -371,9 +371,9 @@ void print_usage(void)
 	printf("                     {-f file | -l | -n | -m message}\n");
 	printf("                     [-c] [-k keepalive] [-q qos] [-r] [--repeat N] [--repeat-delay time]\n");
 #ifdef WITH_SRV
-	printf("                     [-A bind_address] [-S]\n");
+	printf("                     [-A bind_address] [--nodelay] [-S]\n");
 #else
-	printf("                     [-A bind_address]\n");
+	printf("                     [-A bind_address] [--nodelay]\n");
 #endif
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [--quiet]\n");
@@ -424,9 +424,11 @@ void print_usage(void)
 	printf(" -V : specify the version of the MQTT protocol to use when connecting.\n");
 	printf("      Can be mqttv5, mqttv311 or mqttv31. Defaults to mqttv311.\n");
 	printf(" --help : display this message.\n");
+	printf(" --nodelay : disable Nagle's algorithm, to reduce socket sending latency at the possible\n");
+	printf("             expense of more packets being sent.\n");
+	printf(" --quiet : don't print error messages.\n");
 	printf(" --repeat : if publish mode is -f, -m, or -s, then repeat the publish N times.\n");
 	printf(" --repeat-delay : if using --repeat, wait time seconds between publishes. Defaults to 0.\n");
-	printf(" --quiet : don't print error messages.\n");
 	printf(" --unix : connect to a broker through a unix domain socket instead of a TCP socket,\n");
 	printf("          e.g. /tmp/mosquitto.sock\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");

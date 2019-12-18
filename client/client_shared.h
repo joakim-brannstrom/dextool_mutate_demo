@@ -120,6 +120,7 @@ struct mosq_config {
 	mosquitto_property *will_props;
 	bool have_topic_alias; /* pub */
 	char *response_topic; /* rr */
+	bool tcp_nodelay;
 };
 
 int client_config_load(struct mosq_config *config, int pub_or_sub, int argc, char *argv[]);

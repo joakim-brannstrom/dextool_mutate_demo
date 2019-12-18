@@ -35,6 +35,7 @@
 			<arg><option>-i</option> <replaceable>client-id</replaceable></arg>
 			<arg><option>-I</option> <replaceable>client-id-prefix</replaceable></arg>
 			<arg><option>-k</option> <replaceable>keepalive-time</replaceable></arg>
+			<arg><option>--nodelay</option></arg>
 			<arg><option>-q</option> <replaceable>message-QoS</replaceable></arg>
 			<arg><option>--quiet</option></arg>
 			<arg><option>-r</option></arg>
@@ -354,6 +355,16 @@
 				<term><option>--null-message</option></term>
 				<listitem>
 					<para>Send a null (zero length) message.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--nodelay</option></term>
+				<listitem>
+					<para>Disable Nagle's algorithm for the socket. This means
+						that latency of sent messages is reduced, which is
+						particularly noticable for small, reasonably infrequent
+						messages. Using this option may result in more packets
+						being sent than would normally be necessary.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
