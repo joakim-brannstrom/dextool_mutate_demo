@@ -366,9 +366,19 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	}
 #endif
 
-	if(cfg->clean_session == false && (cfg->id_prefix || !cfg->id)){
+	if(cfg->protocol_version != 5 && cfg->clean_session == false && (cfg->id_prefix || !cfg->id)){
 		fprintf(stderr, "Error: You must provide a client id if you are using the -c option.\n");
 		return 1;
+	}
+	if(cfg->protocol_version == 5 && cfg->session_expiry_interval > 0){
+		if(cfg->session_expiry_interval == UINT32_MAX && (cfg->id_prefix || !cfg->id)){
+			fprintf(stderr, "Error: You must provide a client id if you are using an infinite session expiry interval.\n");
+			return 1;
+		}
+		rc = mosquitto_property_add_int32(&cfg->connect_props, MQTT_PROP_SESSION_EXPIRY_INTERVAL, cfg->session_expiry_interval);
+		if(rc){
+			fprintf(stderr, "Error adding property session-expiry-interval\n");
+		}
 	}
 
 	if(pub_or_sub == CLIENT_SUB){
@@ -1081,6 +1091,32 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 					return 1;
 				}
 				cfg->will_topic = strdup(argv[i+1]);
+			}
+			i++;
+		}else if(!strcmp(argv[i], "-x")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: -x argument given but no session expiry interval specified.\n\n");
+				return 1;
+			}else{
+				if(!strcmp(argv[i+1], "∞")){
+					cfg->session_expiry_interval = UINT32_MAX;
+				}else{
+					char *endptr = NULL;
+					cfg->session_expiry_interval = strtol(argv[i+1], &endptr, 0);
+					if(endptr == argv[i+1] || endptr[0] != '\0'){
+						/* Entirety of argument wasn't a number */
+						fprintf(stderr, "Error: session-expiry-interval not a number.\n\n");
+						return 1;
+					}
+					if(cfg->session_expiry_interval > UINT32_MAX || cfg->session_expiry_interval < -1){
+						fprintf(stderr, "Error: session-expiry-interval out of range.\n\n");
+						return 1;
+					}
+					if(cfg->session_expiry_interval == -1){
+						/* Convenience value for infinity. */
+						cfg->session_expiry_interval = UINT32_MAX;
+					}
+				}
 			}
 			i++;
 		}else{

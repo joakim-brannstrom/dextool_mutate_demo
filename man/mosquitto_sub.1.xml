@@ -56,6 +56,7 @@
 			<arg><option>-v</option></arg>
 			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
 			<arg><option>-W</option> <replaceable>message-processing-timeout</replaceable></arg>
+			<arg><option>-x</option> <replaceable>session-expiry-interval</replaceable></arg>
 			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
 			<arg><option>--quiet</option></arg>
 			<arg>
@@ -153,11 +154,18 @@
 				<term><option>-c</option></term>
 				<term><option>--disable-clean-session</option></term>
 				<listitem>
-					<para>Disable the 'clean session' flag. This means that all
-					of the subscriptions for the client will be maintained
-					after it disconnects, along with subsequent QoS 1 and QoS 2
-					messages that arrive. When the client reconnects, it will
-					receive all of the queued messages.</para>
+					<para>Disable 'clean session' / enable persistent client mode.
+						When this argument is used, the broker will be instructed
+						not to clean existing sessions for the same client id when
+						the client connects, and sessions will never expire when
+						the client disconnects. MQTT v5 clients can change their
+						session expiry interval with the <option>-x</option> argument.
+					</para>
+					<para>When a session is persisted on the broker, the subscriptions
+						for the client will be maintained after it disconnects, along
+						with subsequent QoS 1 and QoS 2 messages that arrive. When the
+						client reconnects and does not clean the session, it will
+						receive all of the queued messages.</para>
 					<para>If using this option, the client id must be set
 						manually with <option>--id</option></para>
 				</listitem>
@@ -753,6 +761,19 @@ mosquitto_sub -t 'bbc/#' -T bbc/bbc1 --remove-retained</programlisting>
 					the client disconnects unexpectedly.</para>
 				</listitem>
 			</varlistentry>
+			<varlistentry>
+				<term><option>-x</option></term>
+				<listitem>
+					<para>Set the session-expiry-interval property on the CONNECT packet.
+						Applies to MQTT v5 clients only. Set to 0-4294967294 to specify
+						the session will expire in that many seconds after the client
+						disconnects, or use -1, 4294967295, or ∞ for a session that does
+						not expire. Defaults to -1 if -c is also given, or 0 if -c not
+						given.</para>
+					<para>If the session is set to never expire, either with -x or -c, then
+						a client id must be provided.</para>
+				</listitem>
+			</varlistentry>
 		</variablelist>
 	</refsect1>
 
@@ -903,7 +924,7 @@ mosquitto_sub -t 'bbc/#' -T bbc/bbc1 --remove-retained</programlisting>
 				<listitem><para><option>receive-maximum</option> (16-bit unsigned integer)</para></listitem>
 				<listitem><para><option>request-problem-information</option> (8-bit unsigned integer)</para></listitem>
 				<listitem><para><option>request-response-information</option> (8-bit unsigned integer)</para></listitem>
-				<listitem><para><option>session-expiry-interval</option> (32-bit unsigned integer)</para></listitem>
+				<listitem><para><option>session-expiry-interval</option> (32-bit unsigned integer, note use <option>-x</option> instead)</para></listitem>
 				<listitem><para><option>topic-alias-maximum</option> (16-bit unsigned integer)</para></listitem>
 				<listitem><para><option>user-property</option> (UTF-8 string pair)</para></listitem>
 			</itemizedlist>

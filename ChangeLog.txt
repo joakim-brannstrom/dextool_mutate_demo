@@ -40,6 +40,8 @@ Clients:
 - mosquitto_sub will now exit if all subscriptions were denied.
 - Add `--nodelay` to all clients to allow them to use the MOSQ_OPT_TCP_NODELAY
   option.
+- Add `-x` to all clients to all the session-expiry-interval property to be
+  easily set for MQTT v5 clients.
 
 
 1.6.8 - 20191128

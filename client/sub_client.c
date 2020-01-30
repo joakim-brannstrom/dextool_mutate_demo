@@ -181,7 +181,7 @@ void print_usage(void)
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a set of topics and print all messages it receives.\n");
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_sub {[-h host] [--unix path] [-p port] [-u username] [-P password] -t topic | -L URL [-t topic]}\n");
-	printf("                     [-c] [-k keepalive] [-q qos]\n");
+	printf("                     [-c] [-k keepalive] [-q qos] [-x session-expiry-interval]\n");
 	printf("                     [-C msg_count] [-E] [-R] [--retained-only] [--remove-retained] [-T filter_out] [-U topic ...]\n");
 	printf("                     [-F format]\n");
 #ifndef WIN32
@@ -211,7 +211,11 @@ void print_usage(void)
 	printf("       mosquitto_sub --help\n\n");
 	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
 	printf("      the client communicates over.\n");
-	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
+	printf(" -c : disable clean session/enable persistent client mode\n");
+	printf("      When this argument is used, the broker will be instructed not to clean existing sessions\n");
+	printf("      for the same client id when the client connects, and sessions will never expire when the\n");
+	printf("      client disconnects. MQTT v5 clients can change their session expiry interval with the -x\n");
+	printf("      argument.\n");
 	printf(" -C : disconnect and exit after receiving the 'msg_count' messages.\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -D : Define MQTT v5 properties. See the documentation for more details.\n");
@@ -242,6 +246,10 @@ void print_usage(void)
 #ifndef WIN32
 	printf(" -W : Specifies a timeout in seconds how long to process incoming MQTT messages.\n");
 #endif
+	printf(" -x : Set the session-expiry-interval property on the CONNECT packet. Applies to MQTT v5\n");
+	printf("      clients only. Set to 0-4294967294 to specify the session will expire in that many\n");
+	printf("      seconds after the client disconnects, or use -1, 4294967295, or ∞ for a session\n");
+	printf("      that does not expire. Defaults to -1 if -c is also given, or 0 if -c not given.\n");
 	printf(" --help : display this message.\n");
 	printf(" --nodelay : disable Nagle's algorithm, to reduce socket sending latency at the possible\n");
 	printf("             expense of more packets being sent.\n");
