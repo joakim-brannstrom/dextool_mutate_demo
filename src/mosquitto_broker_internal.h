@@ -514,6 +514,7 @@ struct mosquitto__bridge{
 	bool try_private;
 	bool try_private_accepted;
 	bool clean_start;
+	int8_t clean_start_local;
 	int keepalive;
 	struct mosquitto__bridge_topic *topics;
 	int topic_count;

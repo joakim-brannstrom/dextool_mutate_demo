@@ -1215,6 +1215,17 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
+				}else if(!strcmp(token, "local_cleansession")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					if(conf__parse_bool(&token, "local_cleansession", (bool *) &cur_bridge->clean_start_local, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
 				}else if(!strcmp(token, "clientid_prefixes")){
 					if(reload){
 						mosquitto__free(config->clientid_prefixes);
@@ -1261,6 +1272,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						cur_bridge->protocol_version = mosq_p_mqtt311;
 						cur_bridge->primary_retry_sock = INVALID_SOCKET;
 						cur_bridge->outgoing_retain = true;
+						cur_bridge->clean_start_local = -1;
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty connection value in configuration.");
 						return MOSQ_ERR_INVAL;

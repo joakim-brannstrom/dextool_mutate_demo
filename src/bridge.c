@@ -109,6 +109,10 @@ int bridge__new(struct mosquitto_db *db, struct mosquitto__bridge *bridge)
 #endif
 
 	bridge->try_private_accepted = true;
+	if(bridge->clean_start_local == -1){
+		/* default to "regular" clean start setting */
+		bridge->clean_start_local = bridge->clean_start;
+	}
 	new_context->retain_available = bridge->outgoing_retain;
 	new_context->protocol = bridge->protocol_version;
 
@@ -152,9 +156,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 	bridge__packet_cleanup(context);
 	db__message_reconnect_reset(db, context);
 
-	if(context->clean_start){
-		db__messages_delete(db, context);
-	}
+	db__messages_delete(db, context);
 
 	/* Delete all local subscriptions even for clean_start==false. We don't
 	 * remove any messages and the next loop carries out the resubscription
@@ -331,9 +333,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 	bridge__packet_cleanup(context);
 	db__message_reconnect_reset(db, context);
 
-	if(context->clean_start){
-		db__messages_delete(db, context);
-	}
+	db__messages_delete(db, context);
 
 	/* Delete all local subscriptions even for clean_start==false. We don't
 	 * remove any messages and the next loop carries out the resubscription
