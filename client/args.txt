@@ -45,7 +45,7 @@ v - RR,SUB         (verbose)
 W - SUB            (timeout)
 w
 X
-x
+x - PUB,RR,SUB     (session-expiry-interval)
 Y
 y
 Z
