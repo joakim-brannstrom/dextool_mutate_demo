@@ -701,15 +701,24 @@ int bridge__connect_step2(struct mosquitto_db *db, struct mosquitto *context);
 int bridge__connect_step3(struct mosquitto_db *db, struct mosquitto *context);
 int bridge__on_connect(struct mosquitto_db *db, struct mosquitto *context);
 void bridge__packet_cleanup(struct mosquitto *context);
-#ifdef WITH_EPOLL
 void bridge_check(struct mosquitto_db *db);
-#else
-void bridge_check(struct mosquitto_db *db, struct pollfd *pollfds, int *pollfd_index);
-#endif
 int bridge__register_local_connections(struct mosquitto_db *db);
 int bridge__add_topic(struct mosquitto__bridge *bridge, const char *topic, enum mosquitto__bridge_direction direction, int qos, const char *local_prefix, const char *remote_prefix);
 int bridge__remap_topic_in(struct mosquitto *context, char **topic);
 #endif
+
+/* ============================================================
+ * IO multiplex related functions
+ * ============================================================ */
+int mux__init(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count);
+int mux__loop_prepare(void);
+int mux__add_out(struct mosquitto_db *db, struct mosquitto *context);
+int mux__remove_out(struct mosquitto_db *db, struct mosquitto *context);
+int mux__add_in(struct mosquitto_db *db, struct mosquitto *context);
+int mux__delete(struct mosquitto_db *db, struct mosquitto *context);
+int mux__wait(void);
+int mux__handle(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count);
+int mux__cleanup(struct mosquitto_db *db);
 
 /* ============================================================
  * Property related functions

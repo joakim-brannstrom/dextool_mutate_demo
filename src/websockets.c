@@ -254,6 +254,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
 					mosq->sock = INVALID_SOCKET;
 					mosq->pollfd_index = -1;
+					mux__delete(db, mosq);
 				}
 				mosq->wsi = NULL;
 #ifdef WITH_TLS

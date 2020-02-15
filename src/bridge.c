@@ -30,10 +30,6 @@ Contributors:
 #endif
 
 #ifndef WIN32
-#ifdef WITH_EPOLL
-#include <sys/epoll.h>
-#endif
-#include <poll.h>
 #include <unistd.h>
 #else
 #include <process.h>
@@ -520,20 +516,12 @@ int bridge__on_connect(struct mosquitto_db *db, struct mosquitto *context)
 int bridge__register_local_connections(struct mosquitto_db *db)
 {
 #ifdef WITH_EPOLL
-	struct epoll_event ev;
 	struct mosquitto *context, *ctxt_tmp = NULL;
-
-	memset(&ev, 0, sizeof(struct epoll_event));
 
 	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
 		if(context->bridge){
-			ev.data.fd = context->sock;
-			ev.events = EPOLLIN;
-			context->events = EPOLLIN;
-			if (epoll_ctl(db->epollfd, EPOLL_CTL_ADD, context->sock, &ev) == -1) {
+			if(mux__add_in(db, context)){
 				log__printf(NULL, MOSQ_LOG_ERR, "Error in epoll initial registering bridge: %s", strerror(errno));
-				(void)close(db->epollfd);
-				db->epollfd = 0;
 				return MOSQ_ERR_UNKNOWN;
 			}
 		}
@@ -639,19 +627,12 @@ static void bridge__backoff_reset(struct mosquitto *context)
 	}
 }
 
-#ifdef WITH_EPOLL
 void bridge_check(struct mosquitto_db *db)
-#else
-void bridge_check(struct mosquitto_db *db, struct pollfd *pollfds, int *pollfd_index)
-#endif
 {
 	static time_t last_check = 0;
 	time_t now;
 	struct mosquitto *context = NULL;
 	socklen_t len;
-#ifdef WITH_EPOLL
-	struct epoll_event ev;
-#endif
 	int i;
 	int rc;
 	int err;
@@ -660,9 +641,6 @@ void bridge_check(struct mosquitto_db *db, struct pollfd *pollfds, int *pollfd_i
 
 	if(now <= last_check) return;
 
-#ifdef WITH_EPOLL
-	memset(&ev, 0, sizeof(struct epoll_event));
-#endif
 	for(i=0; i<db->bridge_count; i++){
 		if(!db->bridges[i]) continue;
 
@@ -736,29 +714,10 @@ void bridge_check(struct mosquitto_db *db, struct pollfd *pollfds, int *pollfd_i
 						}else if(rc == 0){
 							rc = bridge__connect_step2(db, context);
 							if(rc == MOSQ_ERR_SUCCESS){
-#ifdef WITH_EPOLL
-								ev.data.fd = context->sock;
-								ev.events = EPOLLIN;
+								rc = mux__add_in(db, context);
 								if(context->current_out_packet){
-									ev.events |= EPOLLOUT;
+									rc = mux__add_out(db, context);
 								}
-								if(epoll_ctl(db->epollfd, EPOLL_CTL_ADD, context->sock, &ev) == -1) {
-									if((errno != EEXIST)||(epoll_ctl(db->epollfd, EPOLL_CTL_MOD, context->sock, &ev) == -1)) {
-											log__printf(NULL, MOSQ_LOG_DEBUG, "Error in epoll re-registering bridge: %s", strerror(errno));
-									}
-								}else{
-									context->events = ev.events;
-								}
-#else
-								pollfds[*pollfd_index].fd = context->sock;
-								pollfds[*pollfd_index].events = POLLIN;
-								pollfds[*pollfd_index].revents = 0;
-								if(context->current_out_packet){
-									pollfds[*pollfd_index].events |= POLLOUT;
-								}
-								context->pollfd_index = *pollfd_index;
-								(*pollfd_index)++;
-#endif
 							}else if(rc == MOSQ_ERR_CONN_PENDING){
 								context->bridge->restart_t = 0;
 							}else{
@@ -778,10 +737,6 @@ void bridge_check(struct mosquitto_db *db, struct pollfd *pollfds, int *pollfd_i
 							context->bridge->restart_t = 0;
 						}
 					}else{
-#ifdef WITH_EPOLL
-						/* clean any events triggered in previous connection */
-						context->events = 0;
-#endif
 						rc = bridge__connect_step1(db, context);
 						if(rc){
 							context->bridge->cur_address++;
@@ -801,29 +756,10 @@ void bridge_check(struct mosquitto_db *db, struct pollfd *pollfds, int *pollfd_i
 							if(context->bridge->round_robin == false && context->bridge->cur_address != 0){
 								context->bridge->primary_retry = now + 5;
 							}
-#ifdef WITH_EPOLL
-							ev.data.fd = context->sock;
-							ev.events = EPOLLIN;
+							rc = mux__add_in(db, context);
 							if(context->current_out_packet){
-								ev.events |= EPOLLOUT;
+								rc = mux__add_out(db, context);
 							}
-							if(epoll_ctl(db->epollfd, EPOLL_CTL_ADD, context->sock, &ev) == -1) {
-								if((errno != EEXIST)||(epoll_ctl(db->epollfd, EPOLL_CTL_MOD, context->sock, &ev) == -1)) {
-										log__printf(NULL, MOSQ_LOG_DEBUG, "Error in epoll re-registering bridge: %s", strerror(errno));
-								}
-							}else{
-								context->events = ev.events;
-							}
-#else
-							pollfds[*pollfd_index].fd = context->sock;
-							pollfds[*pollfd_index].events = POLLIN;
-							pollfds[*pollfd_index].revents = 0;
-							if(context->current_out_packet){
-								pollfds[*pollfd_index].events |= POLLOUT;
-							}
-							context->pollfd_index = *pollfd_index;
-							(*pollfd_index)++;
-#endif
 						}else{
 							context->bridge->cur_address++;
 							if(context->bridge->cur_address == context->bridge->address_count){

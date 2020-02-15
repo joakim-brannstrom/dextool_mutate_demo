@@ -29,6 +29,7 @@ set (MOSQ_SRCS
 	mosquitto.c
 	mosquitto_broker.h mosquitto_broker_internal.h
 	../lib/misc_mosq.c ../lib/misc_mosq.h
+	mux.c mux.h mux_epoll.c mux_poll.c
 	net.c
 	../lib/net_mosq_ocsp.c ../lib/net_mosq.c ../lib/net_mosq.h
 	../lib/packet_datatypes.c
