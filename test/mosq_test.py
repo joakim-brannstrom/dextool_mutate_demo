@@ -114,6 +114,20 @@ def packet_matches(name, recvd, expected):
         return True
 
 
+def receive_unordered(sock, recv1_packet, recv2_packet, error_string):
+    expected1 = recv1_packet + recv2_packet
+    expected2 = recv2_packet + recv1_packet
+    recvd = b''
+    while len(recvd) < len(expected1):
+        recvd += sock.recv(1)
+
+    if recvd == expected1 or recvd == expected2:
+        return
+    else:
+        packet_matches(error_string, recvd, expected2)
+        raise ValueError(error_string)
+
+
 def do_send_receive(sock, send_packet, receive_packet, error_string="send receive error"):
     size = len(send_packet)
     total_sent = 0

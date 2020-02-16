@@ -36,9 +36,8 @@ try:
     # We shouldn't receive the publish here because it is > MAXIMUM_PACKET_SIZE
     mosq_test.do_ping(sock)
 
-    mosq_test.do_send_receive(sock, publish2_packet, puback2_packet, "puback 2")
-
-    mosq_test.expect_packet(sock, "publish2", publish2_packet)
+    sock.send(publish2_packet)
+    mosq_test.receive_unordered(sock, puback2_packet, publish2_packet, "puback 2/publish2")
     rc = 0
 except mosq_test.TestError:
     pass

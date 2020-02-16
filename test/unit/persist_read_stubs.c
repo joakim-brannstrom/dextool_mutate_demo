@@ -135,7 +135,7 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 	return MOSQ_ERR_SUCCESS;
 }
 
-int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored, mosquitto_property *properties)
+int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored, mosquitto_property *properties, bool update)
 {
 	return MOSQ_ERR_SUCCESS;
 }

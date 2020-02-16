@@ -30,9 +30,8 @@ def do_test(proto_ver):
 
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-        mosq_test.do_send_receive(sock, publish_packet, puback_packet, "puback")
-
-        mosq_test.expect_packet(sock, "publish2", publish_packet2)
+        sock.send(publish_packet)
+        mosq_test.receive_unordered(sock, puback_packet, publish_packet2, "puback/publish2")
         rc = 0
 
         sock.close()

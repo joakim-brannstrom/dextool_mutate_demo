@@ -290,7 +290,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			break;
 		case 2:
 			if(dup == 0){
-				res = db__message_insert(db, context, stored->source_mid, mosq_md_in, stored->qos, stored->retain, stored, NULL);
+				res = db__message_insert(db, context, stored->source_mid, mosq_md_in, stored->qos, stored->retain, stored, NULL, false);
 			}else{
 				res = 0;
 			}
@@ -304,6 +304,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			break;
 	}
 
+	db__message_write_queued_in(db, context);
 	return rc;
 process_bad_message:
 	rc = 1;

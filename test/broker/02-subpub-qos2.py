@@ -35,9 +35,10 @@ def do_test(proto_ver):
 
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
         mosq_test.do_send_receive(sock, publish_packet, pubrec_packet, "pubrec")
-        mosq_test.do_send_receive(sock, pubrel_packet, pubcomp_packet, "pubcomp")
+        sock.send(pubrel_packet)
 
-        mosq_test.expect_packet(sock, "publish2", publish_packet2)
+        mosq_test.receive_unordered(sock, pubcomp_packet, publish_packet2, "pubcomp/publish2")
+
         mosq_test.do_send_receive(sock, pubrec_packet2, pubrel_packet2, "pubrel2")
         sock.send(pubcomp_packet2)
         # Broker side of flow complete so can quit here.

@@ -70,7 +70,6 @@ def do_test():
         (stdo, stde) = broker.communicate()
         if rc:
             print(stde.decode('utf-8'))
-            print("proto_ver=%d" % (proto_ver))
             exit(rc)
 
 

@@ -184,7 +184,7 @@ static int retain__process(struct mosquitto_db *db, struct mosquitto__retainhier
 	if(subscription_identifier > 0){
 		mosquitto_property_add_varint(&properties, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, subscription_identifier);
 	}
-	return db__message_insert(db, context, mid, mosq_md_out, qos, true, retained, properties);
+	return db__message_insert(db, context, mid, mosq_md_out, qos, true, retained, properties, false);
 }
 
 

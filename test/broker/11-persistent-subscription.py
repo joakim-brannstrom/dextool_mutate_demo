@@ -52,9 +52,8 @@ def do_test(proto_ver):
 
         sock = mosq_test.do_client_connect(connect_packet, connack_packet2, timeout=20, port=port)
 
-        mosq_test.do_send_receive(sock, publish_packet, puback_packet, "puback")
-
-        mosq_test.expect_packet(sock, "publish2", publish_packet2)
+        sock.send(publish_packet)
+        mosq_test.receive_unordered(sock, puback_packet, publish_packet2, "puback/publish2")
         rc = 0
 
         sock.close()

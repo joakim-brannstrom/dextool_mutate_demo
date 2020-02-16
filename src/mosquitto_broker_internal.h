@@ -653,10 +653,9 @@ void db__limits_set(unsigned long inflight_bytes, int queued, unsigned long queu
 /* Return the number of in-flight messages in count. */
 int db__message_count(int *count);
 int db__message_delete_outgoing(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_state expect_state, int qos);
-int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored, mosquitto_property *properties);
+int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored, mosquitto_property *properties, bool update);
 int db__message_release_incoming(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid);
 int db__message_update_outgoing(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_state state, int qos);
-int db__message_write(struct mosquitto_db *db, struct mosquitto *context);
 void db__message_dequeue_first(struct mosquitto *context, struct mosquitto_msg_data *msg_data);
 int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context, bool force_free);
 int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, uint32_t message_expiry_interval, mosquitto_property **properties);
@@ -672,6 +671,9 @@ void db__msg_store_free(struct mosquitto_msg_store *store);
 int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *context);
 void sys_tree__init(struct mosquitto_db *db);
 void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time);
+int db__message_write_inflight_out(struct mosquitto_db *db, struct mosquitto *context);
+int db__message_write_queued_out(struct mosquitto_db *db, struct mosquitto *context);
+int db__message_write_queued_in(struct mosquitto_db *db, struct mosquitto *context);
 
 /* ============================================================
  * Subscription functions

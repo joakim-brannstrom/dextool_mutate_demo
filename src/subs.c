@@ -95,7 +95,7 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
 		if(leaf->identifier){
 			mosquitto_property_add_varint(&properties, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, leaf->identifier);
 		}
-		if(db__message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, client_retain, stored, properties) == 1){
+		if(db__message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, client_retain, stored, properties, true) == 1){
 			return 1;
 		}
 	}else{

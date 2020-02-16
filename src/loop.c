@@ -166,14 +166,12 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 	time_t last_backup = mosquitto_time();
 #endif
 	time_t now = 0;
-	int time_count;
+	time_t last_keepalive_check = mosquitto_time();
 	struct mosquitto *context, *ctxt_tmp;
-#ifdef WITH_BRIDGE
-	int rc;
-#endif
 #ifdef WITH_WEBSOCKETS
 	int i;
 #endif
+	int rc;
 
 
 #if defined(WITH_WEBSOCKETS) && LWS_LIBRARY_VERSION_NUMBER == 3002000
@@ -197,41 +195,28 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 		}
 #endif
 
-		time_count = 0;
-		HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
-			if(time_count > 0){
-				time_count--;
-			}else{
-				time_count = 1000;
-				now = mosquitto_time();
-			}
+		now = mosquitto_time();
+		if(last_keepalive_check != now){
+			last_keepalive_check = now;
 
-			if(context->sock != INVALID_SOCKET){
-				/* Local bridges never time out in this fashion. */
-				if(!(context->keepalive)
-						|| context->bridge
-						|| now - context->last_msg_in <= (time_t)(context->keepalive)*3/2){
+			HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
+				if(context->sock != INVALID_SOCKET){
+					/* Local bridges never time out in this fashion. */
+					if(!(context->keepalive)
+							|| context->bridge
+							|| now - context->last_msg_in <= (time_t)(context->keepalive)*3/2){
 
-					if(db__message_write(db, context) == MOSQ_ERR_SUCCESS){
-						if(context->current_out_packet || context->state == mosq_cs_connect_pending || context->ws_want_write){
-							mux__add_out(db, context);
-							context->ws_want_write = false;
-						}
-						else{
-							mux__remove_out(db, context);
-						}
 					}else{
-						do_disconnect(db, context, MOSQ_ERR_CONN_LOST);
+						/* Client has exceeded keepalive*1.5 */
+						do_disconnect(db, context, MOSQ_ERR_KEEPALIVE);
 					}
-				}else{
-					/* Client has exceeded keepalive*1.5 */
-					do_disconnect(db, context, MOSQ_ERR_KEEPALIVE);
 				}
 			}
 		}
 
-
+#ifdef WITH_BRIDGE
 		bridge_check(db);
+#endif
 
 		rc = mux__handle(db, listensock, listensock_count);
 		if(rc) return rc;

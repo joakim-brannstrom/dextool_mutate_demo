@@ -59,9 +59,9 @@ try:
     mosq_test.do_send_receive(sock, subscribe2_packet, suback2_packet, "suback2")
 
     mosq_test.do_send_receive(sock, publish1_packet, puback1_packet, "puback1a")
-    mosq_test.do_send_receive(sock, publish2s_packet, puback2s_packet, "puback2a")
+    sock.send(publish2s_packet)
+    mosq_test.receive_unordered(sock, puback2s_packet, publish2a_packet, "puback2a/publish2a")
 
-    mosq_test.expect_packet(sock, "publish2a", publish2a_packet)
     sock.send(puback2a_packet)
 
     broker.terminate()
@@ -74,9 +74,9 @@ try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet2, timeout=20, port=port)
 
     mosq_test.do_send_receive(sock, publish1_packet, puback1_packet, "puback1b")
-    mosq_test.do_send_receive(sock, publish2s_packet, puback2s_packet, "puback2b")
+    sock.send(publish2s_packet)
+    mosq_test.receive_unordered(sock, puback2s_packet, publish2b_packet, "puback2b/publish2b")
 
-    mosq_test.expect_packet(sock, "publish2b", publish2b_packet)
     rc = 0
 
     sock.close()

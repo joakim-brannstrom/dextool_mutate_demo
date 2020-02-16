@@ -346,7 +346,7 @@ int db__message_delete_outgoing(struct mosquitto_db *db, struct mosquitto *conte
 	return MOSQ_ERR_SUCCESS;
 }
 
-int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored, mosquitto_property *properties)
+int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored, mosquitto_property *properties, bool update)
 {
 	struct mosquitto_client_msg *msg;
 	struct mosquitto_msg_data *msg_data;
@@ -522,15 +522,15 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 	if(dir == mosq_md_out && msg->qos > 0){
 		util__decrement_send_quota(context);
 	}
-#ifdef WITH_WEBSOCKETS
-	if(context->wsi && rc == 0){
-		return db__message_write(db, context);
-	}else{
-		return rc;
+
+	if(dir == mosq_md_out && update && context->current_out_packet == NULL){
+		rc = db__message_write_inflight_out(db, context);
+		if(rc) return rc;
+		rc = db__message_write_queued_out(db, context);
+		if(rc) return rc;
 	}
-#else
+
 	return rc;
-#endif
 }
 
 int db__message_update_outgoing(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_state state, int qos)
@@ -926,33 +926,17 @@ int db__message_release_incoming(struct mosquitto_db *db, struct mosquitto *cont
 	}
 }
 
-int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
+int db__message_write_inflight_in(struct mosquitto_db *db, struct mosquitto *context)
 {
-	int rc;
 	struct mosquitto_client_msg *tail, *tmp;
-	uint16_t mid;
-	int retries;
-	int retain;
-	const char *topic;
-	int qos;
-	uint32_t payloadlen;
-	const void *payload;
-	int msg_count = 0;
-	mosquitto_property *cmsg_props = NULL, *store_props = NULL;
+	int rc;
 	time_t now = 0;
-	uint32_t expiry_interval;
-
-	if(!context || context->sock == INVALID_SOCKET
-			|| (context->state == mosq_cs_active && !context->id)){
-		return MOSQ_ERR_INVAL;
-	}
 
 	if(context->state != mosq_cs_active){
 		return MOSQ_ERR_SUCCESS;
 	}
 
 	DL_FOREACH_SAFE(context->msgs_in.inflight, tail, tmp){
-		msg_count++;
 		if(tail->store->message_expiry_time){
 			if(now == 0){
 				now = time(NULL);
@@ -963,11 +947,10 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 				continue;
 			}
 		}
-		mid = tail->mid;
 
 		switch(tail->state){
 			case mosq_ms_send_pubrec:
-				rc = send__pubrec(context, mid, 0, NULL);
+				rc = send__pubrec(context, tail->mid, 0, NULL);
 				if(!rc){
 					tail->state = mosq_ms_wait_for_pubrel;
 				}else{
@@ -976,7 +959,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 				break;
 
 			case mosq_ms_resend_pubcomp:
-				rc = send__pubcomp(context, mid, NULL);
+				rc = send__pubcomp(context, tail->mid, NULL);
 				if(!rc){
 					tail->state = mosq_ms_wait_for_pubrel;
 				}else{
@@ -997,9 +980,31 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 				break;
 		}
 	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int db__message_write_inflight_out(struct mosquitto_db *db, struct mosquitto *context)
+{
+	struct mosquitto_client_msg *tail, *tmp;
+	mosquitto_property *cmsg_props = NULL, *store_props = NULL;
+	int rc;
+	uint16_t mid;
+	int retries;
+	int retain;
+	const char *topic;
+	int qos;
+	uint32_t payloadlen;
+	const void *payload;
+	time_t now = 0;
+	uint32_t expiry_interval;
+
+	if(context->state != mosq_cs_active || context->sock == INVALID_SOCKET){
+		return MOSQ_ERR_SUCCESS;
+	}
 
 	DL_FOREACH_SAFE(context->msgs_out.inflight, tail, tmp){
-		msg_count++;
+		expiry_interval = 0;
 		if(tail->store->message_expiry_time){
 			if(now == 0){
 				now = time(NULL);
@@ -1080,13 +1085,23 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 				break;
 		}
 	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int db__message_write_queued_in(struct mosquitto_db *db, struct mosquitto *context)
+{
+	struct mosquitto_client_msg *tail, *tmp;
+	int rc;
+
+	if(context->state != mosq_cs_active){
+		return MOSQ_ERR_SUCCESS;
+	}
 
 	DL_FOREACH_SAFE(context->msgs_in.queued, tail, tmp){
 		if(context->msgs_out.inflight_maximum != 0 && context->msgs_in.inflight_quota == 0){
 			break;
 		}
-
-		msg_count++;
 
 		if(tail->qos == 2){
 			tail->state = mosq_ms_send_pubrec;
@@ -1099,13 +1114,22 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int db__message_write_queued_out(struct mosquitto_db *db, struct mosquitto *context)
+{
+	struct mosquitto_client_msg *tail, *tmp;
+
+	if(context->state != mosq_cs_active){
+		return MOSQ_ERR_SUCCESS;
+	}
 
 	DL_FOREACH_SAFE(context->msgs_out.queued, tail, tmp){
 		if(context->msgs_out.inflight_maximum != 0 && context->msgs_out.inflight_quota == 0){
 			break;
 		}
-
-		msg_count++;
 
 		switch(tail->qos){
 			case 0:
@@ -1120,9 +1144,9 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 		}
 		db__message_dequeue_first(context, &context->msgs_out);
 	}
-
 	return MOSQ_ERR_SUCCESS;
 }
+
 
 void db__limits_set(unsigned long inflight_bytes, int queued, unsigned long queued_bytes)
 {

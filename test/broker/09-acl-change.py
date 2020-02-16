@@ -98,8 +98,8 @@ try:
     sock.settimeout(10)
     mosq_test.expect_packet(sock, "publish1r", publish1r_packet)
     # We don't expect messages to topic/two any more, so we don't expect the queued one
-    mosq_test.do_send_receive(sock, publish3s_packet, puback3s_packet, "puback3")
-    mosq_test.expect_packet(sock, "publish3r", publish3r_packet)
+    sock.send(publish3s_packet)
+    mosq_test.receive_unordered(sock, puback3s_packet, publish3r_packet, "puback3/publish3r")
 
     # Send this, don't expect it to succeed
     mosq_test.do_send_receive(sock, publish4s_packet, puback4s_packet, "puback4")

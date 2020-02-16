@@ -242,6 +242,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			}
 			mosq->sock = libwebsocket_get_socket_fd(wsi);
 			HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(mosq->sock), mosq);
+			mux__add_in(db, mosq);
 			break;
 
 		case LWS_CALLBACK_CLOSED:
@@ -273,7 +274,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				return -1;
 			}
 
-			db__message_write(db, mosq);
+			db__message_write_inflight_out(db, mosq);
 
 			if(mosq->out_packet && !mosq->current_out_packet){
 				mosq->current_out_packet = mosq->out_packet;
@@ -672,8 +673,13 @@ static int callback_http(struct libwebsocket_context *context,
 		case LWS_CALLBACK_DEL_POLL_FD:
 		case LWS_CALLBACK_CHANGE_MODE_POLL_FD:
 			HASH_FIND(hh_sock, db->contexts_by_sock, &pollargs->fd, sizeof(pollargs->fd), mosq);
-			if(mosq && (pollargs->events & POLLOUT)){
-				mosq->ws_want_write = true;
+			if(mosq){
+				if(pollargs->events & POLLOUT){
+					mux__add_out(db, mosq);
+					mosq->ws_want_write = true;
+				}else{
+					mux__remove_out(db, mosq);
+				}
 			}
 			break;
 
