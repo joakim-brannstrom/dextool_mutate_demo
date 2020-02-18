@@ -671,7 +671,8 @@ void db__msg_store_free(struct mosquitto_msg_store *store);
 int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *context);
 void sys_tree__init(struct mosquitto_db *db);
 void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time);
-int db__message_write_inflight_out(struct mosquitto_db *db, struct mosquitto *context);
+int db__message_write_inflight_out_all(struct mosquitto_db *db, struct mosquitto *context);
+int db__message_write_inflight_out_latest(struct mosquitto_db *db, struct mosquitto *context);
 int db__message_write_queued_out(struct mosquitto_db *db, struct mosquitto *context);
 int db__message_write_queued_in(struct mosquitto_db *db, struct mosquitto *context);
 

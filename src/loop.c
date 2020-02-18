@@ -129,7 +129,7 @@ static int single_publish(struct mosquitto_db *db, struct mosquitto *context, st
 	}else{
 		mid = 0;
 	}
-	return db__message_insert(db, context, mid, mosq_md_out, msg->qos, 0, stored, msg->properties);
+	return db__message_insert(db, context, mid, mosq_md_out, msg->qos, 0, stored, msg->properties, true);
 }
 
 

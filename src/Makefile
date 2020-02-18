@@ -3,7 +3,7 @@ include ../config.mk
 .PHONY: all install uninstall clean reallyclean
 
 ifeq ($(WITH_TLS),yes)
-all : mosquitto 
+all : mosquitto mosquitto_passwd
 else
 all : mosquitto
 endif

@@ -272,11 +272,10 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 	mosquitto__set_state(context, mosq_cs_active);
 	rc = send__connack(db, context, connect_ack, CONNACK_ACCEPTED, connack_props);
 	mosquitto_property_free_all(&connack_props);
-	if(rc) return rc;
-	rc = db__message_write_inflight_out(db, context);
-	if(rc) return rc;
 	rc = db__message_write_queued_out(db, context);
-	return rc;
+	if(rc) return rc;
+	rc = db__message_write_inflight_out_all(db, context);
+	if(rc) return rc;
 error:
 	free(auth_data_out);
 	mosquitto_property_free_all(&connack_props);

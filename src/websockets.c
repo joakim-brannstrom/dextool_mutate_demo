@@ -274,7 +274,8 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				return -1;
 			}
 
-			db__message_write_inflight_out(db, mosq);
+			db__message_write_queued_out(db, mosq);
+			db__message_write_inflight_out_latest(db, mosq);
 
 			if(mosq->out_packet && !mosq->current_out_packet){
 				mosq->current_out_packet = mosq->out_packet;

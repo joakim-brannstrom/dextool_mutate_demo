@@ -221,9 +221,9 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 #endif
 
 	if(context->current_out_packet == NULL){
-		rc = db__message_write_inflight_out(db, context);
-		if(rc) return rc;
 		rc = db__message_write_queued_out(db, context);
+		if(rc) return rc;
+		rc = db__message_write_inflight_out_latest(db, context);
 		if(rc) return rc;
 	}
 

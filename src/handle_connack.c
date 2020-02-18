@@ -67,7 +67,10 @@ int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 		}
 #endif
 		mosquitto__set_state(context, mosq_cs_active);
-		return MOSQ_ERR_SUCCESS;
+		rc = db__message_write_queued_out(db, context);
+		if(rc) return rc;
+		rc = db__message_write_inflight_out_all(db, context);
+		return rc;
 	}else{
 		if(context->protocol == mosq_p_mqtt5){
 			switch(reason_code){
