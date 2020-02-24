@@ -217,10 +217,16 @@ int add__acl(struct mosquitto__security_options *security_opts, const char *user
 	/* Add acl to user acl list */
 	if(acl_user->acl){
 		acl_tail = acl_user->acl;
-		while(acl_tail->next){
-			acl_tail = acl_tail->next;
+		if(access == MOSQ_ACL_NONE){
+			/* Put "deny" acls at front of the list */
+			acl->next = acl_tail;
+			acl_user->acl = acl;
+		}else{
+			while(acl_tail->next){
+				acl_tail = acl_tail->next;
+			}
+			acl_tail->next = acl;
 		}
-		acl_tail->next = acl;
 	}else{
 		acl_user->acl = acl;
 	}
@@ -291,10 +297,16 @@ int add__acl_pattern(struct mosquitto__security_options *security_opts, const ch
 
 	if(security_opts->acl_patterns){
 		acl_tail = security_opts->acl_patterns;
-		while(acl_tail->next){
-			acl_tail = acl_tail->next;
+		if(access == MOSQ_ACL_NONE){
+			/* Put "deny" acls at front of the list */
+			acl->next = acl_tail;
+			security_opts->acl_patterns = acl;
+		}else{
+			while(acl_tail->next){
+				acl_tail = acl_tail->next;
+			}
+			acl_tail->next = acl;
 		}
-		acl_tail->next = acl;
 	}else{
 		security_opts->acl_patterns = acl;
 	}
@@ -334,7 +346,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 		acl_root = NULL;
 	}
 
-	/* Loop through all ACLs for this client. */
+	/* Loop through all ACLs for this client. ACL denials are iterated over first. */
 	while(acl_root){
 		/* Loop through the topic looking for matches to this ACL. */
 
@@ -345,6 +357,10 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 		}
 		mosquitto_topic_matches_sub(acl_root->topic, topic, &result);
 		if(result){
+			if(acl_root->access == MOSQ_ACL_NONE){
+				/* Access was explicitly denied for this topic. */
+				return MOSQ_ERR_ACL_DENIED;
+			}
 			if(access & acl_root->access){
 				/* And access is allowed. */
 				return MOSQ_ERR_SUCCESS;
@@ -374,7 +390,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 		}
 	}
 
-	/* Loop through all pattern ACLs. */
+	/* Loop through all pattern ACLs. ACL denial patterns are iterated over first. */
 	if(!context->id) return MOSQ_ERR_ACL_DENIED;
 	clen = strlen(context->id);
 
@@ -418,6 +434,10 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 		mosquitto_topic_matches_sub(local_acl, topic, &result);
 		mosquitto__free(local_acl);
 		if(result){
+			if(acl_root->access == MOSQ_ACL_NONE){
+				/* Access was explicitly denied for this topic pattern. */
+				return MOSQ_ERR_ACL_DENIED;
+			}
 			if(access & acl_root->access){
 				/* And access is allowed. */
 				return MOSQ_ERR_SUCCESS;
@@ -501,6 +521,8 @@ static int aclfile__parse(struct mosquitto_db *db, struct mosquitto__security_op
 						access = MOSQ_ACL_WRITE;
 					}else if(!strcmp(access_s, "readwrite")){
 						access = MOSQ_ACL_READ | MOSQ_ACL_WRITE;
+					}else if(!strcmp(access_s, "deny")){
+						access = MOSQ_ACL_NONE;
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid topic access type \"%s\" in acl_file \"%s\".", access_s, security_opts->acl_file);
 						mosquitto__free(user);
