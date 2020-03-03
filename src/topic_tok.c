@@ -61,6 +61,12 @@ int sub__topic_tokenise(const char *subtopic, char **local_sub, char ***topics, 
 	int count;
 	int topic_index = 0;
 	int i;
+	int len;
+
+	len = strlen(subtopic);
+	if(len == 0){
+		return MOSQ_ERR_INVAL;
+	}
 
 	*local_sub = mosquitto__strdup(subtopic);
 	if((*local_sub) == NULL) return MOSQ_ERR_NOMEM;

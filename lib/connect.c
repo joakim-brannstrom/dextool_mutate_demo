@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -43,6 +43,7 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(!host || port < 0) return MOSQ_ERR_INVAL;
+	if(keepalive < 5) return MOSQ_ERR_INVAL;
 
 	/* Only MQTT v3.1 requires a client id to be sent */
 	if(mosq->id == NULL && (mosq->protocol == mosq_p_mqtt31)){

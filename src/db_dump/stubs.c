@@ -79,3 +79,7 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 	return 0;
 }
 
+int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored)
+{
+	return 0;
+}
