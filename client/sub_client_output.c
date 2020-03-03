@@ -582,8 +582,27 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 }
 
 
+void rand_init(void)
+{
+	struct tm *ti = NULL;
+	long ns;
+
+	if(!get_time(&ti, &ns)){
+		srandom(ns);
+	}
+}
+
+
 void print_message(struct mosq_config *cfg, const struct mosquitto_message *message, const mosquitto_property *properties)
 {
+	long r;
+
+	if(cfg->random_filter < 10000){
+		r = random();
+		if((r%10000) >= cfg->random_filter){
+			return;
+		}
+	}
 	if(cfg->format){
 		formatted_print(cfg, message, properties);
 	}else if(cfg->verbose){

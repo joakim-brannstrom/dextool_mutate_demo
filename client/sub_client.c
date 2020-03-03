@@ -256,6 +256,9 @@ void print_usage(void)
 	printf(" --pretty : print formatted output rather than minimised output when using the\n");
 	printf("            JSON output format option.\n");
 	printf(" --quiet : don't print error messages.\n");
+	printf(" --random-filter : only print a percentage of received messages. Set to 100 to have all\n");
+	printf("                   messages printed, 50.0 to have half of the messages received on average\n");
+	printf("                   printed, and so on.\n");
 	printf(" --retained-only : only handle messages with the retained flag set, and exit when the\n");
 	printf("                   first non-retained message is received.\n");
 	printf(" --remove-retained : send a message to the server to clear any received retained messages\n");
@@ -306,6 +309,8 @@ int main(int argc, char *argv[])
 #endif
 
 	mosquitto_lib_init();
+
+	rand_init();
 
 	rc = client_config_load(&cfg, CLIENT_SUB, argc, argv);
 	if(rc){

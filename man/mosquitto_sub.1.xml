@@ -44,6 +44,7 @@
 			<arg><option>--nodelay</option></arg>
 			<arg><option>--pretty</option></arg>
 			<arg><option>-q</option> <replaceable>message-QoS</replaceable></arg>
+			<arg><option>--random-filter</option> <replaceable>chance</replaceable></arg>
 			<arg><option>--remove-retained</option></arg>
 			<group choice='opt'>
 				<arg choice='plain'><option>-R</option></arg>
@@ -506,6 +507,17 @@
 						subscribing to a wildcard topic there may be a large
 						number of retained messages. This argument suppresses
 						their display.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--random-filter</option></term>
+				<listitem>
+					<para>This option can be used to reduce the proportion of
+						messages that mosquitto_sub prints. The default behaviour
+						is to print all incoming messages. Setting the
+						<replaceable>chance</replaceable> to a floating point value
+						between 0.1 and 100.0 will ensure that on average that
+						percentage of messages will be printed.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

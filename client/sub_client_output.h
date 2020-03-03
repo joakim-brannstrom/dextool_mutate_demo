@@ -20,6 +20,7 @@ Contributors:
 #include "mosquitto.h"
 #include "client_shared.h"
 
+void rand_init(void);
 void print_message(struct mosq_config *cfg, const struct mosquitto_message *message, const mosquitto_property *properties);
 
 #endif

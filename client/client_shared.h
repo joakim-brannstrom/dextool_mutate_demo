@@ -107,6 +107,7 @@ struct mosq_config {
 	int timeout; /* sub */
 	int sub_opts; /* sub */
 	long session_expiry_interval;
+	int random_filter; /* sub */
 #ifdef WITH_SOCKS
 	char *socks5_host;
 	int socks5_port;

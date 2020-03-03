@@ -149,6 +149,7 @@ void init_config(struct mosq_config *cfg, int pub_or_sub)
 	cfg->repeat_count = 1;
 	cfg->repeat_delay.tv_sec = 0;
 	cfg->repeat_delay.tv_usec = 0;
+	cfg->random_filter = 10000;
 	if(pub_or_sub == CLIENT_RR){
 		cfg->protocol_version = MQTT_PROTOCOL_V5;
 		cfg->msg_count = 1;
@@ -853,6 +854,21 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 			cfg->no_retain = true;
 			cfg->sub_opts |= MQTT_SUB_OPT_SEND_RETAIN_NEVER;
+		}else if(!strcmp(argv[i], "--random-filter")){
+			if(pub_or_sub != CLIENT_SUB){
+				goto unknown_option;
+			}
+			if(i==argc-1){
+				fprintf(stderr, "Error: --random-filter argument given but no chance specified.\n\n");
+				return 1;
+			}else{
+				cfg->random_filter = 10.0*atof(argv[i+1]);
+				if(cfg->random_filter > 10000 || cfg->random_filter < 1){
+					fprintf(stderr, "Error: --random-filter chance must be between 0.1-100.0\n\n");
+					return 1;
+				}
+			}
+			i++;
 		}else if(!strcmp(argv[i], "--remove-retained")){
 			if(pub_or_sub != CLIENT_SUB){
 				goto unknown_option;

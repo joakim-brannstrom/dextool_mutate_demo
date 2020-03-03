@@ -42,6 +42,8 @@ Clients:
   option.
 - Add `-x` to all clients to all the session-expiry-interval property to be
   easily set for MQTT v5 clients.
+- Add `--random-filter` to mosquitto_sub, to allow only a certain proportion
+  of received messages to be printed.
 
 
 1.6.9 - 20200227
