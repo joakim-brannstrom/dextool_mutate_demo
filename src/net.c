@@ -527,6 +527,7 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 		rc = SSL_CTX_use_PrivateKey_file(listener->ssl_ctx, listener->keyfile, SSL_FILETYPE_PEM);
 		if(rc != 1){
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server key file \"%s\". Check keyfile.", listener->keyfile);
+			net__print_ssl_error(NULL);
 #if !defined(OPENSSL_NO_ENGINE)
 			ENGINE_FINISH(engine);
 #endif
