@@ -259,12 +259,8 @@ void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context)
 		context->id = NULL;
 	}
 
-	if(db->ll_for_free){
-		context->for_free_next = db->ll_for_free;
-		db->ll_for_free = context;
-	}else{
-		db->ll_for_free = context;
-	}
+	context->for_free_next = db->ll_for_free;
+	db->ll_for_free = context;
 }
 
 void context__free_disused(struct mosquitto_db *db)
@@ -276,6 +272,7 @@ void context__free_disused(struct mosquitto_db *db)
 	assert(db);
 
 	context = db->ll_for_free;
+	db->ll_for_free = NULL;
 	while(context){
 #ifdef WITH_WEBSOCKETS
 		if(context->wsi){
@@ -297,7 +294,6 @@ void context__free_disused(struct mosquitto_db *db)
 			context = next;
 		}
 	}
-	db->ll_for_free = NULL;
 }
 
 
