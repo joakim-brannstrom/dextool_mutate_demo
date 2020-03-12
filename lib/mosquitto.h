@@ -1397,28 +1397,27 @@ libmosq_EXPORT int mosquitto_threaded_set(struct mosquitto *mosq, bool threaded)
  *	value -  the option specific value.
  *
  * Options:
- *	MOSQ_OPT_PROTOCOL_VERSION
- *	          Value must be an int, set to either MQTT_PROTOCOL_V31 or
- *	          MQTT_PROTOCOL_V311. Must be set before the client connects.
+ *	MOSQ_OPT_PROTOCOL_VERSION - Value must be an int, set to either
+ *	          MQTT_PROTOCOL_V31 or MQTT_PROTOCOL_V311. Must be set
+ *	          before the client connects.
  *	          Defaults to MQTT_PROTOCOL_V31.
  *
- *	MOSQ_OPT_SSL_CTX
- *	          Pass an openssl SSL_CTX to be used when creating TLS connections
- *	          rather than libmosquitto creating its own.  This must be called
- *	          before connecting to have any effect. If you use this option, the
- *	          onus is on you to ensure that you are using secure settings.
+ *	MOSQ_OPT_SSL_CTX - Pass an openssl SSL_CTX to be used when creating
+ *	          TLS connections rather than libmosquitto creating its own.
+ *	          This must be called before connecting to have any effect.
+ *	          If you use this option, the onus is on you to ensure that
+ *	          you are using secure settings.
  *	          Setting to NULL means that libmosquitto will use its own SSL_CTX
  *	          if TLS is to be used.
  *	          This option is only available for openssl 1.1.0 and higher.
  *
- *	MOSQ_OPT_SSL_CTX_WITH_DEFAULTS
- *	          Value must be an int set to 1 or 0. If set to 1, then the user
- *	          specified SSL_CTX passed in using MOSQ_OPT_SSL_CTX will have the
- *	          default options applied to it. This means that you only need to
- *	          change the values that are relevant to you. If you use this
- *	          option then you must configure the TLS options as normal, i.e.
- *	          you should use <mosquitto_tls_set> to configure the cafile/capath
- *	          as a minimum.
+ *	MOSQ_OPT_SSL_CTX_WITH_DEFAULTS - Value must be an int set to 1 or 0.
+ *	          If set to 1, then the user specified SSL_CTX passed in using
+ *	          MOSQ_OPT_SSL_CTX will have the default options applied to it.
+ *	          This means that you only need to change the values that are
+ *	          relevant to you. If you use this option then you must configure
+ *	          the TLS options as normal, i.e. you should use
+ *	          <mosquitto_tls_set> to configure the cafile/capath as a minimum.
  *	          This option is only available for openssl 1.1.0 and higher.
  */
 libmosq_EXPORT int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t option, void *value);
@@ -1434,49 +1433,46 @@ libmosq_EXPORT int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t op
  *	value -  the option specific value.
  *
  * Options:
- *	MOSQ_OPT_TCP_NODELAY -
- *	          Set to 1 to disable Nagle's algorithm on client sockets. This has
- *	          the effect of reducing latency of individual messages at the
- *	          potential cost of increasing the number of packets being sent.
+ *	MOSQ_OPT_TCP_NODELAY - Set to 1 to disable Nagle's algorithm on client
+ *	          sockets. This has the effect of reducing latency of individual
+ *	          messages at the potential cost of increasing the number of
+ *	          packets being sent.
  *	          Defaults to 0, which means Nagle remains enabled.
  *
- *	MOSQ_OPT_PROTOCOL_VERSION -
- *	          Value must be set to either MQTT_PROTOCOL_V31,
+ *	MOSQ_OPT_PROTOCOL_VERSION - Value must be set to either MQTT_PROTOCOL_V31,
  *	          MQTT_PROTOCOL_V311, or MQTT_PROTOCOL_V5. Must be set before the
  *	          client connects.  Defaults to MQTT_PROTOCOL_V311.
  *
- *	MOSQ_OPT_RECEIVE_MAXIMUM -
- *	          Value can be set between 1 and 65535 inclusive, and represents
- *	          the maximum number of incoming QoS 1 and QoS 2 messages that this
- *	          client wants to process at once. Defaults to 20. This option is
- *	          not valid for MQTT v3.1 or v3.1.1 clients.
+ *	MOSQ_OPT_RECEIVE_MAXIMUM - Value can be set between 1 and 65535 inclusive,
+ *	          and represents the maximum number of incoming QoS 1 and QoS 2
+ *	          messages that this client wants to process at once. Defaults to
+ *	          20. This option is not valid for MQTT v3.1 or v3.1.1 clients.
  *	          Note that if the MQTT_PROP_RECEIVE_MAXIMUM property is in the
  *	          proplist passed to mosquitto_connect_v5(), then that property
  *	          will override this option. Using this option is the recommended
  *	          method however.
  *
- *	MOSQ_OPT_SEND_MAXIMUM -
- *	          Value can be set between 1 and 65535 inclusive, and represents
- *	          the maximum number of outgoing QoS 1 and QoS 2 messages that this
- *	          client will attempt to have "in flight" at once. Defaults to 20.
+ *	MOSQ_OPT_SEND_MAXIMUM - Value can be set between 1 and 65535 inclusive,
+ *	          and represents the maximum number of outgoing QoS 1 and QoS 2
+ *	          messages that this client will attempt to have "in flight" at
+ *	          once. Defaults to 20.
  *	          This option is not valid for MQTT v3.1 or v3.1.1 clients.
  *	          Note that if the broker being connected to sends a
  *	          MQTT_PROP_RECEIVE_MAXIMUM property that has a lower value than
  *	          this option, then the broker provided value will be used.
  *
- *	MOSQ_OPT_SSL_CTX_WITH_DEFAULTS -
- *	          If value is set to a non zero value, then the user specified
- *	          SSL_CTX passed in using MOSQ_OPT_SSL_CTX will have the default
- *	          options applied to it. This means that you only need to change
- *	          the values that are relevant to you. If you use this option then
- *	          you must configure the TLS options as normal, i.e.  you should
- *	          use <mosquitto_tls_set> to configure the cafile/capath as a
- *	          minimum.
+ *	MOSQ_OPT_SSL_CTX_WITH_DEFAULTS - If value is set to a non zero value,
+ *	          then the user specified SSL_CTX passed in using MOSQ_OPT_SSL_CTX
+ *	          will have the default options applied to it. This means that
+ *	          you only need to change the values that are relevant to you.
+ *	          If you use this option then you must configure the TLS options
+ *	          as normal, i.e.  you should use <mosquitto_tls_set> to
+ *	          configure the cafile/capath as a minimum.
  *	          This option is only available for openssl 1.1.0 and higher.
  *
- *	MOSQ_OPT_TLS_OCSP_REQUIRED -
- *	          Set whether OCSP checking on TLS connections is required. Set to
- *	          1 to enable checking, or 0 (the default) for no checking.
+ *	MOSQ_OPT_TLS_OCSP_REQUIRED - Set whether OCSP checking on TLS
+ *	          connections is required. Set to 1 to enable checking,
+ *	          or 0 (the default) for no checking.
  */
 libmosq_EXPORT int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t option, int value);
 
@@ -1492,25 +1488,26 @@ libmosq_EXPORT int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t 
  *	value -  the option specific value.
  *
  * Options:
- *	MOSQ_OPT_TLS_ENGINE
- *	          Configure the client for TLS Engine support. Pass a TLS Engine ID
- *	          to be used when creating TLS connections.
- *	          Must be set before <mosquitto_connect>.
- *	MOSQ_OPT_TLS_KEYFORM
- *            Configure the client to treat the keyfile differently depending
- *            on its type.  Must be set before <mosquitto_connect>.
+ *	MOSQ_OPT_TLS_ENGINE - Configure the client for TLS Engine support.
+ *	          Pass a TLS Engine ID to be used when creating TLS
+ *	          connections. Must be set before <mosquitto_connect>.
+ *
+ *	MOSQ_OPT_TLS_KEYFORM - Configure the client to treat the keyfile
+ *	          differently depending on its type.  Must be set
+ *	          before <mosquitto_connect>.
  *	          Set as either "pem" or "engine", to determine from where the
  *	          private key for a TLS connection will be obtained. Defaults to
  *	          "pem", a normal private key file.
- *	MOSQ_OPT_TLS_KPASS_SHA1
- *	          Where the TLS Engine requires the use of a password to be
- *	          accessed, this option allows a hex encoded SHA1 hash of the
- *	          private key password to be passed to the engine directly.
- *	          Must be set before <mosquitto_connect>.
- *	MOSQ_OPT_TLS_ALPN
- *	          If the broker being connected to has multiple services available
- *	          on a single TLS port, such as both MQTT and WebSockets, use this
- *	          option to configure the ALPN option for the connection.
+ *
+ *	MOSQ_OPT_TLS_KPASS_SHA1 - Where the TLS Engine requires the use of
+ *	          a password to be accessed, this option allows a hex encoded
+ *	          SHA1 hash of the private key password to be passed to the
+ *	          engine directly. Must be set before <mosquitto_connect>.
+ *
+ *	MOSQ_OPT_TLS_ALPN - If the broker being connected to has multiple
+ *	          services available on a single TLS port, such as both MQTT
+ *	          and WebSockets, use this option to configure the ALPN
+ *	          option for the connection.
  */
 libmosq_EXPORT int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, const char *value);
 
@@ -1526,11 +1523,11 @@ libmosq_EXPORT int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt
  *	value -  the option specific value.
  *
  * Options:
- *	MOSQ_OPT_SSL_CTX -
- *	          Pass an openssl SSL_CTX to be used when creating TLS connections
- *	          rather than libmosquitto creating its own.  This must be called
- *	          before connecting to have any effect. If you use this option, the
- *	          onus is on you to ensure that you are using secure settings.
+ *	MOSQ_OPT_SSL_CTX - Pass an openssl SSL_CTX to be used when creating TLS
+ *	          connections rather than libmosquitto creating its own.  This must
+ *	          be called before connecting to have any effect. If you use this
+ *	          option, the onus is on you to ensure that you are using secure
+ *	          settings.
  *	          Setting to NULL means that libmosquitto will use its own SSL_CTX
  *	          if TLS is to be used.
  *	          This option is only available for openssl 1.1.0 and higher.
