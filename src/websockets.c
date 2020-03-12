@@ -694,7 +694,7 @@ static int callback_http(struct libwebsocket_context *context,
 static void log_wrap(int level, const char *line)
 {
 	char *l = (char *)line;
-	l[strlen(line)-1] = '\0'; // Remove \n
+	l[strlen(line)-1] = '\0'; /* Remove \n */
 	log__printf(NULL, MOSQ_LOG_WEBSOCKETS, "%s", l);
 }
 

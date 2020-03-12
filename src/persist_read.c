@@ -408,7 +408,7 @@ int persist__restore(struct mosquitto_db *db)
 		goto error;
 	}
 	if(!memcmp(header, magic, 15)){
-		// Restore DB as normal
+		/* Restore DB as normal */
 		read_e(fptr, &crc, sizeof(uint32_t));
 		read_e(fptr, &i32temp, sizeof(uint32_t));
 		db_version = ntohl(i32temp);

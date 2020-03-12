@@ -1,3 +1,7 @@
+Build:
+- Various fixes for building with <C99 support. Closes #1622.
+
+
 1.6.9 - 20200227
 ================
 

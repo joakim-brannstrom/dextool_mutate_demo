@@ -64,7 +64,7 @@ int mosquitto__verify_ocsp_status_cb(SSL * ssl, void *arg)
 	long len = SSL_get_tlsext_status_ocsp_resp(mosq->ssl, &p);
 	log__printf(mosq, MOSQ_LOG_DEBUG, "OCSP: SSL_get_tlsext_status_ocsp_resp returned %ld bytes", len);
 
-	// the following functions expect a const pointer
+	/* the following functions expect a const pointer */
 	cp = (const unsigned char *)p;
 
 	if (!cp || len <= 0) {
@@ -100,9 +100,10 @@ int mosquitto__verify_ocsp_status_cb(SSL * ssl, void *arg)
 
 	st = SSL_CTX_get_cert_store(mosq->ssl_ctx);
 
-	// Note:
-	//    Other checkers often fix problems in OpenSSL before 1.0.2a (e.g. libcurl).
-	//    For all currently supported versions of the OpenSSL project, this is not needed anymore.
+	/* Note:
+	 * Other checkers often fix problems in OpenSSL before 1.0.2a (e.g. libcurl).
+	 * For all currently supported versions of the OpenSSL project, this is not needed anymore.
+	 */
 
 	if ((result2=OCSP_basic_verify(br, ch, st, 0)) <= 0) {
 		log__printf(mosq, MOSQ_LOG_DEBUG, "OCSP: response verification failed (error: %d)", result2);
@@ -126,7 +127,7 @@ int mosquitto__verify_ocsp_status_cb(SSL * ssl, void *arg)
 
 		switch(cert_status) {
 			case V_OCSP_CERTSTATUS_GOOD:
-				// Note: A OCSP stapling result will be accepted up to 5 minutes after it expired!
+				/* Note: A OCSP stapling result will be accepted up to 5 minutes after it expired! */
 				if(!OCSP_check_validity(thisupd, nextupd, 300L, -1L)) {
 					log__printf(mosq, MOSQ_LOG_DEBUG, "OCSP: OCSP response has expired");
 					goto end;
@@ -149,11 +150,11 @@ int mosquitto__verify_ocsp_status_cb(SSL * ssl, void *arg)
 
 	if (br!=NULL)  OCSP_BASICRESP_free(br);
 	if (rsp!=NULL) OCSP_RESPONSE_free(rsp);
-	return 1; // OK
+	return 1; /* OK */
 
 end:
 	if (br!=NULL)  OCSP_BASICRESP_free(br);
 	if (rsp!=NULL) OCSP_RESPONSE_free(rsp);
-	return 0; // Not OK
+	return 0; /* Not OK */
 }
 #endif

@@ -482,11 +482,11 @@ void net__print_ssl_error(struct mosquitto *mosq)
 int net__socket_connect_tls(struct mosquitto *mosq)
 {
 	int ret, err;
+	long res;
 
 	ERR_clear_error();
-	long res;
 	if (mosq->tls_ocsp_required) {
-		// Note: OCSP is available in all currently supported OpenSSL versions.
+		/* Note: OCSP is available in all currently supported OpenSSL versions. */
 		if ((res=SSL_set_tlsext_status_type(mosq->ssl, TLSEXT_STATUSTYPE_ocsp)) != 1) {
 			log__printf(mosq, MOSQ_LOG_ERR, "Could not activate OCSP (error: %ld)", res);
 			return MOSQ_ERR_OCSP;
@@ -537,6 +537,9 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 	ENGINE *engine = NULL;
 	uint8_t tls_alpn_wire[256];
 	uint8_t tls_alpn_len;
+#if !defined(OPENSSL_NO_ENGINE)
+	EVP_PKEY *pkey;
+#endif
 
 	if(mosq->ssl_ctx){
 		if(!mosq->ssl_ctx_defaults){
@@ -595,7 +598,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 		/* Set ALPN */
 		if(mosq->tls_alpn) {
 			tls_alpn_len = (uint8_t) strnlen(mosq->tls_alpn, 254);
-			tls_alpn_wire[0] = tls_alpn_len;  // first byte is length of string
+			tls_alpn_wire[0] = tls_alpn_len;  /* first byte is length of string */
 			memcpy(tls_alpn_wire + 1, mosq->tls_alpn, tls_alpn_len);
 			SSL_CTX_set_alpn_protos(mosq->ssl_ctx, tls_alpn_wire, tls_alpn_len + 1);
 		}
@@ -718,7 +721,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 						}
 						ui_method = NULL;
 					}
-					EVP_PKEY *pkey = ENGINE_load_private_key(engine, mosq->tls_keyfile, ui_method, NULL);
+					pkey = ENGINE_load_private_key(engine, mosq->tls_keyfile, ui_method, NULL);
 					if(!pkey){
 						log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load engine private key file \"%s\".", mosq->tls_keyfile);
 						ENGINE_FINISH(engine);

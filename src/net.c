@@ -444,6 +444,10 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 {
 #ifdef WITH_TLS
 	ENGINE *engine = NULL;
+#  if !defined(OPENSSL_NO_ENGINE)
+	UI_METHOD *ui_method;
+	EVP_PKEY *pkey;
+#  endif
 	int rc;
 
 	rc = SSL_CTX_load_verify_locations(listener->ssl_ctx, listener->cafile, listener->capath);
@@ -493,7 +497,7 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 	}
 	if(listener->tls_engine && listener->tls_keyform == mosq_k_engine){
 #if !defined(OPENSSL_NO_ENGINE)
-		UI_METHOD *ui_method = net__get_ui_method();
+		ui_method = net__get_ui_method();
 		if(listener->tls_engine_kpass_sha1){
 			if(!ENGINE_ctrl_cmd(engine, ENGINE_SECRET_MODE, ENGINE_SECRET_MODE_SHA, NULL, NULL, 0)){
 				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set engine secret mode sha");
@@ -509,7 +513,7 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 			}
 			ui_method = NULL;
 		}
-		EVP_PKEY *pkey = ENGINE_load_private_key(engine, listener->keyfile, ui_method, NULL);
+		pkey = ENGINE_load_private_key(engine, listener->keyfile, ui_method, NULL);
 		if(!pkey){
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load engine private key file \"%s\".", listener->keyfile);
 			net__print_ssl_error(NULL);
