@@ -24,6 +24,7 @@ Contributors:
 #include <strings.h>
 #endif
 
+#include "logging_mosq.h"
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #include "memory_mosq.h"
