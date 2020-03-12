@@ -2174,8 +2174,10 @@ libmosq_EXPORT const char *mosquitto_reason_string(int reason_code);
  *	MOSQ_ERR_INVAL - on an invalid input.
  *
  * Example:
+ * (start code)
  *  mosquitto_string_to_command("CONNECT", &cmd);
  *  // cmd == CMD_CONNECT
+ * (end)
  */
 libmosq_EXPORT int mosquitto_string_to_command(const char *str, int *cmd);
 
@@ -2593,8 +2595,8 @@ libmosq_EXPORT int mosquitto_subscribe_callback(
  *	MOSQ_ERR_NOMEM - on out of memory
  *
  * Example:
- *	mosquitto_property *proplist = NULL;
- *	mosquitto_property_add_byte(&proplist, MQTT_PROP_PAYLOAD_FORMAT_IDENTIFIER, 1);
+ * > mosquitto_property *proplist = NULL;
+ * > mosquitto_property_add_byte(&proplist, MQTT_PROP_PAYLOAD_FORMAT_IDENTIFIER, 1);
  */
 libmosq_EXPORT int mosquitto_property_add_byte(mosquitto_property **proplist, int identifier, uint8_t value);
 
@@ -2617,8 +2619,8 @@ libmosq_EXPORT int mosquitto_property_add_byte(mosquitto_property **proplist, in
  *	MOSQ_ERR_NOMEM - on out of memory
  *
  * Example:
- *	mosquitto_property *proplist = NULL;
- *	mosquitto_property_add_int16(&proplist, MQTT_PROP_RECEIVE_MAXIMUM, 1000);
+ * > mosquitto_property *proplist = NULL;
+ * > mosquitto_property_add_int16(&proplist, MQTT_PROP_RECEIVE_MAXIMUM, 1000);
  */
 libmosq_EXPORT int mosquitto_property_add_int16(mosquitto_property **proplist, int identifier, uint16_t value);
 
@@ -2641,8 +2643,8 @@ libmosq_EXPORT int mosquitto_property_add_int16(mosquitto_property **proplist, i
  *	MOSQ_ERR_NOMEM - on out of memory
  *
  * Example:
- *	mosquitto_property *proplist = NULL;
- *	mosquitto_property_add_int32(&proplist, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL, 86400);
+ * > mosquitto_property *proplist = NULL;
+ * > mosquitto_property_add_int32(&proplist, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL, 86400);
  */
 libmosq_EXPORT int mosquitto_property_add_int32(mosquitto_property **proplist, int identifier, uint32_t value);
 
@@ -2665,8 +2667,8 @@ libmosq_EXPORT int mosquitto_property_add_int32(mosquitto_property **proplist, i
  *	MOSQ_ERR_NOMEM - on out of memory
  *
  * Example:
- *	mosquitto_property *proplist = NULL;
- *	mosquitto_property_add_varint(&proplist, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 1);
+ * > mosquitto_property *proplist = NULL;
+ * > mosquitto_property_add_varint(&proplist, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 1);
  */
 libmosq_EXPORT int mosquitto_property_add_varint(mosquitto_property **proplist, int identifier, uint32_t value);
 
@@ -2690,8 +2692,8 @@ libmosq_EXPORT int mosquitto_property_add_varint(mosquitto_property **proplist, 
  *	MOSQ_ERR_NOMEM - on out of memory
  *
  * Example:
- *	mosquitto_property *proplist = NULL;
- *	mosquitto_property_add_binary(&proplist, MQTT_PROP_AUTHENTICATION_DATA, auth_data, auth_data_len);
+ * > mosquitto_property *proplist = NULL;
+ * > mosquitto_property_add_binary(&proplist, MQTT_PROP_AUTHENTICATION_DATA, auth_data, auth_data_len);
  */
 libmosq_EXPORT int mosquitto_property_add_binary(mosquitto_property **proplist, int identifier, const void *value, uint16_t len);
 
@@ -2715,8 +2717,8 @@ libmosq_EXPORT int mosquitto_property_add_binary(mosquitto_property **proplist, 
  *	MOSQ_ERR_MALFORMED_UTF8 - value is not valid UTF-8.
  *
  * Example:
- *	mosquitto_property *proplist = NULL;
- *	mosquitto_property_add_string(&proplist, MQTT_PROP_CONTENT_TYPE, "application/json");
+ * > mosquitto_property *proplist = NULL;
+ * > mosquitto_property_add_string(&proplist, MQTT_PROP_CONTENT_TYPE, "application/json");
  */
 libmosq_EXPORT int mosquitto_property_add_string(mosquitto_property **proplist, int identifier, const char *value);
 
@@ -2741,8 +2743,8 @@ libmosq_EXPORT int mosquitto_property_add_string(mosquitto_property **proplist, 
  *	MOSQ_ERR_MALFORMED_UTF8 - if name or value are not valid UTF-8.
  *
  * Example:
- *	mosquitto_property *proplist = NULL;
- *	mosquitto_property_add_string_pair(&proplist, MQTT_PROP_USER_PROPERTY, "client", "mosquitto_pub");
+ * > mosquitto_property *proplist = NULL;
+ * > mosquitto_property_add_string_pair(&proplist, MQTT_PROP_USER_PROPERTY, "client", "mosquitto_pub");
  */
 libmosq_EXPORT int mosquitto_property_add_string_pair(mosquitto_property **proplist, int identifier, const char *name, const char *value);
 
@@ -2768,11 +2770,13 @@ libmosq_EXPORT int mosquitto_property_identifier(const mosquitto_property *prope
  * Return the next property in a property list. Use to iterate over a property
  * list, e.g.:
  *
+ * (start code)
  * for(prop = proplist; prop != NULL; prop = mosquitto_property_next(prop)){
- *		if(mosquitto_property_identifier(prop) == MQTT_PROP_CONTENT_TYPE){
- *			...
- *		}
+ * 	if(mosquitto_property_identifier(prop) == MQTT_PROP_CONTENT_TYPE){
+ * 		...
+ * 	}
  * }
+ * (end)
  *
  * Parameters:
  *	proplist - pointer to mosquitto_property pointer, the list of properties
@@ -2795,9 +2799,11 @@ libmosq_EXPORT const mosquitto_property *mosquitto_property_next(const mosquitto
  * If the property is not found, *value will not be modified, so it is safe to
  * pass a variable with a default value to be potentially overwritten:
  *
+ * (start code)
  * uint16_t keepalive = 60; // default value
  * // Get value from property list, or keep default if not found.
  * mosquitto_property_read_int16(proplist, MQTT_PROP_SERVER_KEEP_ALIVE, &keepalive, false);
+ * (end)
  *
  * Parameters:
  *	proplist - mosquitto_property pointer, the list of properties or single property
@@ -2811,6 +2817,7 @@ libmosq_EXPORT const mosquitto_property *mosquitto_property_next(const mosquitto
  *	NULL, if the property is not found, or proplist is NULL.
  *
  * Example:
+ * (start code)
  *	// proplist is obtained from a callback
  *	mosquitto_property *prop;
  *	prop = mosquitto_property_read_byte(proplist, identifier, &value, false);
@@ -2818,6 +2825,7 @@ libmosq_EXPORT const mosquitto_property *mosquitto_property_next(const mosquitto
  *		printf("value: %s\n", value);
  *		prop = mosquitto_property_read_byte(prop, identifier, &value);
  *	}
+ * (end)
  */
 libmosq_EXPORT const mosquitto_property *mosquitto_property_read_byte(
 		const mosquitto_property *proplist,
@@ -2996,9 +3004,9 @@ libmosq_EXPORT const mosquitto_property *mosquitto_property_read_string_pair(
  *   properties - list of properties to free
  *
  * Example:
- *   mosquitto_properties *properties = NULL;
- *   // Add properties
- *   mosquitto_property_free_all(&properties);
+ * > mosquitto_properties *properties = NULL;
+ * > // Add properties
+ * > mosquitto_property_free_all(&properties);
  */
 libmosq_EXPORT void mosquitto_property_free_all(mosquitto_property **properties);
 
@@ -3087,9 +3095,11 @@ libmosq_EXPORT const char *mosquitto_property_identifier_to_string(int identifie
  *	MOSQ_ERR_INVAL - if the string does not match a property
  *
  * Example:
+ * (start code)
  *	mosquitto_string_to_property_info("response-topic", &id, &type);
  *	// id == MQTT_PROP_RESPONSE_TOPIC
  *	// type == MQTT_PROP_TYPE_STRING
+ * (end)
  */
 libmosq_EXPORT int mosquitto_string_to_property_info(const char *propname, int *identifier, int *type);
 
