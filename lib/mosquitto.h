@@ -1387,8 +1387,9 @@ libmosq_EXPORT int mosquitto_threaded_set(struct mosquitto *mosq, bool threaded)
  *
  * Used to set options for the client.
  *
- * This function is deprecated, the replacement <mosquitto_int_option> and
- * <mosquitto_void_option> functions should be used instead.
+ * This function is deprecated, the replacement <mosquitto_int_option>,
+ * <mosquitto_string_option> and <mosquitto_void_option> functions should
+ * be used instead.
  *
  * Parameters:
  *	mosq -   a valid mosquitto instance.
@@ -1478,6 +1479,40 @@ libmosq_EXPORT int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t op
  *	          1 to enable checking, or 0 (the default) for no checking.
  */
 libmosq_EXPORT int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t option, int value);
+
+
+/*
+ * Function: mosquitto_string_option
+ *
+ * Used to set const char* options for the client.
+ *
+ * Parameters:
+ *	mosq -   a valid mosquitto instance.
+ *	option - the option to set.
+ *	value -  the option specific value.
+ *
+ * Options:
+ *	MOSQ_OPT_TLS_ENGINE
+ *	          Configure the client for TLS Engine support. Pass a TLS Engine ID
+ *	          to be used when creating TLS connections.
+ *	          Must be set before <mosquitto_connect>.
+ *	MOSQ_OPT_TLS_KEYFORM
+ *            Configure the client to treat the keyfile differently depending
+ *            on its type.  Must be set before <mosquitto_connect>.
+ *	          Set as either "pem" or "engine", to determine from where the
+ *	          private key for a TLS connection will be obtained. Defaults to
+ *	          "pem", a normal private key file.
+ *	MOSQ_OPT_TLS_KPASS_SHA1
+ *	          Where the TLS Engine requires the use of a password to be
+ *	          accessed, this option allows a hex encoded SHA1 hash of the
+ *	          private key password to be passed to the engine directly.
+ *	          Must be set before <mosquitto_connect>.
+ *	MOSQ_OPT_TLS_ALPN
+ *	          If the broker being connected to has multiple services available
+ *	          on a single TLS port, such as both MQTT and WebSockets, use this
+ *	          option to configure the ALPN option for the connection.
+ */
+libmosq_EXPORT int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, const char *value);
 
 
 /*
@@ -2061,39 +2096,6 @@ libmosq_EXPORT void mosquitto_unsubscribe_v5_callback_set(struct mosquitto *mosq
  *	str -   the message string.
  */
 libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on_log)(struct mosquitto *, void *, int, const char *));
-
-/*
- * Function: mosquitto_string_option
- *
- * Used to set const char* options for the client.
- *
- * Parameters:
- *	mosq -   a valid mosquitto instance.
- *	option - the option to set.
- *	value -  the option specific value.
- *
- * Options:
- *	MOSQ_OPT_TLS_ENGINE
- *	          Configure the client for TLS Engine support. Pass a TLS Engine ID
- *	          to be used when creating TLS connections.
- *	          Must be set before <mosquitto_connect>.
- *	MOSQ_OPT_TLS_KEYFORM
- *            Configure the client to treat the keyfile differently depending
- *            on its type.  Must be set before <mosquitto_connect>.
- *	          Set as either "pem" or "engine", to determine from where the
- *	          private key for a TLS connection will be obtained. Defaults to
- *	          "pem", a normal private key file.
- *	MOSQ_OPT_TLS_KPASS_SHA1
- *	          Where the TLS Engine requires the use of a password to be
- *	          accessed, this option allows a hex encoded SHA1 hash of the
- *	          private key password to be passed to the engine directly.
- *	          Must be set before <mosquitto_connect>.
- *	MOSQ_OPT_TLS_ALPN
- *	          If the broker being connected to has multiple services available
- *	          on a single TLS port, such as both MQTT and WebSockets, use this
- *	          option to configure the ALPN option for the connection.
- */
-libmosq_EXPORT int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, const char *value);
 
 
 /*
