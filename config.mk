@@ -158,8 +158,10 @@ PASSWD_LDADD:=
 
 ifneq ($(or $(findstring $(UNAME),FreeBSD), $(findstring $(UNAME),OpenBSD), $(findstring $(UNAME),NetBSD)),)
 	BROKER_LDADD:=$(BROKER_LDADD) -lm
+	SEDINPLACE:=-i ""
 else
 	BROKER_LDADD:=$(BROKER_LDADD) -ldl -lm
+	SEDINPLACE:=-i
 endif
 
 ifeq ($(UNAME),Linux)
