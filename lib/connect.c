@@ -79,20 +79,6 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 	mosq->msgs_in.inflight_quota = mosq->msgs_in.inflight_maximum;
 	mosq->msgs_out.inflight_quota = mosq->msgs_out.inflight_maximum;
 
-	if(mosq->sockpairR != INVALID_SOCKET){
-		COMPAT_CLOSE(mosq->sockpairR);
-		mosq->sockpairR = INVALID_SOCKET;
-	}
-	if(mosq->sockpairW != INVALID_SOCKET){
-		COMPAT_CLOSE(mosq->sockpairW);
-		mosq->sockpairW = INVALID_SOCKET;
-	}
-
-	if(net__socketpair(&mosq->sockpairR, &mosq->sockpairW)){
-		log__printf(mosq, MOSQ_LOG_WARNING,
-				"Warning: Unable to open socket pair, outgoing publish commands may be delayed.");
-	}
-
 	return MOSQ_ERR_SUCCESS;
 }
 

@@ -1086,6 +1086,9 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 #else
 	int sv[2];
 
+	*pairR = INVALID_SOCKET;
+	*pairW = INVALID_SOCKET;
+
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1){
 		return MOSQ_ERR_ERRNO;
 	}
