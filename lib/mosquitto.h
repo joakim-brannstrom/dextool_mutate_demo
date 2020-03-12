@@ -189,7 +189,7 @@ typedef struct mqtt5__property mosquitto_property;
  *             be returned in this variable.
  *
  * Returns:
- *	LIBMOSQUITTO_VERSION_NUMBER, which is a unique number based on the major,
+ *	LIBMOSQUITTO_VERSION_NUMBER - which is a unique number based on the major,
  *		minor and revision values.
  * See Also:
  * 	<mosquitto_lib_cleanup>, <mosquitto_lib_init>
