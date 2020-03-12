@@ -860,29 +860,7 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const c
  *	sub -  the subscription pattern.
  *	qos -  the requested Quality of Service for this subscription.
  *	options - options to apply to this subscription, OR'd together. Set to 0 to
- *	          use the default options, otherwise choose from the list:
- *	          MQTT_SUB_OPT_NO_LOCAL: with this option set, if this client
- *	                        publishes to a topic to which it is subscribed, the
- *	                        broker will not publish the message back to the
- *	                        client.
- *	          MQTT_SUB_OPT_RETAIN_AS_PUBLISHED: with this option set, messages
- *	                        published for this subscription will keep the
- *	                        retain flag as was set by the publishing client.
- *	                        The default behaviour without this option set has
- *	                        the retain flag indicating whether a message is
- *	                        fresh/stale.
- *	          MQTT_SUB_OPT_SEND_RETAIN_ALWAYS: with this option set,
- *	                        pre-existing retained messages are sent as soon as
- *	                        the subscription is made, even if the subscription
- *	                        already exists. This is the default behaviour, so
- *	                        it is not necessary to set this option.
- *	          MQTT_SUB_OPT_SEND_RETAIN_NEW: with this option set, pre-existing
- *	                        retained messages for this subscription will be
- *	                        sent when the subscription is made, but only if the
- *	                        subscription does not already exist.
- *	          MQTT_SUB_OPT_SEND_RETAIN_NEVER: with this option set,
- *	                        pre-existing retained messages will never be sent
- *	                        for this subscription.
+ *	          use the default options, otherwise choose from list of <mqtt5_sub_options>
  * 	properties - a valid mosquitto_property list, or NULL.
  *
  * Returns:
@@ -918,29 +896,7 @@ libmosq_EXPORT int mosquitto_subscribe_v5(struct mosquitto *mosq, int *mid, cons
  *	qos -  the requested Quality of Service for each subscription.
  *	options - options to apply to this subscription, OR'd together. This
  *	          argument is not used for MQTT v3 susbcriptions. Set to 0 to use
- *	          the default options, otherwise choose from the list:
- *	          MQTT_SUB_OPT_NO_LOCAL: with this option set, if this client
- *	                     publishes to a topic to which it is subscribed, the
- *	                     broker will not publish the message back to the
- *	                     client.
- *	          MQTT_SUB_OPT_RETAIN_AS_PUBLISHED: with this option set, messages
- *	                     published for this subscription will keep the
- *	                     retain flag as was set by the publishing client.
- *	                     The default behaviour without this option set has
- *	                     the retain flag indicating whether a message is
- *	                     fresh/stale.
- *	          MQTT_SUB_OPT_SEND_RETAIN_ALWAYS: with this option set,
- *	                     pre-existing retained messages are sent as soon as
- *	                     the subscription is made, even if the subscription
- *	                     already exists. This is the default behaviour, so
- *	                     it is not necessary to set this option.
- *	          MQTT_SUB_OPT_SEND_RETAIN_NEW: with this option set, pre-existing
- *	                     retained messages for this subscription will be
- *	                     sent when the subscription is made, but only if the
- *	                     subscription does not already exist.
- *	          MQTT_SUB_OPT_SEND_RETAIN_NEVER: with this option set,
- *	                     pre-existing retained messages will never be sent
- *	                     for this subscription.
+ *	          the default options, otherwise choose from list of <mqtt5_sub_options>
  * 	properties - a valid mosquitto_property list, or NULL. Only used with MQTT
  * 	             v5 clients.
  *

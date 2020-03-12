@@ -145,6 +145,30 @@ enum mqtt5_property_type {
 	MQTT_PROP_TYPE_STRING_PAIR = 7
 };
 
+/* Enum: mqtt5_sub_options
+ * Options for use with MQTTv5 subscriptions.
+ *
+ * MQTT_SUB_OPT_NO_LOCAL - with this option set, if this client publishes to
+ * a topic to which it is subscribed, the broker will not publish the
+ * message back to the client.
+ *
+ * MQTT_SUB_OPT_RETAIN_AS_PUBLISHED - with this option set, messages
+ * published for this subscription will keep the retain flag as was set by
+ * the publishing client. The default behaviour without this option set has
+ * the retain flag indicating whether a message is fresh/stale.
+ *
+ * MQTT_SUB_OPT_SEND_RETAIN_ALWAYS - with this option set, pre-existing
+ * retained messages are sent as soon as the subscription is made, even
+ * if the subscription already exists. This is the default behaviour, so
+ * it is not necessary to set this option.
+ *
+ * MQTT_SUB_OPT_SEND_RETAIN_NEW - with this option set, pre-existing retained
+ * messages for this subscription will be sent when the subscription is made,
+ * but only if the subscription does not already exist.
+ *
+ * MQTT_SUB_OPT_SEND_RETAIN_NEVER - with this option set, pre-existing
+ * retained messages will never be sent for this subscription.
+ */
 enum mqtt5_sub_options {
 	MQTT_SUB_OPT_NO_LOCAL = 0x04,
 	MQTT_SUB_OPT_RETAIN_AS_PUBLISHED = 0x08,
