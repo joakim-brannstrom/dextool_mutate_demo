@@ -2495,7 +2495,7 @@ struct libmosquitto_tls {
  *
  * Returns:
  *   MOSQ_ERR_SUCCESS - on success
- *   >0 - on error.
+ *   Greater than 0 - on error.
  */
 libmosq_EXPORT int mosquitto_subscribe_simple(
 		struct mosquitto_message **messages,
@@ -2548,7 +2548,7 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
  *
  * Returns:
  *   MOSQ_ERR_SUCCESS - on success
- *   >0 - on error.
+ *   Greater than 0 - on error.
  */
 libmosq_EXPORT int mosquitto_subscribe_callback(
 		int (*callback)(struct mosquitto *, void *, const struct mosquitto_message *),
