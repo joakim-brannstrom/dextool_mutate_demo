@@ -2322,7 +2322,7 @@ libmosq_EXPORT int mosquitto_topic_matches_sub2(const char *sub, size_t sublen, 
  * Returns:
  *   MOSQ_ERR_SUCCESS -        for a valid topic
  *   MOSQ_ERR_INVAL -          if the topic contains a + or a #, or if it is too long.
- * 	 MOSQ_ERR_MALFORMED_UTF8 - if sub or topic is not valid UTF-8
+ *   MOSQ_ERR_MALFORMED_UTF8 - if topic is not valid UTF-8
  *
  * See Also:
  *   <mosquitto_sub_topic_check>
@@ -2348,7 +2348,7 @@ libmosq_EXPORT int mosquitto_pub_topic_check(const char *topic);
  * Returns:
  *   MOSQ_ERR_SUCCESS -        for a valid topic
  *   MOSQ_ERR_INVAL -          if the topic contains a + or a #, or if it is too long.
- * 	 MOSQ_ERR_MALFORMED_UTF8 - if sub or topic is not valid UTF-8
+ *   MOSQ_ERR_MALFORMED_UTF8 - if topic is not valid UTF-8
  *
  * See Also:
  *   <mosquitto_sub_topic_check>
@@ -2376,7 +2376,7 @@ libmosq_EXPORT int mosquitto_pub_topic_check2(const char *topic, size_t topiclen
  *   MOSQ_ERR_SUCCESS -        for a valid topic
  *   MOSQ_ERR_INVAL -          if the topic contains a + or a # that is in an
  *                             invalid position, or if it is too long.
- * 	 MOSQ_ERR_MALFORMED_UTF8 - if topic is not valid UTF-8
+ *   MOSQ_ERR_MALFORMED_UTF8 - if topic is not valid UTF-8
  *
  * See Also:
  *   <mosquitto_sub_topic_check>
@@ -2405,7 +2405,7 @@ libmosq_EXPORT int mosquitto_sub_topic_check(const char *topic);
  *   MOSQ_ERR_SUCCESS -        for a valid topic
  *   MOSQ_ERR_INVAL -          if the topic contains a + or a # that is in an
  *                             invalid position, or if it is too long.
- * 	 MOSQ_ERR_MALFORMED_UTF8 - if topic is not valid UTF-8
+ *   MOSQ_ERR_MALFORMED_UTF8 - if topic is not valid UTF-8
  *
  * See Also:
  *   <mosquitto_sub_topic_check>
