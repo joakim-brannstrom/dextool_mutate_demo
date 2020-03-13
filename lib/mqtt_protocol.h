@@ -105,6 +105,38 @@ enum mqtt5_return_codes {
 	MQTT_RC_WILDCARD_SUBS_NOT_SUPPORTED = 162,	/* SUBACK, DISCONNECT */
 };
 
+/* Enum: mqtt5_property
+ * Options for use with MQTTv5 properties.
+ * Options:
+ *
+ *	MQTT_PROP_PAYLOAD_FORMAT_INDICATOR - property option.
+ *	MQTT_PROP_MESSAGE_EXPIRY_INTERVAL - property option.
+ *	MQTT_PROP_CONTENT_TYPE - property option.
+ *	MQTT_PROP_RESPONSE_TOPIC - property option.
+ *	MQTT_PROP_CORRELATION_DATA - property option.
+ *	MQTT_PROP_SUBSCRIPTION_IDENTIFIER - property option.
+ *	MQTT_PROP_SESSION_EXPIRY_INTERVAL - property option.
+ *	MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER - property option.
+ *	MQTT_PROP_SERVER_KEEP_ALIVE - property option.
+ *	MQTT_PROP_AUTHENTICATION_METHOD - property option.
+ *	MQTT_PROP_AUTHENTICATION_DATA - property option.
+ *	MQTT_PROP_REQUEST_PROBLEM_INFORMATION - property option.
+ *	MQTT_PROP_WILL_DELAY_INTERVAL - property option.
+ *	MQTT_PROP_REQUEST_RESPONSE_INFORMATION - property option.
+ *	MQTT_PROP_RESPONSE_INFORMATION - property option.
+ *	MQTT_PROP_SERVER_REFERENCE - property option.
+ *	MQTT_PROP_REASON_STRING - property option.
+ *	MQTT_PROP_RECEIVE_MAXIMUM - property option.
+ *	MQTT_PROP_TOPIC_ALIAS_MAXIMUM - property option.
+ *	MQTT_PROP_TOPIC_ALIAS - property option.
+ *	MQTT_PROP_MAXIMUM_QOS - property option.
+ *	MQTT_PROP_RETAIN_AVAILABLE - property option.
+ *	MQTT_PROP_USER_PROPERTY - property option.
+ *	MQTT_PROP_MAXIMUM_PACKET_SIZE - property option.
+ *	MQTT_PROP_WILDCARD_SUB_AVAILABLE - property option.
+ *	MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE - property option.
+ *	MQTT_PROP_SHARED_SUB_AVAILABLE - property option.
+ */
 enum mqtt5_property {
 	MQTT_PROP_PAYLOAD_FORMAT_INDICATOR = 1,		/* Byte :				PUBLISH, Will Properties */
 	MQTT_PROP_MESSAGE_EXPIRY_INTERVAL = 2,		/* 4 byte int :			PUBLISH, Will Properties */
