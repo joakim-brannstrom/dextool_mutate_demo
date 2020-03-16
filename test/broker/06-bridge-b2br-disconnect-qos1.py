@@ -13,7 +13,8 @@ def write_config(filename, port1, port2, protocol_version):
         f.write("topic bridge/# both 1\n")
         f.write("notifications false\n")
         f.write("restart_timeout 5\n")
-        f.write("bridge_protocol_version %s\n" %(protocol_version))
+        f.write("bridge_protocol_version %s\n" % (protocol_version))
+
 
 def do_test(proto_ver):
     if proto_ver == 4:
@@ -33,12 +34,12 @@ def do_test(proto_ver):
     connect_packet = mosq_test.gen_connect(client_id, keepalive=keepalive, clean_session=False, proto_ver=proto_ver_connect)
     connack_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
 
-    mid = 1
     if proto_ver == 5:
         opts = mqtt5_opts.MQTT_SUB_OPT_NO_LOCAL | mqtt5_opts.MQTT_SUB_OPT_RETAIN_AS_PUBLISHED
     else:
         opts = 0
 
+    mid = 1
     subscribe_packet = mosq_test.gen_subscribe(mid, "bridge/#", 1 | opts, proto_ver=proto_ver)
     suback_packet = mosq_test.gen_suback(mid, 1, proto_ver=proto_ver)
 
