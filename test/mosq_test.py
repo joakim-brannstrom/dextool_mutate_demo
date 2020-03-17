@@ -60,6 +60,8 @@ def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False):
             return broker
 
     if expect_fail == False:
+        outs, errs = broker.communicate(timeout=1)
+        print("FAIL: unable to start broker: %s" % errs)
         raise IOError
     else:
         return None
