@@ -1,3 +1,6 @@
+Client library:
+- Don't treat an unexpected PUBREL as a fatal error. Issue #1629.
+
 Build:
 - Various fixes for building with <C99 support. Closes #1622.
 - Fix use of sed on BSD. Closes #1614.

@@ -41,6 +41,7 @@ c : test-compile
 	./03-publish-b2c-qos1.py $@/03-publish-b2c-qos1.test
 	./03-publish-b2c-qos2-len.py $@/03-publish-b2c-qos2-len.test
 	./03-publish-b2c-qos2.py $@/03-publish-b2c-qos2.test
+	./03-publish-b2c-qos2-unexpected-pubrel.py $@/03-publish-b2c-qos2-unexpected-pubrel.test
 	./03-publish-c2b-qos1-disconnect.py $@/03-publish-c2b-qos1-disconnect.test
 	./03-publish-c2b-qos1-len.py $@/03-publish-c2b-qos1-len.test
 	./03-publish-c2b-qos1-receive-maximum.py $@/03-publish-c2b-qos1-receive-maximum.test
