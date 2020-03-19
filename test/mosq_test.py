@@ -123,6 +123,22 @@ def do_send_receive(sock, send_packet, receive_packet, error_string="send receiv
         raise ValueError
 
 
+# Useful for mocking a client receiving (with ack) a qos1 publish
+def do_receive_send(sock, receive_packet, send_packet, error_string="receive send error"):
+    if expect_packet(sock, error_string, receive_packet):
+        size = len(send_packet)
+        total_sent = 0
+        while total_sent < size:
+            sent = sock.send(send_packet[total_sent:])
+            if sent == 0:
+                raise RuntimeError("socket connection broken")
+            total_sent += sent
+        return sock
+    else:
+        sock.close()
+        raise ValueError
+
+
 def do_client_connect(connect_packet, connack_packet, hostname="localhost", port=1888, timeout=60, connack_error="connack"):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(timeout)
