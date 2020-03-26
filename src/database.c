@@ -626,10 +626,6 @@ int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, 
 	}
 	if(db__message_store(db, context, 0, topic_heap, qos, payloadlen, &payload_uhpa, retain, &stored, message_expiry_interval, local_properties, 0, origin)) return 1;
 
-	if(retain){
-		stored->ref_count++;
-	}
-
 	return sub__messages_queue(db, source_id, topic_heap, qos, retain, &stored);
 }
 
@@ -915,9 +911,6 @@ int db__message_release_incoming(struct mosquitto_db *db, struct mosquitto *cont
 			 * denied/dropped and is being processed so the client doesn't
 			 * keep resending it. That means we don't send it to other
 			 * clients. */
-			if(retain){
-				tail->store->ref_count++;
-			}
 			if(topic == NULL){
 				db__message_remove(db, &context->msgs_in, tail);
 				deleted = true;
