@@ -322,13 +322,15 @@ static int sub__add_context(struct mosquitto_db *db, struct mosquitto *context, 
 {
 	struct mosquitto__subhier *branch;
 	int topic_index = 0;
+	size_t topiclen;
 
 	/* Find leaf node */
 	while(topics && topics[topic_index] != NULL){
-		HASH_FIND(hh, subhier->children, topics[topic_index], strlen(topics[topic_index]), branch);
+		topiclen = strlen(topics[topic_index]);
+		HASH_FIND(hh, subhier->children, topics[topic_index], topiclen, branch);
 		if(!branch){
 			/* Not found */
-			branch = sub__add_hier_entry(subhier, &subhier->children, topics[topic_index], strlen(topics[topic_index]));
+			branch = sub__add_hier_entry(subhier, &subhier->children, topics[topic_index], topiclen);
 			if(!branch) return MOSQ_ERR_NOMEM;
 		}
 		subhier = branch;
@@ -562,6 +564,7 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 	const char *sharename = NULL;
 	char *local_sub;
 	char **topics;
+	size_t topiclen;
 
 	assert(root);
 	assert(*root);
@@ -570,9 +573,10 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 	rc = sub__topic_tokenise(sub, &local_sub, &topics, &sharename);
 	if(rc) return rc;
 
-	HASH_FIND(hh, *root, topics[0], strlen(topics[0]), subhier);
+	topiclen = strlen(topics[0]);
+	HASH_FIND(hh, *root, topics[0], topiclen, subhier);
 	if(!subhier){
-		subhier = sub__add_hier_entry(NULL, root, topics[0], strlen(topics[0]));
+		subhier = sub__add_hier_entry(NULL, root, topics[0], topiclen);
 		if(!subhier){
 			mosquitto__free(local_sub);
 			mosquitto__free(topics);
