@@ -100,9 +100,17 @@ endif (WITH_DLT)
 # Include projects
 # ========================================
 
+option(WITH_CLIENTS "Build clients?" ON)
+option(WITH_BROKER "Build broker?" ON)
+
 add_subdirectory(lib)
-add_subdirectory(client)
+if (WITH_CLIENTS)
+	add_subdirectory(client)
+endif (WITH_CLIENTS)
+if (WITH_BROKER)
 add_subdirectory(src)
+endif (WITH_BROKER)
+
 if (DOCUMENTATION)
 	add_subdirectory(man)
 endif (DOCUMENTATION)

@@ -1,4 +1,7 @@
-add_subdirectory(cpp)
+option(WITH_LIB_CPP "Build C++ library?" ON)
+if (WITH_LIB_CPP)
+	add_subdirectory(cpp)
+endif (WITH_LIB_CPP)
 
 include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/lib
 			${STDBOOL_H_PATH} ${STDINT_H_PATH}
