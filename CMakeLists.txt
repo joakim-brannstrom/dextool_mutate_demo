@@ -22,6 +22,7 @@ endif (WIN32)
 
 include(GNUInstallDirs)
 
+option(WITH_BUNDLED_DEPS "Build with bundled dependencies?" ON)
 option(WITH_TLS
 	"Include SSL/TLS support?" ON)
 option(WITH_TLS_PSK
