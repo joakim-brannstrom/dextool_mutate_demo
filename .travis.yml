@@ -8,7 +8,7 @@ os:
   - osx
 
 dist:
-  - xenial
+  - bionic
 
 sudo: true
 
