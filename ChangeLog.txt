@@ -1,3 +1,7 @@
+Broker:
+- Report invalid bridge prefix+pattern combinations at config parsing time
+  rather than letting the bridge fail later. Issue #1635.
+
 Client library:
 - Don't treat an unexpected PUBREL as a fatal error. Issue #1629.
 

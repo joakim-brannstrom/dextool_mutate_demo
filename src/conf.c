@@ -2021,11 +2021,22 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 										log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic local prefix '%s'.", token);
 										return MOSQ_ERR_INVAL;
 									}
-									cur_topic->local_prefix = mosquitto__strdup(token);
-									if(!cur_topic->local_prefix){
+									cur_topic->local_prefix = malloc(strlen(cur_topic->topic) + strlen(token) + 1);
+									if(cur_topic == NULL){
 										log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 										return MOSQ_ERR_NOMEM;
 									}
+									/* Print prefix+pattern to check for validity */
+									snprintf(cur_topic->local_prefix, strlen(cur_topic->topic) + strlen(token)+1,
+											"%s%s", token, cur_topic->topic);
+									if(mosquitto_sub_topic_check(cur_topic->local_prefix) != MOSQ_ERR_SUCCESS){
+										log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic local prefix and pattern combination '%s'.", cur_topic->local_prefix);
+										return MOSQ_ERR_INVAL;
+									}
+									
+									/* Print just the prefix for storage */
+									snprintf(cur_topic->local_prefix, strlen(cur_topic->topic) + strlen(token)+1,
+											"%s", token);
 								}
 
 								token = strtok_r(NULL, " ", &saveptr);
@@ -2037,11 +2048,24 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 											log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic remote prefix '%s'.", token);
 											return MOSQ_ERR_INVAL;
 										}
-										cur_topic->remote_prefix = mosquitto__strdup(token);
-										if(!cur_topic->remote_prefix){
+										cur_topic->remote_prefix = malloc(strlen(cur_topic->topic) + strlen(token) + 1);
+										if(cur_topic == NULL){
 											log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 											return MOSQ_ERR_NOMEM;
 										}
+										/* Print prefix+pattern to check for validity */
+										snprintf(cur_topic->remote_prefix, strlen(cur_topic->topic) + strlen(token)+1,
+												"%s%s", token, cur_topic->topic);
+										if(mosquitto_sub_topic_check(cur_topic->remote_prefix) != MOSQ_ERR_SUCCESS){
+											log__printf(NULL, MOSQ_LOG_ERR,
+													"Error: Invalid bridge topic remote prefix and pattern combination '%s'.",
+													cur_topic->remote_prefix);
+											return MOSQ_ERR_INVAL;
+										}
+									
+										/* Print just the prefix for storage */
+										snprintf(cur_topic->remote_prefix, strlen(cur_topic->topic) + strlen(token)+1,
+												"%s", token);
 									}
 								}
 							}
