@@ -15,8 +15,6 @@ def write_config(filename, port1, port2):
         f.write("topic prefix/# out 0 local2/topic/ remote2/topic/\n")
         f.write("topic +/value out 0 local3/topic/ remote3/topic/\n")
         f.write("topic ic/+ out 0 local4/top remote4/tip\n")
-        f.write("# this one is invalid\n")
-        f.write("topic +/value out 0 local5/top remote5/tip\n")
         f.write("notifications false\n")
         f.write("restart_timeout 5\n")
 
