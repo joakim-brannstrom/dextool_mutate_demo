@@ -55,6 +55,19 @@ Contributors:
 static void bridge__backoff_step(struct mosquitto *context);
 static void bridge__backoff_reset(struct mosquitto *context);
 
+void bridge__start_all(struct mosquitto_db *db)
+{
+	int i;
+
+	for(i=0; i<db->config->bridge_count; i++){
+		if(bridge__new(db, &(db->config->bridges[i]))){
+			log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Unable to connect to bridge %s.", 
+					db->config->bridges[i].name);
+		}
+	}
+}
+
+
 int bridge__new(struct mosquitto_db *db, struct mosquitto__bridge *bridge)
 {
 	struct mosquitto *new_context = NULL;

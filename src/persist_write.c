@@ -298,8 +298,9 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 	int len;
 	struct PF_cfg cfg_chunk;
 
-	if(!db || !db->config || !db->config->persistence_filepath) return MOSQ_ERR_INVAL;
+	if(db == NULL || db->config == NULL) return MOSQ_ERR_INVAL;
 	if(db->config->persistence == false) return MOSQ_ERR_SUCCESS;
+	if(db->config->persistence_filepath == NULL) return MOSQ_ERR_INVAL;
 
 	log__printf(NULL, MOSQ_LOG_INFO, "Saving in-memory database to %s.", db->config->persistence_filepath);
 

@@ -693,6 +693,7 @@ void log__internal(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
  * Bridge functions
  * ============================================================ */
 #ifdef WITH_BRIDGE
+void bridge__start_all(struct mosquitto_db *db);
 int bridge__new(struct mosquitto_db *db, struct mosquitto__bridge *bridge);
 void bridge__cleanup(struct mosquitto_db *db, struct mosquitto *context);
 int bridge__connect(struct mosquitto_db *db, struct mosquitto *context);

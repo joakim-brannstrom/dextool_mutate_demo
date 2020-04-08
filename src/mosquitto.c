@@ -206,14 +206,129 @@ void mosquitto__daemonise(void)
 }
 
 
+int listeners__start(struct mosquitto_db *db, mosq_sock_t **listensock, int *listensock_count)
+{
+	int i, j;
+	int listensock_index = 0;
+
+	listensock_index = 0;
+	(*listensock_count) = 0;
+	for(i=0; i<db->config->listener_count; i++){
+		if(db->config->listeners[i].protocol == mp_mqtt){
+			if(net__socket_listen(&db->config->listeners[i])){
+				db__close(db);
+				if(db->config->pid_file){
+					remove(db->config->pid_file);
+				}
+				return 1;
+			}
+			(*listensock_count) += db->config->listeners[i].sock_count;
+			*listensock = mosquitto__realloc(*listensock, sizeof(mosq_sock_t)*(*listensock_count));
+			if(!listensock){
+				db__close(db);
+				if(db->config->pid_file){
+					remove(db->config->pid_file);
+				}
+				return 1;
+			}
+			for(j=0; j<db->config->listeners[i].sock_count; j++){
+				if(db->config->listeners[i].socks[j] == INVALID_SOCKET){
+					db__close(db);
+					if(db->config->pid_file){
+						remove(db->config->pid_file);
+					}
+					return 1;
+				}
+				(*listensock)[listensock_index] = db->config->listeners[i].socks[j];
+				listensock_index++;
+			}
+		}else if(db->config->listeners[i].protocol == mp_websockets){
+#ifdef WITH_WEBSOCKETS
+			db->config->listeners[i].ws_context = mosq_websockets_init(&db->config->listeners[i], db->config);
+			if(!db->config->listeners[i].ws_context){
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create websockets listener on port %d.", db->config->listeners[i].port);
+				return 1;
+			}
+#endif
+		}
+	}
+	if((*listensock) == NULL){
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to start any listening sockets, exiting.");
+		return 1;
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+void listeners__stop(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count)
+{
+	int i;
+
+	for(i=0; i<db->config->listener_count; i++){
+#ifdef WITH_WEBSOCKETS
+		if(db->config->listeners[i].ws_context){
+			libwebsocket_context_destroy(db->config->listeners[i].ws_context);
+		}
+		mosquitto__free(db->config->listeners[i].ws_protocol);
+#endif
+#ifdef WITH_UNIX_SOCKETS
+		if(db->config->listeners[i].unix_socket_path != NULL){
+			unlink(db->config->listeners[i].unix_socket_path);
+		}
+#endif
+	}
+
+	for(i=0; i<listensock_count; i++){
+		if(listensock[i] != INVALID_SOCKET){
+			COMPAT_CLOSE(listensock[i]);
+		}
+	}
+	mosquitto__free(listensock);
+}
+
+
+void signal__setup(void)
+{
+	signal(SIGINT, handle_sigint);
+	signal(SIGTERM, handle_sigint);
+#ifdef SIGHUP
+	signal(SIGHUP, handle_sighup);
+#endif
+#ifndef WIN32
+	signal(SIGUSR1, handle_sigusr1);
+	signal(SIGUSR2, handle_sigusr2);
+	signal(SIGPIPE, SIG_IGN);
+#endif
+#ifdef WIN32
+	CreateThread(NULL, 0, SigThreadProc, NULL, 0, NULL);
+#endif
+}
+
+
+int pid__write(struct mosquitto_db *db)
+{
+	FILE *pid;
+
+	if(db->config->daemon && db->config->pid_file){
+		pid = mosquitto__fopen(db->config->pid_file, "wt", false);
+		if(pid){
+			fprintf(pid, "%d", getpid());
+			fclose(pid);
+		}else{
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to write pid file.");
+			return 1;
+		}
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 int main(int argc, char *argv[])
 {
 	mosq_sock_t *listensock = NULL;
 	int listensock_count = 0;
-	int listensock_index = 0;
 	struct mosquitto__config config;
-	int i, j;
-	FILE *pid;
+	int i;
 	int rc;
 #ifdef WIN32
 	SYSTEMTIME st;
@@ -263,16 +378,7 @@ int main(int argc, char *argv[])
 		mosquitto__daemonise();
 	}
 
-	if(config.daemon && config.pid_file){
-		pid = mosquitto__fopen(config.pid_file, "wt", false);
-		if(pid){
-			fprintf(pid, "%d", getpid());
-			fclose(pid);
-		}else{
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to write pid file.");
-			return 1;
-		}
-	}
+	if(pid__write(&int_db)) return 1;
 
 	rc = db__open(&config, &int_db);
 	if(rc != MOSQ_ERR_SUCCESS){
@@ -302,75 +408,15 @@ int main(int argc, char *argv[])
 	sys_tree__init(&int_db);
 #endif
 
-	listensock_index = 0;
-	for(i=0; i<config.listener_count; i++){
-		if(config.listeners[i].protocol == mp_mqtt){
-			if(net__socket_listen(&config.listeners[i])){
-				db__close(&int_db);
-				if(config.pid_file){
-					remove(config.pid_file);
-				}
-				return 1;
-			}
-			listensock_count += config.listeners[i].sock_count;
-			listensock = mosquitto__realloc(listensock, sizeof(mosq_sock_t)*listensock_count);
-			if(!listensock){
-				db__close(&int_db);
-				if(config.pid_file){
-					remove(config.pid_file);
-				}
-				return 1;
-			}
-			for(j=0; j<config.listeners[i].sock_count; j++){
-				if(config.listeners[i].socks[j] == INVALID_SOCKET){
-					db__close(&int_db);
-					if(config.pid_file){
-						remove(config.pid_file);
-					}
-					return 1;
-				}
-				listensock[listensock_index] = config.listeners[i].socks[j];
-				listensock_index++;
-			}
-		}else if(config.listeners[i].protocol == mp_websockets){
-#ifdef WITH_WEBSOCKETS
-			config.listeners[i].ws_context = mosq_websockets_init(&config.listeners[i], &config);
-			if(!config.listeners[i].ws_context){
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create websockets listener on port %d.", config.listeners[i].port);
-				return 1;
-			}
-#endif
-		}
-	}
-	if(listensock == NULL){
-		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to start any listening sockets, exiting.");
-		return 1;
-	}
+	if(listeners__start(&int_db, &listensock, &listensock_count)) return 1;
 
 	rc = drop_privileges(&config, false);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
 
-	signal(SIGINT, handle_sigint);
-	signal(SIGTERM, handle_sigint);
-#ifdef SIGHUP
-	signal(SIGHUP, handle_sighup);
-#endif
-#ifndef WIN32
-	signal(SIGUSR1, handle_sigusr1);
-	signal(SIGUSR2, handle_sigusr2);
-	signal(SIGPIPE, SIG_IGN);
-#endif
-#ifdef WIN32
-	CreateThread(NULL, 0, SigThreadProc, NULL, 0, NULL);
-#endif
+	signal__setup();
 
 #ifdef WITH_BRIDGE
-	for(i=0; i<config.bridge_count; i++){
-		if(bridge__new(&int_db, &(config.bridges[i]))){
-			log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Unable to connect to bridge %s.", 
-					config.bridges[i].name);
-		}
-	}
+	bridge__start_all(&int_db);
 #endif
 
 #ifdef WITH_SYSTEMD
@@ -382,20 +428,6 @@ int main(int argc, char *argv[])
 
 	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s terminating", VERSION);
 
-	for(i=0; i<int_db.config->listener_count; i++){
-#ifdef WITH_WEBSOCKETS
-		if(int_db.config->listeners[i].ws_context){
-			libwebsocket_context_destroy(int_db.config->listeners[i].ws_context);
-		}
-		mosquitto__free(int_db.config->listeners[i].ws_protocol);
-#endif
-#ifdef WITH_UNIX_SOCKETS
-		if(int_db.config->listeners[i].unix_socket_path != NULL){
-			unlink(int_db.config->listeners[i].unix_socket_path);
-		}
-#endif
-	}
-
 	/* FIXME - this isn't quite right, all wills with will delay zero should be
 	 * sent now, but those with positive will delay should be persisted and
 	 * restored, pending the client reconnecting in time. */
@@ -405,9 +437,7 @@ int main(int argc, char *argv[])
 	will_delay__send_all(&int_db);
 
 #ifdef WITH_PERSISTENCE
-	if(config.persistence){
-		persist__backup(&int_db, true);
-	}
+	persist__backup(&int_db, true);
 #endif
 	session_expiry__remove_all(&int_db);
 
@@ -435,16 +465,7 @@ int main(int argc, char *argv[])
 
 	db__close(&int_db);
 
-	for(i=0; i<listensock_count; i++){
-		if(listensock[i] != INVALID_SOCKET){
-#ifndef WIN32
-			close(listensock[i]);
-#else
-			closesocket(listensock[i]);
-#endif
-		}
-	}
-	mosquitto__free(listensock);
+	listeners__stop(&int_db, listensock, listensock_count);
 
 	mosquitto_security_module_cleanup(&int_db);
 

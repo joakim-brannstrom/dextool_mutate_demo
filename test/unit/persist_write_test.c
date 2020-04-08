@@ -80,6 +80,7 @@ static void TEST_persistence_disabled(void)
 	memset(&db, 0, sizeof(struct mosquitto_db));
 	memset(&config, 0, sizeof(struct mosquitto__config));
 	db.config = &config;
+	config.persistence = true;
 
 	rc = persist__backup(&db, false);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_INVAL);
