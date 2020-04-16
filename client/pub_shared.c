@@ -50,7 +50,7 @@ void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *s
 
 int load_stdin(void)
 {
-	long pos = 0, rlen;
+	size_t pos = 0, rlen;
 	char buf[1024];
 	char *aux_message = NULL;
 
@@ -70,7 +70,12 @@ int load_stdin(void)
 		memcpy(&(cfg.message[pos]), buf, rlen);
 		pos += rlen;
 	}
-	cfg.msglen = pos;
+	if(pos > MQTT_MAX_PAYLOAD){
+		err_printf(&cfg, "Error: Message length must be less that %u bytes.\n\n", MQTT_MAX_PAYLOAD);
+		free(cfg.message);
+		return 1;
+	}
+	cfg.msglen = (int )pos;
 
 	if(!cfg.msglen){
 		err_printf(&cfg, "Error: Zero length input.\n");
@@ -82,8 +87,9 @@ int load_stdin(void)
 
 int load_file(const char *filename)
 {
-	long pos, rlen;
+	size_t pos, rlen;
 	FILE *fptr = NULL;
+	long flen;
 
 	fptr = fopen(filename, "rb");
 	if(!fptr){
@@ -92,22 +98,28 @@ int load_file(const char *filename)
 	}
 	cfg.pub_mode = MSGMODE_FILE;
 	fseek(fptr, 0, SEEK_END);
-	cfg.msglen = ftell(fptr);
-	if(cfg.msglen > 268435455){
+	flen = ftell(fptr);
+	if(flen > MQTT_MAX_PAYLOAD){
+		err_printf(&cfg, "Error: Message length must be less that %u bytes.\n\n", MQTT_MAX_PAYLOAD);
+		free(cfg.message);
+		return 1;
+	}
+	if(flen > 268435455){
 		fclose(fptr);
 		err_printf(&cfg, "Error: File \"%s\" is too large (>268,435,455 bytes).\n", filename);
 		return 1;
-	}else if(cfg.msglen == 0){
+	}else if(flen == 0){
 		fclose(fptr);
 		err_printf(&cfg, "Error: File \"%s\" is empty.\n", filename);
 		return 1;
-	}else if(cfg.msglen < 0){
+	}else if(flen < 0){
 		fclose(fptr);
 		err_printf(&cfg, "Error: Unable to determine size of file \"%s\".\n", filename);
 		return 1;
 	}
+	cfg.msglen = (int )flen;
 	fseek(fptr, 0, SEEK_SET);
-	cfg.message = malloc(cfg.msglen);
+	cfg.message = malloc((size_t )cfg.msglen);
 	if(!cfg.message){
 		fclose(fptr);
 		err_printf(&cfg, "Error: Out of memory.\n");
@@ -115,7 +127,7 @@ int load_file(const char *filename)
 	}
 	pos = 0;
 	while(pos < cfg.msglen){
-		rlen = fread(&(cfg.message[pos]), sizeof(char), cfg.msglen-pos, fptr);
+		rlen = fread(&(cfg.message[pos]), sizeof(char), (size_t )cfg.msglen-pos, fptr);
 		pos += rlen;
 	}
 	fclose(fptr);
