@@ -121,6 +121,12 @@ static int persist__client_msg_restore(struct mosquitto_db *db, struct P_client_
 		return MOSQ_ERR_SUCCESS;
 	}
 
+	context = persist__find_or_add_context(db, chunk->client_id, 0);
+	if(!context){
+		log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Persistence file contains client message with no matching client. File may be corrupt.");
+		return 0;
+	}
+
 	cmsg = mosquitto__calloc(1, sizeof(struct mosquitto_client_msg));
 	if(!cmsg){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
@@ -140,13 +146,6 @@ static int persist__client_msg_restore(struct mosquitto_db *db, struct P_client_
 
 	cmsg->store = load->store;
 	db__msg_store_ref_inc(cmsg->store);
-
-	context = persist__find_or_add_context(db, chunk->client_id, 0);
-	if(!context){
-		mosquitto__free(cmsg);
-		log__printf(NULL, MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
-		return 1;
-	}
 
 	if(cmsg->direction == mosq_md_out){
 		msg_data = &context->msgs_out;
@@ -186,9 +185,13 @@ static int persist__client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	}else{
 		rc = persist__chunk_client_read_v234(db_fptr, &chunk, db_version);
 	}
-	if(rc){
+	if(rc > 0){
 		fclose(db_fptr);
 		return rc;
+	}else if(rc < 0){
+		/* Client not loaded, but otherwise not an error */
+		log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Empty client entry found in persistence database, it may be corrupt.");
+		return MOSQ_ERR_SUCCESS;
 	}
 
 	context = persist__find_or_add_context(db, chunk.client_id, chunk.F.last_mid);

@@ -175,6 +175,12 @@ static int persist__client_save(struct mosquitto_db *db, FILE *db_fptr)
 			chunk.F.id_len = strlen(context->id);
 			chunk.client_id = context->id;
 
+			if(chunk.F.id_len == 0){
+				/* This should never happen, but in case we have a client with
+				 * zero length ID, don't persist them. */
+				continue;
+			}
+
 			rc = persist__chunk_client_write_v5(db_fptr, &chunk);
 			if(rc){
 				return rc;
