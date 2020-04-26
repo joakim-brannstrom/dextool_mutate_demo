@@ -337,7 +337,7 @@ static int update_pwuser_cb(FILE *fptr, FILE *ftmp, const char *username, const 
 	}else{
 		/* Write out a new line for our matching username */
 		helper->found = true;
-		rc = output_new_password(ftmp, username, password);
+		rc = output_new_password(ftmp, username, helper->password);
 	}
 	return rc;
 }
@@ -349,6 +349,7 @@ int update_pwuser(FILE *fptr, FILE *ftmp, const char *username, const char *pass
 
 	memset(&helper, 0, sizeof(helper));
 	helper.username = username;
+	helper.password = password;
 	rc = pwfile_iterate(fptr, ftmp, update_pwuser_cb, &helper);
 
 	if(helper.found){

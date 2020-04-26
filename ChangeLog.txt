@@ -1,6 +1,9 @@
 Broker:
 - Report invalid bridge prefix+pattern combinations at config parsing time
   rather than letting the bridge fail later. Issue #1635.
+- Fix `mosquitto_passwd -b` not updating passwords for existing users
+  correctly. Creating a new user with `-b` worked without problem.
+  Closes #1664.
 
 Client library:
 - Don't treat an unexpected PUBACK, PUBREL, or PUBCOMP as a fatal error.
