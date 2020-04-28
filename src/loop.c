@@ -297,7 +297,7 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context, int reaso
 						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected due to protocol error.", id);
 						break;
 					case MOSQ_ERR_CONN_LOST:
-						log__printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s closed its connection.", id);
 						break;
 					case MOSQ_ERR_AUTH:
 						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected, no longer authorised.", id);
