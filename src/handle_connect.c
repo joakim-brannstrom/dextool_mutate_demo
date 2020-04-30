@@ -886,5 +886,7 @@ handle_connect_error:
 	if(client_cert) X509_free(client_cert);
 #endif
 	/* We return an error here which means the client is freed later on. */
+	context->clean_start = true;
+	context->session_expiry_interval = 0;
 	return rc;
 }
