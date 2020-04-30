@@ -2070,7 +2070,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 									if(!strcmp(token, "\"\"") || token[0] == '#'){
 										remote_prefix = NULL;
 									}else{
-										remote_prefix = mosquitto__strdup(token);
+										remote_prefix = token;
 									}
 								}
 							}
