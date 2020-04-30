@@ -190,6 +190,7 @@ static void sub__remove_shared_leaf(struct mosquitto__subhier *subhier, struct m
 	DL_DELETE(shared->subs, leaf);
 	if(shared->subs == NULL){
 		HASH_DELETE(hh, subhier->shared, shared);
+		mosquitto__free(shared->name);
 		mosquitto__free(shared);
 	}
 	mosquitto__free(leaf);
