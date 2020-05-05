@@ -20,6 +20,8 @@ pubrec_packet = mosq_test.gen_pubrec(mid)
 pubrel_packet = mosq_test.gen_pubrel(mid)
 pubcomp_packet = mosq_test.gen_pubcomp(mid)
 
+publish_quit_packet = mosq_test.gen_publish("quit", qos=0, payload="quit")
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.settimeout(10)
@@ -52,6 +54,7 @@ try:
                 conn.send(pubrel_packet)
 
                 if mosq_test.expect_packet(conn, "pubcomp", pubcomp_packet):
+                    conn.send(publish_quit_packet)
                     rc = 0
 
     conn.close()
