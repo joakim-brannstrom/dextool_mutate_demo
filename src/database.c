@@ -124,7 +124,7 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 	db->bridge_count = 0;
 #endif
 
-	// Initialize the hashtable
+	/* Initialize the hashtable */
 	db->clientid_index_hash = NULL;
 
 	db->subs = NULL;
@@ -573,7 +573,9 @@ int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context)
 		context->msgs_in.msg_count12 = 0;
 	}
 
-	if(context->bridge && context->bridge->clean_start_local){
+	if((context->bridge && context->bridge->clean_start_local)
+			|| (context->bridge == NULL && context->clean_start)){
+
 		db__messages_delete_list(db, &context->msgs_out.inflight);
 		db__messages_delete_list(db, &context->msgs_out.queued);
 		context->msgs_out.msg_bytes = 0;

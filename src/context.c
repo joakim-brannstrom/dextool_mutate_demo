@@ -103,6 +103,10 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 
 	if(!context) return;
 
+	if(do_free){
+		context->clean_start = true;
+	}
+
 #ifdef WITH_BRIDGE
 	if(context->bridge){
 		bridge__cleanup(db, context);
@@ -121,7 +125,7 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 	context->password = NULL;
 
 	net__socket_close(db, context);
-	if(do_free || context->clean_start){
+	if(do_free){
 		sub__clean_session(db, context);
 	}
 	db__messages_delete(db, context);
