@@ -10,6 +10,7 @@
 #define WITH_PERSISTENCE
 
 #include "mosquitto_broker_internal.h"
+#include "memory_mosq.h"
 
 static void hier_quick_check(struct mosquitto__subhier **sub, struct mosquitto *context, const char *topic)
 {
