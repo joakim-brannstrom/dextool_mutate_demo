@@ -8,9 +8,6 @@ Broker:
 - Don't disconnect clients that are already disconnected. This prevents the
   session expiry being extended on SIGHUP. Closes #1521.
  
- 1.6.8 - 20191128
- ================
-
 Client library:
 - Don't treat an unexpected PUBACK, PUBREL, or PUBCOMP as a fatal error.
   Issue #1629.
