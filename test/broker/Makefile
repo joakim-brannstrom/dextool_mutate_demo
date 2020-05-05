@@ -125,6 +125,7 @@ endif
 	./06-bridge-br2b-disconnect-qos1.py
 	./06-bridge-br2b-disconnect-qos2.py
 	./06-bridge-br2b-remapping.py
+	./06-bridge-clean-session.py
 	./06-bridge-fail-persist-resend-qos1.py
 	./06-bridge-fail-persist-resend-qos2.py
 	./06-bridge-no-local.py

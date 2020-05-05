@@ -1555,6 +1555,17 @@ openssl dhparam -out dhparam.pem 2048</programlisting>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>local_cleansession</option> [ true | false]</term>
+				<listitem>
+					<para>The regular <option>cleansession</option> covers both the local subscriptions
+					and the remote subscriptions.   local_cleansession allows splitting this.
+					Setting <replaceable>false</replaceable> will mean that the local connection
+					will preserve subscription, independent of the remote connection.
+					</para>
+					<para>Defaults to the value of bridge.cleansession unless explicitly specified.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>connection</option> <replaceable>name</replaceable></term>
 				<listitem>
 					<para>This variable marks the start of a new bridge

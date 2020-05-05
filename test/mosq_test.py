@@ -60,6 +60,8 @@ def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False):
             return broker
 
     if expect_fail == False:
+        outs, errs = broker.communicate(timeout=1)
+        print("FAIL: unable to start broker: %s" % errs)
         raise IOError
     else:
         return None
@@ -115,6 +117,22 @@ def do_send_receive(sock, send_packet, receive_packet, error_string="send receiv
         total_sent += sent
 
     if expect_packet(sock, error_string, receive_packet):
+        return sock
+    else:
+        sock.close()
+        raise ValueError
+
+
+# Useful for mocking a client receiving (with ack) a qos1 publish
+def do_receive_send(sock, receive_packet, send_packet, error_string="receive send error"):
+    if expect_packet(sock, error_string, receive_packet):
+        size = len(send_packet)
+        total_sent = 0
+        while total_sent < size:
+            sent = sock.send(send_packet[total_sent:])
+            if sent == 0:
+                raise RuntimeError("socket connection broken")
+            total_sent += sent
         return sock
     else:
         sock.close()
