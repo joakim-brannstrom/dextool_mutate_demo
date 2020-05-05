@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
 		mosq->loop();
 	}
 
+	delete mosq;
 	mosqpp::lib_cleanup();
 
 	return run;

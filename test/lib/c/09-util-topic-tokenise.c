@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
 		print_error("topic", topics, topic_count);
 		return 1;
 	}
+	mosquitto_sub_topic_tokens_free(&topics, topic_count);
 
 	if(mosquitto_sub_topic_tokenise("a/deep/topic/hierarchy", &topics, &topic_count)){
 		printf("Out of memory.\n");
@@ -43,6 +44,7 @@ int main(int argc, char *argv[])
 		print_error("a/deep/topic/hierarchy", topics, topic_count);
 		return 1;
 	}
+	mosquitto_sub_topic_tokens_free(&topics, topic_count);
 
 	if(mosquitto_sub_topic_tokenise("/a/deep/topic/hierarchy", &topics, &topic_count)){
 		printf("Out of memory.\n");
@@ -57,6 +59,7 @@ int main(int argc, char *argv[])
 		print_error("/a/deep/topic/hierarchy", topics, topic_count);
 		return 1;
 	}
+	mosquitto_sub_topic_tokens_free(&topics, topic_count);
 
 	if(mosquitto_sub_topic_tokenise("a/b/c", &topics, &topic_count)){
 		printf("Out of memory.\n");
@@ -69,6 +72,7 @@ int main(int argc, char *argv[])
 		print_error("a/b/c", topics, topic_count);
 		return 1;
 	}
+	mosquitto_sub_topic_tokens_free(&topics, topic_count);
 
 	if(mosquitto_sub_topic_tokenise("/a/b/c", &topics, &topic_count)){
 		printf("Out of memory.\n");
@@ -82,6 +86,7 @@ int main(int argc, char *argv[])
 		print_error("/a/b/c", topics, topic_count);
 		return 1;
 	}
+	mosquitto_sub_topic_tokens_free(&topics, topic_count);
 
 	if(mosquitto_sub_topic_tokenise("a///hierarchy", &topics, &topic_count)){
 		printf("Out of memory.\n");
@@ -95,6 +100,7 @@ int main(int argc, char *argv[])
 		print_error("a///hierarchy", topics, topic_count);
 		return 1;
 	}
+	mosquitto_sub_topic_tokens_free(&topics, topic_count);
 
 	if(mosquitto_sub_topic_tokenise("/a///hierarchy", &topics, &topic_count)){
 		printf("Out of memory.\n");
@@ -109,6 +115,7 @@ int main(int argc, char *argv[])
 		print_error("/a///hierarchy", topics, topic_count);
 		return 1;
 	}
+	mosquitto_sub_topic_tokens_free(&topics, topic_count);
 
 	if(mosquitto_sub_topic_tokenise("/a///hierarchy/", &topics, &topic_count)){
 		printf("Out of memory.\n");
@@ -124,6 +131,7 @@ int main(int argc, char *argv[])
 		print_error("/a///hierarchy/", topics, topic_count);
 		return 1;
 	}
+	mosquitto_sub_topic_tokens_free(&topics, topic_count);
 
 	return 0;
 }
