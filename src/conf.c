@@ -2022,7 +2022,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 										return MOSQ_ERR_INVAL;
 									}
 									cur_topic->local_prefix = malloc(strlen(cur_topic->topic) + strlen(token) + 1);
-									if(cur_topic == NULL){
+									if(cur_topic->local_prefix == NULL){
 										log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 										return MOSQ_ERR_NOMEM;
 									}
