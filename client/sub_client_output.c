@@ -114,7 +114,7 @@ static void json_print(const struct mosquitto_message *message, const struct tm 
 {
 	char buf[100];
 
-	strftime(buf, 100, "%s", ti);
+	snprintf(buf, 100, "%ld", time(NULL));
 	printf("{\"tst\":%s,\"topic\":\"%s\",\"qos\":%d,\"retain\":%d,\"payloadlen\":%d,", buf, message->topic, message->qos, message->retain, message->payloadlen);
 	if(message->qos > 0){
 		printf("\"mid\":%d,", message->mid);

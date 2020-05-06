@@ -12,6 +12,9 @@ Client library:
 - Don't treat an unexpected PUBACK, PUBREL, or PUBCOMP as a fatal error.
   Issue #1629.
 
+Clients:
+- Fix mosquitto_sub %j or %J not working on Windows. Closes #1674.
+
 Build:
 - Various fixes for building with <C99 support. Closes #1622.
 - Fix use of sed on BSD. Closes #1614.
