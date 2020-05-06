@@ -49,6 +49,8 @@ void my_signal_handler(int signum)
 	if(signum == SIGALRM || signum == SIGTERM || signum == SIGINT){
 		process_messages = false;
 		mosquitto_disconnect_v5(mosq, MQTT_RC_DISCONNECT_WITH_WILL_MSG, cfg.disconnect_props);
+	}
+	if(signum == SIGALRM){
 		timed_out = true;
 	}
 }
