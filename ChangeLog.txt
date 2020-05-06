@@ -46,6 +46,7 @@ Clients:
   easily set for MQTT v5 clients.
 - Add `--random-filter` to mosquitto_sub, to allow only a certain proportion
   of received messages to be printed.
+- mosquitto_sub %j and %J timestamps are now in a ISO 8601 compatible format.
 
 
 1.6.9 - 20200227
