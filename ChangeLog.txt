@@ -7,10 +7,12 @@ Broker:
 - Fix memory leak when connecting clients rejected.
 - Don't disconnect clients that are already disconnected. This prevents the
   session expiry being extended on SIGHUP. Closes #1521.
+- Fix support for openssl 3.0.
  
 Client library:
 - Don't treat an unexpected PUBACK, PUBREL, or PUBCOMP as a fatal error.
   Issue #1629.
+- Fix support for openssl 3.0.
 
 Clients:
 - Fix mosquitto_sub %j or %J not working on Windows. Closes #1674.
