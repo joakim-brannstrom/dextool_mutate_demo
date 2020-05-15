@@ -8,6 +8,8 @@ Broker:
 - Don't disconnect clients that are already disconnected. This prevents the
   session expiry being extended on SIGHUP. Closes #1521.
 - Fix support for openssl 3.0.
+- Fix check when loading persistence file of a different version than the
+  native version. Closes #1684.
  
 Client library:
 - Don't treat an unexpected PUBACK, PUBREL, or PUBCOMP as a fatal error.

@@ -415,7 +415,7 @@ int persist__restore(struct mosquitto_db *db)
 		/* IMPORTANT - this is where compatibility checks are made.
 		 * Is your DB change still compatible with previous versions?
 		 */
-		if(db_version > MOSQ_DB_VERSION && db_version != 0){
+		if(db_version != MOSQ_DB_VERSION){
 			if(db_version == 4){
 			}else if(db_version == 3){
 				/* Addition of source_username and source_port to msg_store chunk in v4, v1.5.6 */
