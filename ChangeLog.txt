@@ -15,6 +15,10 @@ Client library:
 - Don't treat an unexpected PUBACK, PUBREL, or PUBCOMP as a fatal error.
   Issue #1629.
 - Fix support for openssl 3.0.
+- Fix memory leaks from multiple calls to
+  `mosquitto_lib_init()`/`mosquitto_lib_cleanup()`. Closes #1691.
+- Fix documentation on return code of `mosquitto_lib_init()` for Windows.
+  Closes #1690.
 
 Clients:
 - Fix mosquitto_sub %j or %J not working on Windows. Closes #1674.
