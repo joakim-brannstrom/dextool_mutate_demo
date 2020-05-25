@@ -110,7 +110,6 @@ sign : dist
 
 copy : sign
 	cd dist; scp mosquitto-${VERSION}.tar.gz mosquitto-${VERSION}.tar.gz.asc mosquitto:site/mosquitto.org/files/source/
-	cd dist; scp *.html mosquitto:site/mosquitto.org/man/
 	scp ChangeLog.txt mosquitto:site/mosquitto.org/
 
 coverage :
