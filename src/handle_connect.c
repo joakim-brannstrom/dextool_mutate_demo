@@ -378,12 +378,17 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	uint16_t auth_data_len = 0;
 	void *auth_data_out = NULL;
 	uint16_t auth_data_out_len = 0;
+	bool allow_zero_length_clientid;
 #ifdef WITH_TLS
 	int i;
 	X509 *client_cert = NULL;
 	X509_NAME *name;
 	X509_NAME_ENTRY *name_entry;
 	ASN1_STRING *name_asn1 = NULL;
+	BIO *subject_bio;
+	char *data_start;
+	long name_length;
+	char *subject;
 #endif
 
 	G_CONNECTION_COUNT_INC();
@@ -494,7 +499,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		rc = MOSQ_ERR_PROTOCOL;
 		goto handle_connect_error;
 	}
-	will_retain = ((connect_flags & 0x20) == 0x20); // Temporary hack because MSVC<1800 doesn't have stdbool.h.
+	will_retain = ((connect_flags & 0x20) == 0x20);
 	password_flag = connect_flags & 0x40;
 	username_flag = connect_flags & 0x80;
 
@@ -537,7 +542,6 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			mosquitto__free(client_id);
 			client_id = NULL;
 
-			bool allow_zero_length_clientid;
 			if(db->config->per_listener_settings){
 				allow_zero_length_clientid = context->listener->security_options.allow_zero_length_clientid;
 			}else{
@@ -687,7 +691,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 				rc = 1;
 				goto handle_connect_error;
 			}
-			if (context->listener->use_identity_as_username) { //use_identity_as_username
+			if (context->listener->use_identity_as_username) { /* use_identity_as_username */
 				i = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
 				if(i == -1){
 					if(context->protocol == mosq_p_mqtt5){
@@ -735,12 +739,12 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 						goto handle_connect_error;
 					}
 				}
-			} else { // use_subject_as_username
-				BIO *subject_bio = BIO_new(BIO_s_mem());
+			} else { /* use_subject_as_username */
+				subject_bio = BIO_new(BIO_s_mem());
 				X509_NAME_print_ex(subject_bio, X509_get_subject_name(client_cert), 0, XN_FLAG_RFC2253);
-				char *data_start = NULL;
-				long name_length = BIO_get_mem_data(subject_bio, &data_start);
-				char *subject = mosquitto__malloc(sizeof(char)*name_length+1);
+				data_start = NULL;
+				name_length = BIO_get_mem_data(subject_bio, &data_start);
+				subject = mosquitto__malloc(sizeof(char)*name_length+1);
 				if(!subject){
 					BIO_free(subject_bio);
 					rc = MOSQ_ERR_NOMEM;
@@ -882,5 +886,7 @@ handle_connect_error:
 	if(client_cert) X509_free(client_cert);
 #endif
 	/* We return an error here which means the client is freed later on. */
+	context->clean_start = true;
+	context->session_expiry_interval = 0;
 	return rc;
 }

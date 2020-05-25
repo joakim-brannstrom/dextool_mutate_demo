@@ -24,6 +24,7 @@ Contributors:
 #include <strings.h>
 #endif
 
+#include "logging_mosq.h"
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #include "memory_mosq.h"
@@ -33,6 +34,7 @@ Contributors:
 #include "packet_mosq.h"
 #include "will_mosq.h"
 
+static unsigned int init_refcount = 0;
 
 void mosquitto__destroy(struct mosquitto *mosq);
 
@@ -46,31 +48,47 @@ int mosquitto_lib_version(int *major, int *minor, int *revision)
 
 int mosquitto_lib_init(void)
 {
+	int rc;
+
+	if (init_refcount == 0) {
 #ifdef WIN32
-	srand(GetTickCount64());
+		srand(GetTickCount64());
 #elif _POSIX_TIMERS>0 && defined(_POSIX_MONOTONIC_CLOCK)
-	struct timespec tp;
+		struct timespec tp;
 
-	clock_gettime(CLOCK_MONOTONIC, &tp);
-	srand(tp.tv_nsec);
+		clock_gettime(CLOCK_MONOTONIC, &tp);
+		srand(tp.tv_nsec);
 #elif defined(__APPLE__)
-	uint64_t ticks;
+		uint64_t ticks;
 
-	ticks = mach_absolute_time();
-	srand((unsigned int)ticks);
+		ticks = mach_absolute_time();
+		srand((unsigned int)ticks);
 #else
-	struct timeval tv;
+		struct timeval tv;
 
-	gettimeofday(&tv, NULL);
-	srand(tv.tv_sec*1000 + tv.tv_usec/1000);
+		gettimeofday(&tv, NULL);
+		srand(tv.tv_sec*1000 + tv.tv_usec/1000);
 #endif
 
-	return net__init();
+		rc = net__init();
+		if (rc != MOSQ_ERR_SUCCESS) {
+			return rc;
+		}
+	}
+
+	init_refcount++;
+	return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_lib_cleanup(void)
 {
-	net__cleanup();
+	if (init_refcount == 1) {
+		net__cleanup();
+	}
+
+	if (init_refcount > 0) {
+		--init_refcount;
+	}
 
 	return MOSQ_ERR_SUCCESS;
 }
@@ -92,8 +110,10 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_start, void *userdata
 	mosq = (struct mosquitto *)mosquitto__calloc(1, sizeof(struct mosquitto));
 	if(mosq){
 		mosq->sock = INVALID_SOCKET;
-		mosq->sockpairR = INVALID_SOCKET;
-		mosq->sockpairW = INVALID_SOCKET;
+		if(net__socketpair(&mosq->sockpairR, &mosq->sockpairW)){
+			log__printf(mosq, MOSQ_LOG_WARNING,
+					"Warning: Unable to open socket pair, outgoing publish commands may be delayed.");
+		}
 #ifdef WITH_THREADING
 		mosq->thread_id = pthread_self();
 #endif
@@ -131,8 +151,10 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_st
 	}
 	mosq->protocol = mosq_p_mqtt311;
 	mosq->sock = INVALID_SOCKET;
-	mosq->sockpairR = INVALID_SOCKET;
-	mosq->sockpairW = INVALID_SOCKET;
+	if(net__socketpair(&mosq->sockpairR, &mosq->sockpairW)){
+		log__printf(mosq, MOSQ_LOG_WARNING,
+				"Warning: Unable to open socket pair, outgoing publish commands may be delayed.");
+	}
 	mosq->keepalive = 60;
 	mosq->clean_start = clean_start;
 	if(id){

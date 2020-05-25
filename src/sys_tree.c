@@ -213,6 +213,7 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 
 	double exponent;
 	double i_mult;
+	bool initial_publish;
 
 	now = mosquitto_time();
 
@@ -222,7 +223,7 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 		db__messages_easy_queue(db, NULL, "$SYS/broker/uptime", SYS_TREE_QOS, strlen(buf), buf, 1, 60, NULL);
 
 		sys_tree__update_clients(db, buf);
-		bool initial_publish = false;
+		initial_publish = false;
 		if(last_update == 0){
 			initial_publish = true;
 			last_update = 1;

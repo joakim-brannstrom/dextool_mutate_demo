@@ -48,7 +48,7 @@ extern "C" {
 
 #define LIBMOSQUITTO_MAJOR 1
 #define LIBMOSQUITTO_MINOR 6
-#define LIBMOSQUITTO_REVISION 9
+#define LIBMOSQUITTO_REVISION 10
 /* LIBMOSQUITTO_VERSION_NUMBER looks like 1002001 for e.g. version 1.2.1. */
 #define LIBMOSQUITTO_VERSION_NUMBER (LIBMOSQUITTO_MAJOR*1000000+LIBMOSQUITTO_MINOR*1000+LIBMOSQUITTO_REVISION)
 
@@ -202,7 +202,8 @@ libmosq_EXPORT int mosquitto_lib_version(int *major, int *minor, int *revision);
  * This function is *not* thread safe.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - always
+ * 	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_UNKNOWN - on Windows, if sockets couldn't be initialized.
  *
  * See Also:
  * 	<mosquitto_lib_cleanup>, <mosquitto_lib_version>

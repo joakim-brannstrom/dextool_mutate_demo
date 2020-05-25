@@ -39,8 +39,11 @@ c : test-compile
 	./02-unsubscribe-v5.py $@/02-unsubscribe-v5.test
 	./02-unsubscribe.py $@/02-unsubscribe.test
 	./03-publish-b2c-qos1.py $@/03-publish-b2c-qos1.test
+	./03-publish-b2c-qos1-unexpected-puback.py $@/03-publish-b2c-qos1-unexpected-puback.test
 	./03-publish-b2c-qos2-len.py $@/03-publish-b2c-qos2-len.test
 	./03-publish-b2c-qos2.py $@/03-publish-b2c-qos2.test
+	./03-publish-b2c-qos2-unexpected-pubrel.py $@/03-publish-b2c-qos2-unexpected-pubrel.test
+	./03-publish-b2c-qos2-unexpected-pubcomp.py $@/03-publish-b2c-qos2-unexpected-pubcomp.test
 	./03-publish-c2b-qos1-disconnect.py $@/03-publish-c2b-qos1-disconnect.test
 	./03-publish-c2b-qos1-len.py $@/03-publish-c2b-qos1-len.test
 	./03-publish-c2b-qos1-receive-maximum.py $@/03-publish-c2b-qos1-receive-maximum.test

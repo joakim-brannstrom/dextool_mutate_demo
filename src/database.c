@@ -74,6 +74,8 @@ static bool db__ready_for_queue(struct mosquitto *context, int qos, struct mosqu
 	int adjust_count;
 	unsigned long source_bytes;
 	unsigned long adjust_bytes = max_inflight_bytes;
+	bool valid_bytes;
+	bool valid_count;
 
 	if(max_queued == 0 && max_queued_bytes == 0){
 		return true;
@@ -94,8 +96,8 @@ static bool db__ready_for_queue(struct mosquitto *context, int qos, struct mosqu
 		adjust_count = 0;
 	}
 
-	bool valid_bytes = source_bytes - adjust_bytes < max_queued_bytes;
-	bool valid_count = source_count - adjust_count < max_queued;
+	valid_bytes = source_bytes - adjust_bytes < max_queued_bytes;
+	valid_count = source_count - adjust_count < max_queued;
 
 	if(max_queued_bytes == 0){
 		return valid_count;
@@ -124,7 +126,7 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 	db->bridge_count = 0;
 #endif
 
-	// Initialize the hashtable
+	/* Initialize the hashtable */
 	db->clientid_index_hash = NULL;
 
 	db->subs = NULL;

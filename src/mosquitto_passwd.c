@@ -133,7 +133,7 @@ void print_usage(void)
 {
 	printf("mosquitto_passwd is a tool for managing password files for mosquitto.\n\n");
 	printf("Usage: mosquitto_passwd [-c | -D] passwordfile username\n");
-	printf("       mosquitto_passwd -b passwordfile username password\n");
+	printf("       mosquitto_passwd [-c] -b passwordfile username password\n");
 	printf("       mosquitto_passwd -U passwordfile\n");
 	printf(" -b : run in batch mode to allow passing passwords on the command line.\n");
 	printf(" -c : create a new password file. This will overwrite existing files.\n");
@@ -331,15 +331,13 @@ static int update_pwuser_cb(FILE *fptr, FILE *ftmp, const char *username, const 
 {
 	int rc = 0;
 
-	printf("%s\n", username);
 	if(strcmp(username, helper->username)){
 		/* If this isn't the matching user, then writing out the exiting line */
-		printf("%s\n", line);
 		fprintf(ftmp, "%s", line);
 	}else{
 		/* Write out a new line for our matching username */
 		helper->found = true;
-		rc = output_new_password(ftmp, username, password);
+		rc = output_new_password(ftmp, username, helper->password);
 	}
 	return rc;
 }
@@ -351,6 +349,7 @@ int update_pwuser(FILE *fptr, FILE *ftmp, const char *username, const char *pass
 
 	memset(&helper, 0, sizeof(helper));
 	helper.username = username;
+	helper.password = password;
 	rc = pwfile_iterate(fptr, ftmp, update_pwuser_cb, &helper);
 
 	if(helper.found){
@@ -539,12 +538,22 @@ int main(int argc, char *argv[])
 
 	if(!strcmp(argv[1], "-c")){
 		create_new = true;
-		if(argc != 4){
-			fprintf(stderr, "Error: -c argument given but password file or username missing.\n");
-			return 1;
-		}else{
+		if(argc == 4){
 			password_file_tmp = argv[2];
 			username = argv[3];
+		}else if(argc == 6){
+			if(!strcmp(argv[2], "-b")){
+				batch_mode = true;
+				password_file_tmp = argv[3];
+				username = argv[4];
+				password_cmd = argv[5];
+			}else{
+				fprintf(stderr, "Error: Incorrect number of arguments.\n");
+				return 1;
+			}
+		}else{
+			fprintf(stderr, "Error: -c argument given but password file or username missing.\n");
+			return 1;
 		}
 	}else if(!strcmp(argv[1], "-D")){
 		delete_user = true;
@@ -612,10 +621,13 @@ int main(int argc, char *argv[])
 #endif
 
 	if(create_new){
-		rc = get_password(password, MAX_BUFFER_LEN);
-		if(rc){
-			free(password_file);
-			return rc;
+		if(batch_mode == false){
+			rc = get_password(password, MAX_BUFFER_LEN);
+			if(rc){
+				free(password_file);
+				return rc;
+			}
+			password_cmd = password;
 		}
 		fptr = fopen(password_file, "wt");
 		if(!fptr){
@@ -624,7 +636,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 		free(password_file);
-		rc = output_new_password(fptr, username, password);
+		rc = output_new_password(fptr, username, password_cmd);
 		fclose(fptr);
 		return rc;
 	}else{

@@ -1830,7 +1830,7 @@ topic # both 2 local/topic/ remote/topic/</programlisting>
 connection test-mosquitto-org
 address test.mosquitto.org
 cleansession true
-topic clients/total in 0 test/mosquitto/org $SYS/broker/
+topic clients/total in 0 test/mosquitto/org/ $SYS/broker/
 </programlisting></example>
 
 				</listitem>

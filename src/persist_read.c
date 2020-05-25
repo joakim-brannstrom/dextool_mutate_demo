@@ -408,14 +408,14 @@ int persist__restore(struct mosquitto_db *db)
 		goto error;
 	}
 	if(!memcmp(header, magic, 15)){
-		// Restore DB as normal
+		/* Restore DB as normal */
 		read_e(fptr, &crc, sizeof(uint32_t));
 		read_e(fptr, &i32temp, sizeof(uint32_t));
 		db_version = ntohl(i32temp);
 		/* IMPORTANT - this is where compatibility checks are made.
 		 * Is your DB change still compatible with previous versions?
 		 */
-		if(db_version > MOSQ_DB_VERSION && db_version != 0){
+		if(db_version != MOSQ_DB_VERSION){
 			if(db_version == 4){
 			}else if(db_version == 3){
 				/* Addition of source_username and source_port to msg_store chunk in v4, v1.5.6 */

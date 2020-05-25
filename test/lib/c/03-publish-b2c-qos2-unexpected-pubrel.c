@@ -15,6 +15,10 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc)
 
 void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
 {
+	if(!strcmp(msg->topic, "quit")){
+		run = 0;
+		return;
+	}
 	if(msg->mid != 13423){
 		printf("Invalid mid (%d)\n", msg->mid);
 		exit(1);
@@ -40,7 +44,6 @@ void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_messag
 		exit(1);
 	}
 
-	run = 0;
 }
 
 int main(int argc, char *argv[])
@@ -60,7 +63,11 @@ int main(int argc, char *argv[])
 	rc = mosquitto_connect(mosq, "localhost", port, 60);
 
 	while(run == -1){
-		mosquitto_loop(mosq, 300, 1);
+		rc = mosquitto_loop(mosq, 300, 1);
+		if(rc){
+			printf("%d:%s\n", rc, mosquitto_strerror(rc));
+			exit(1);
+		}
 	}
 
 	mosquitto_destroy(mosq);

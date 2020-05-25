@@ -226,6 +226,10 @@ void context__send_will(struct mosquitto_db *db, struct mosquitto *ctxt)
 
 void context__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 {
+	if(mosquitto__get_state(context) == mosq_cs_disconnected){
+		return;
+	}
+
 	net__socket_close(db, context);
 
 	context__send_will(db, context);
@@ -259,12 +263,8 @@ void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context)
 		context->id = NULL;
 	}
 
-	if(db->ll_for_free){
-		context->for_free_next = db->ll_for_free;
-		db->ll_for_free = context;
-	}else{
-		db->ll_for_free = context;
-	}
+	context->for_free_next = db->ll_for_free;
+	db->ll_for_free = context;
 }
 
 void context__free_disused(struct mosquitto_db *db)
@@ -276,6 +276,7 @@ void context__free_disused(struct mosquitto_db *db)
 	assert(db);
 
 	context = db->ll_for_free;
+	db->ll_for_free = NULL;
 	while(context){
 #ifdef WITH_WEBSOCKETS
 		if(context->wsi){
@@ -297,7 +298,6 @@ void context__free_disused(struct mosquitto_db *db)
 			context = next;
 		}
 	}
-	db->ll_for_free = NULL;
 }
 
 

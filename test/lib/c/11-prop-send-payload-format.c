@@ -18,6 +18,7 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc)
 	}else{
 		rc2 = mosquitto_property_add_byte(&proplist, MQTT_PROP_PAYLOAD_FORMAT_INDICATOR, 1);
 		mosquitto_publish_v5(mosq, &sent_mid, "prop/qos0", strlen("message"), "message", 0, false, proplist);
+		mosquitto_property_free_all(&proplist);
 	}
 }
 

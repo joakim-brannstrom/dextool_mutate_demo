@@ -83,7 +83,7 @@ static void write_payload(const unsigned char *payload, int payloadlen, int hex)
 	int i;
 
 	if(hex == 0){
-		(void)fwrite(payload, 1, payloadlen, stdout);
+		(void)fwrite(payload, 1, (size_t )payloadlen, stdout);
 	}else if(hex == 1){
 		for(i=0; i<payloadlen; i++){
 			fprintf(stdout, "%02x", payload[i]);
@@ -114,7 +114,7 @@ static void json_print(const struct mosquitto_message *message, const struct tm 
 {
 	char buf[100];
 
-	strftime(buf, 100, "%s", ti);
+	snprintf(buf, 100, "%ld", time(NULL));
 	printf("{\"tst\":%s,\"topic\":\"%s\",\"qos\":%d,\"retain\":%d,\"payloadlen\":%d,", buf, message->topic, message->qos, message->retain, message->payloadlen);
 	if(message->qos > 0){
 		printf("\"mid\":%d,", message->mid);
@@ -133,7 +133,7 @@ static void json_print(const struct mosquitto_message *message, const struct tm 
 
 static void formatted_print(const struct mosq_config *lcfg, const struct mosquitto_message *message)
 {
-	int len;
+	size_t len;
 	int i;
 	struct tm *ti = NULL;
 	long ns;

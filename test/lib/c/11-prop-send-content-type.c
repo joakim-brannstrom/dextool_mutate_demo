@@ -18,6 +18,7 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc)
 	}else{
 		rc2 = mosquitto_property_add_string(&proplist, MQTT_PROP_CONTENT_TYPE, "application/json");
 		mosquitto_publish_v5(mosq, &sent_mid, "prop/qos0", strlen("message"), "message", 0, false, proplist);
+		mosquitto_property_free_all(&proplist);
 	}
 }
 
@@ -53,6 +54,7 @@ int main(int argc, char *argv[])
 		rc = mosquitto_loop(mosq, -1, 1);
 	}
 
+	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
 	return run;
 }

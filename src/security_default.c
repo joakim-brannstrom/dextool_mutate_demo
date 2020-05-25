@@ -396,7 +396,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 			len = tlen + acl_root->ccount*(clen-2);
 		}
 		local_acl = mosquitto__malloc(len+1);
-		if(!local_acl) return 1; // FIXME
+		if(!local_acl) return 1; /* FIXME */
 		s = local_acl;
 		for(i=0; i<tlen; i++){
 			if(i<tlen-1 && acl_root->topic[i] == '%'){
@@ -465,8 +465,9 @@ static int aclfile__parse(struct mosquitto_db *db, struct mosquitto__security_op
 		return 1;
 	}
 
-	// topic [read|write] <topic> 
-	// user <user>
+	/* topic [read|write] <topic>
+	 * user <user>
+	 */
 
 	while(fgets_extending(&buf, &buflen, aclfptr)){
 		slen = strlen(buf);
@@ -1000,6 +1001,10 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 	X509_NAME_ENTRY *name_entry;
 	ASN1_STRING *name_asn1 = NULL;
 	struct mosquitto__listener *listener;
+	BIO *subject_bio;
+	char *data_start;
+	long name_length;
+	char *subject;
 #endif
 
 	if(!db) return MOSQ_ERR_INVAL;
@@ -1078,7 +1083,7 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 					security__disconnect_auth(db, context);
 					continue;
 				}
-				if (context->listener->use_identity_as_username) { //use_identity_as_username
+				if (context->listener->use_identity_as_username) { /* use_identity_as_username */
 					i = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
 					if(i == -1){
 						X509_free(client_cert);
@@ -1114,12 +1119,12 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 							continue;
 						}
 					}
-				} else { // use_subject_as_username
-					BIO *subject_bio = BIO_new(BIO_s_mem());
+				} else { /* use_subject_as_username */
+					subject_bio = BIO_new(BIO_s_mem());
 					X509_NAME_print_ex(subject_bio, X509_get_subject_name(client_cert), 0, XN_FLAG_RFC2253);
-					char *data_start = NULL;
-					long name_length = BIO_get_mem_data(subject_bio, &data_start);
-					char *subject = mosquitto__malloc(sizeof(char)*name_length+1);
+					data_start = NULL;
+					name_length = BIO_get_mem_data(subject_bio, &data_start);
+					subject = mosquitto__malloc(sizeof(char)*name_length+1);
 					if(!subject){
 						BIO_free(subject_bio);
 						X509_free(client_cert);
@@ -1227,7 +1232,7 @@ int pw__digest(const char *password, const unsigned char *salt, unsigned int sal
 
 	digest = EVP_get_digestbyname("sha512");
 	if(!digest){
-		// FIXME fprintf(stderr, "Error: Unable to create openssl digest.\n");
+		/* FIXME fprintf(stderr, "Error: Unable to create openssl digest.\n"); */
 		return 1;
 	}
 
@@ -1243,7 +1248,7 @@ int pw__digest(const char *password, const unsigned char *salt, unsigned int sal
 
 	digest = EVP_get_digestbyname("sha512");
 	if(!digest){
-		// FIXME fprintf(stderr, "Error: Unable to create openssl digest.\n");
+		/* FIXME fprintf(stderr, "Error: Unable to create openssl digest.\n"); */
 		return 1;
 	}
 

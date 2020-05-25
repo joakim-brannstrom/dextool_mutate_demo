@@ -482,11 +482,11 @@ void net__print_ssl_error(struct mosquitto *mosq)
 int net__socket_connect_tls(struct mosquitto *mosq)
 {
 	int ret, err;
+	long res;
 
 	ERR_clear_error();
-	long res;
 	if (mosq->tls_ocsp_required) {
-		// Note: OCSP is available in all currently supported OpenSSL versions.
+		/* Note: OCSP is available in all currently supported OpenSSL versions. */
 		if ((res=SSL_set_tlsext_status_type(mosq->ssl, TLSEXT_STATUSTYPE_ocsp)) != 1) {
 			log__printf(mosq, MOSQ_LOG_ERR, "Could not activate OCSP (error: %ld)", res);
 			return MOSQ_ERR_OCSP;
@@ -531,12 +531,69 @@ int net__socket_connect_tls(struct mosquitto *mosq)
 
 
 #ifdef WITH_TLS
+static int net__tls_load_ca(struct mosquitto *mosq)
+{
+	int ret;
+
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+	ret = SSL_CTX_load_verify_locations(mosq->ssl_ctx, mosq->tls_cafile, mosq->tls_capath);
+	if(ret == 0){
+#  ifdef WITH_BROKER
+		if(mosq->tls_cafile && mosq->tls_capath){
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\" and bridge_capath \"%s\".", mosq->tls_cafile, mosq->tls_capath);
+		}else if(mosq->tls_cafile){
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\".", mosq->tls_cafile);
+		}else{
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_capath \"%s\".", mosq->tls_capath);
+		}
+#  else
+		if(mosq->tls_cafile && mosq->tls_capath){
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\" and capath \"%s\".", mosq->tls_cafile, mosq->tls_capath);
+		}else if(mosq->tls_cafile){
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\".", mosq->tls_cafile);
+		}else{
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check capath \"%s\".", mosq->tls_capath);
+		}
+#  endif
+		return MOSQ_ERR_TLS;
+	}
+#else
+	if(mosq->tls_cafile){
+		ret = SSL_CTX_load_verify_file(mosq->ssl_ctx, mosq->tls_cafile);
+		if(ret == 0){
+#  ifdef WITH_BROKER
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\".", mosq->tls_cafile);
+#  else
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\".", mosq->tls_cafile);
+#  endif
+			return MOSQ_ERR_TLS;
+		}
+	}
+	if(mosq->tls_capath){
+		ret = SSL_CTX_load_verify_dir(mosq->ssl_ctx, mosq->tls_capath);
+		if(ret == 0){
+#  ifdef WITH_BROKER
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_capath \"%s\".", mosq->tls_capath);
+#  else
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check capath \"%s\".", mosq->tls_capath);
+#  endif
+			return MOSQ_ERR_TLS;
+		}
+	}
+#endif
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 static int net__init_ssl_ctx(struct mosquitto *mosq)
 {
 	int ret;
 	ENGINE *engine = NULL;
 	uint8_t tls_alpn_wire[256];
 	uint8_t tls_alpn_len;
+#if !defined(OPENSSL_NO_ENGINE)
+	EVP_PKEY *pkey;
+#endif
 
 	if(mosq->ssl_ctx){
 		if(!mosq->ssl_ctx_defaults){
@@ -595,7 +652,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 		/* Set ALPN */
 		if(mosq->tls_alpn) {
 			tls_alpn_len = (uint8_t) strnlen(mosq->tls_alpn, 254);
-			tls_alpn_wire[0] = tls_alpn_len;  // first byte is length of string
+			tls_alpn_wire[0] = tls_alpn_len;  /* first byte is length of string */
 			memcpy(tls_alpn_wire + 1, mosq->tls_alpn, tls_alpn_len);
 			SSL_CTX_set_alpn_protos(mosq->ssl_ctx, tls_alpn_wire, tls_alpn_len + 1);
 		}
@@ -640,28 +697,11 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 			}
 		}
 		if(mosq->tls_cafile || mosq->tls_capath){
-			ret = SSL_CTX_load_verify_locations(mosq->ssl_ctx, mosq->tls_cafile, mosq->tls_capath);
-			if(ret == 0){
-#ifdef WITH_BROKER
-				if(mosq->tls_cafile && mosq->tls_capath){
-					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\" and bridge_capath \"%s\".", mosq->tls_cafile, mosq->tls_capath);
-				}else if(mosq->tls_cafile){
-					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\".", mosq->tls_cafile);
-				}else{
-					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_capath \"%s\".", mosq->tls_capath);
-				}
-#else
-				if(mosq->tls_cafile && mosq->tls_capath){
-					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\" and capath \"%s\".", mosq->tls_cafile, mosq->tls_capath);
-				}else if(mosq->tls_cafile){
-					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\".", mosq->tls_cafile);
-				}else{
-					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check capath \"%s\".", mosq->tls_capath);
-				}
-#endif
-#if !defined(OPENSSL_NO_ENGINE)
+			ret = net__tls_load_ca(mosq);
+			if(ret != MOSQ_ERR_SUCCESS){
+#  if !defined(OPENSSL_NO_ENGINE)
 				ENGINE_FINISH(engine);
-#endif
+#  endif
 				COMPAT_CLOSE(mosq->sock);
 				mosq->sock = INVALID_SOCKET;
 				net__print_ssl_error(mosq);
@@ -718,7 +758,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 						}
 						ui_method = NULL;
 					}
-					EVP_PKEY *pkey = ENGINE_load_private_key(engine, mosq->tls_keyfile, ui_method, NULL);
+					pkey = ENGINE_load_private_key(engine, mosq->tls_keyfile, ui_method, NULL);
 					if(!pkey){
 						log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load engine private key file \"%s\".", mosq->tls_keyfile);
 						ENGINE_FINISH(engine);
@@ -1082,6 +1122,9 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 	return MOSQ_ERR_UNKNOWN;
 #else
 	int sv[2];
+
+	*pairR = INVALID_SOCKET;
+	*pairW = INVALID_SOCKET;
 
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1){
 		return MOSQ_ERR_ERRNO;
