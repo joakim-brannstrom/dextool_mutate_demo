@@ -1145,7 +1145,7 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 #endif
 		{
 			/* Username/password check only if the identity/subject check not used */
-			if(mosquitto_unpwd_check(db, context, context->username, context->password) != MOSQ_ERR_SUCCESS){
+			if(mosquitto_unpwd_check(db, context) != MOSQ_ERR_SUCCESS){
 				mosquitto__set_state(context, mosq_cs_disconnecting);
 				do_disconnect(db, context, MOSQ_ERR_AUTH);
 				continue;

@@ -673,13 +673,13 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	return rc;
 }
 
-int mosquitto_unpwd_check(struct mosquitto_db *db, struct mosquitto *context, const char *username, const char *password)
+int mosquitto_unpwd_check(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int rc;
 	int i;
 	struct mosquitto__security_options *opts;
 
-	rc = mosquitto_unpwd_check_default(db, context, username, password);
+	rc = mosquitto_unpwd_check_default(db, context, context->username, context->password);
 	if(rc != MOSQ_ERR_PLUGIN_DEFER){
 		return rc;
 	}
@@ -700,33 +700,37 @@ int mosquitto_unpwd_check(struct mosquitto_db *db, struct mosquitto *context, co
 			rc = opts->auth_plugin_configs[i].plugin.unpwd_check_v4(
 					opts->auth_plugin_configs[i].plugin.user_data,
 					context,
-					username,
-					password);
+					context->username,
+					context->password);
 
 		}else if(opts->auth_plugin_configs[i].plugin.version == 3){
 			rc = opts->auth_plugin_configs[i].plugin.unpwd_check_v3(
 					opts->auth_plugin_configs[i].plugin.user_data,
 					context,
-					username,
-					password);
+					context->username,
+					context->password);
 
 		}else if(opts->auth_plugin_configs[i].plugin.version == 2){
 			rc = opts->auth_plugin_configs[i].plugin.unpwd_check_v2(
 					opts->auth_plugin_configs[i].plugin.user_data,
-					username,
-					password);
-		}else{
-			rc = MOSQ_ERR_INVAL;
-		}
-		if(rc != MOSQ_ERR_PLUGIN_DEFER){
-			return rc;
+					context->username,
+					context->password);
 		}
 	}
 	/* If all plugins deferred, this is a denial. If rc == MOSQ_ERR_SUCCESS
-	 * here, then no plugins were configured. */
+	 * here, then no plugins were configured. Unless we have all deferred, and
+	 * anonymous logins are allowed. */
 	if(rc == MOSQ_ERR_PLUGIN_DEFER){
-		rc = MOSQ_ERR_AUTH;
+		if(context->username == NULL &&
+				((db->config->per_listener_settings && context->listener->security_options.allow_anonymous == true)
+				|| (!db->config->per_listener_settings && db->config->security_options.allow_anonymous == true))){
+
+			return MOSQ_ERR_SUCCESS;
+		}else{
+			return MOSQ_ERR_AUTH;
+		}
 	}
+
 	return rc;
 }
 
