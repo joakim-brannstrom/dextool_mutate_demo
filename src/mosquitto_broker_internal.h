@@ -756,7 +756,7 @@ int mosquitto_security_init_default(struct mosquitto_db *db, bool reload);
 int mosquitto_security_apply_default(struct mosquitto_db *db);
 int mosquitto_security_cleanup_default(struct mosquitto_db *db, bool reload);
 int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
-int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *username, const char *password);
+int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *context);
 int mosquitto_psk_key_get_default(struct mosquitto_db *db, struct mosquitto *context, const char *hint, const char *identity, char *key, int max_key_len);
 
 int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *context, bool reauth, const void *data_in, uint16_t data_in_len, void **data_out, uint16_t *data_out_len);

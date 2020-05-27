@@ -886,7 +886,7 @@ static int mosquitto__memcmp_const(const void *a, const void *b, size_t len)
 #endif
 
 
-int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *username, const char *password)
+int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *context)
 {
 	struct mosquitto__unpwd *u, *tmp;
 	struct mosquitto__unpwd *unpwd_ref;
@@ -907,7 +907,7 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 		if(db->config->security_options.password_file == NULL) return MOSQ_ERR_PLUGIN_DEFER;
 		unpwd_ref = db->unpwd;
 	}
-	if(!username){
+	if(context->username == NULL){
 		/* Check must be made only after checking unpwd_ref.
 		 * This is DENY here, because in MQTT v5 username can be missing when
 		 * password is present, but we don't support that. */
@@ -915,11 +915,11 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 	}
 
 	HASH_ITER(hh, unpwd_ref, u, tmp){
-		if(!strcmp(u->username, username)){
+		if(!strcmp(u->username, context->username)){
 			if(u->password){
-				if(password){
+				if(context->password){
 #ifdef WITH_TLS
-					rc = pw__digest(password, u->salt, u->salt_len, hash, &hash_len);
+					rc = pw__digest(context->password, u->salt, u->salt_len, hash, &hash_len);
 					if(rc == MOSQ_ERR_SUCCESS){
 						if(hash_len == u->password_len && !mosquitto__memcmp_const(u->password, hash, hash_len)){
 							return MOSQ_ERR_SUCCESS;
@@ -930,7 +930,7 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 						return rc;
 					}
 #else
-					if(!strcmp(u->password, password)){
+					if(!strcmp(u->password, context->password)){
 						return MOSQ_ERR_SUCCESS;
 					}
 #endif

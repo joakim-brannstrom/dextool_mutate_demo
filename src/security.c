@@ -679,7 +679,7 @@ int mosquitto_unpwd_check(struct mosquitto_db *db, struct mosquitto *context)
 	int i;
 	struct mosquitto__security_options *opts;
 
-	rc = mosquitto_unpwd_check_default(db, context, context->username, context->password);
+	rc = mosquitto_unpwd_check_default(db, context);
 	if(rc != MOSQ_ERR_PLUGIN_DEFER){
 		return rc;
 	}
