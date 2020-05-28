@@ -440,6 +440,18 @@ struct mosquitto__acl_user{
 	struct mosquitto__acl *acl;
 };
 
+
+struct mosquitto_message_v5{
+	struct mosquitto_message_v5 *next, *prev;
+	char *topic;
+	void *payload;
+	mosquitto_property *properties;
+	int payloadlen;
+	int qos;
+	bool retain;
+};
+
+
 struct mosquitto_db{
 	dbid_t last_db_id;
 	struct mosquitto__subhier *subs;
@@ -474,6 +486,7 @@ struct mosquitto_db{
 #ifdef WITH_EPOLL
 	int epollfd;
 #endif
+	struct mosquitto_message_v5 *plugin_msgs;
 };
 
 enum mosquitto__bridge_direction{

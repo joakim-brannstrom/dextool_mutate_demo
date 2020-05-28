@@ -12,6 +12,8 @@ Broker:
   to a v3.x only broker.
 - DLT logging is now configurable at runtime with `log_dest dlt`.
   Closes #1735.
+- Add `mosquitto_plugin_publish()` function, which can be used by plugins to
+  publish messages.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are

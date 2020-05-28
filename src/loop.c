@@ -38,6 +38,7 @@ Contributors:
 #  include <sys/socket.h>
 #endif
 #include <time.h>
+#include <utlist.h>
 
 #ifdef WITH_WEBSOCKETS
 #  include <libwebsockets.h>
@@ -98,6 +99,19 @@ void lws__sul_callback(struct lws_sorted_usec_list *l)
 static struct lws_sorted_usec_list sul;
 #endif
 
+
+void queue_plugin_msgs(struct mosquitto_db *db)
+{
+	struct mosquitto_message_v5 *msg, *tmp;
+
+	DL_FOREACH_SAFE(db->plugin_msgs, msg, tmp){
+		DL_DELETE(db->plugin_msgs, msg);
+		db__messages_easy_queue(db, NULL, msg->topic, msg->qos, msg->payloadlen, msg->payload, msg->retain, 0, &msg->properties);
+		mosquitto__free(msg);
+	}
+}
+
+
 int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count)
 {
 #ifdef WITH_SYS_TREE
@@ -130,6 +144,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #endif
 
 	while(run){
+		queue_plugin_msgs(db);
 		context__free_disused(db);
 #ifdef WITH_SYS_TREE
 		if(db->config->sys_interval > 0){
