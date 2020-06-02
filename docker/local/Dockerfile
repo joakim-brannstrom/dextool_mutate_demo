@@ -1,4 +1,4 @@
-FROM alpine:3.8
+FROM alpine:3.12
 
 LABEL maintainer="Roger Light <roger@atchoo.org>" \
     description="Eclipse Mosquitto MQTT Broker"
@@ -12,7 +12,7 @@ RUN set -x && \
         build-base \
         cmake \
         gnupg \
-        libressl-dev \
+        openssl-dev \
         util-linux-dev && \
     wget https://github.com/warmcat/libwebsockets/archive/v${LWS_VERSION}.tar.gz -O /tmp/lws.tar.gz && \
     mkdir -p /build/lws && \
@@ -43,7 +43,6 @@ RUN set -x && \
         WITH_SHARED_LIBRARIES=yes \
         WITH_SRV=no \
         WITH_STRIP=yes \
-        WITH_TLS_PSK=no \
         WITH_WEBSOCKETS=yes \
         prefix=/usr \
         binary && \

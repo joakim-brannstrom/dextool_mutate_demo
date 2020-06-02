@@ -1,10 +1,10 @@
-FROM alpine:3.8
+FROM alpine:3.12
 
 LABEL maintainer="Roger Light <roger@atchoo.org>" \
     description="Eclipse Mosquitto MQTT Broker"
 
-ENV VERSION=1.6.9 \
-    DOWNLOAD_SHA256=412979b2db0a0020bd02fa64f0a0de9e7000b84462586e32b67f29bb1f6c1685 \
+ENV VERSION=1.6.10 \
+    DOWNLOAD_SHA256=92d1807717f0f6d57d1ac1207ffdb952e8377e916c7b0bb4718f745239774232 \
     GPG_KEYS=A0D6EEA1DCAE49A635A3B2F0779B22DFB3E717B7 \
     LWS_VERSION=2.4.2
 
@@ -13,7 +13,7 @@ RUN set -x && \
         build-base \
         cmake \
         gnupg \
-        libressl-dev \
+        openssl-dev \
         util-linux-dev && \
     wget https://github.com/warmcat/libwebsockets/archive/v${LWS_VERSION}.tar.gz -O /tmp/lws.tar.gz && \
     mkdir -p /build/lws && \
@@ -62,7 +62,6 @@ RUN set -x && \
         WITH_SHARED_LIBRARIES=yes \
         WITH_SRV=no \
         WITH_STRIP=yes \
-        WITH_TLS_PSK=no \
         WITH_WEBSOCKETS=yes \
         prefix=/usr \
         binary && \

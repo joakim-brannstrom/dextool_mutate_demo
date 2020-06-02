@@ -5,9 +5,6 @@ This directory contains Docker files for Mosquitto.
 The `1.5` directory contains the latest version of Mosquitto for
 that series, and provide the basis of the official image.
 
-`1.4.12` is the version using Alpine packaged Mosquitto, which will be removed
-at the next minor release.
-
 The `generic` directory contains a generic Dockerfile that can be used to build
 arbitrary versions of Mosquitto based on the released tarballs as follows:
 
