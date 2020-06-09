@@ -1,6 +1,6 @@
 <!--
 .. title: Version 1.6.10 released.
-.. slug: version-1-6-8-released
+.. slug: version-1-6-10-released
 .. date: 2020-05-25 23:45:13 UTC+00:00
 .. tags: Releases
 .. category:
