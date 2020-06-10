@@ -434,7 +434,11 @@ libmosq_EXPORT int mosquitto_username_pw_set(struct mosquitto *mosq, const char 
  *
  * Returns:
  * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid, which could be any of:
+ * 	                   * mosq == NULL
+ * 	                   * host == NULL
+ * 	                   * port < 0
+ * 	                   * keepalive < 5
  * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
@@ -500,7 +504,11 @@ libmosq_EXPORT int mosquitto_connect_bind(struct mosquitto *mosq, const char *ho
  *
  * Returns:
  * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid, which could be any of:
+ * 	                   * mosq == NULL
+ * 	                   * host == NULL
+ * 	                   * port < 0
+ * 	                   * keepalive < 5
  * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
@@ -570,7 +578,11 @@ libmosq_EXPORT int mosquitto_connect_async(struct mosquitto *mosq, const char *h
  *
  * Returns:
  * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid, which could be any of:
+ * 	                   * mosq == NULL
+ * 	                   * host == NULL
+ * 	                   * port < 0
+ * 	                   * keepalive < 5
  * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
@@ -604,7 +616,11 @@ libmosq_EXPORT int mosquitto_connect_bind_async(struct mosquitto *mosq, const ch
  *
  * Returns:
  * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid, which could be any of:
+ * 	                   * mosq == NULL
+ * 	                   * host == NULL
+ * 	                   * port < 0
+ * 	                   * keepalive < 5
  * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
