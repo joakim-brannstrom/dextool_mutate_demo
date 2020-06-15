@@ -3,8 +3,8 @@ FROM alpine:3.12
 LABEL maintainer="Roger Light <roger@atchoo.org>" \
     description="Eclipse Mosquitto MQTT Broker"
 
-ENV VERSION=1.5.9 \
-    DOWNLOAD_SHA256=d7b62aa0ca680b0d869d6883373903362f98326a6465fc6cd01a0b9e0e8f0333 \
+ENV VERSION=1.6.10 \
+    DOWNLOAD_SHA256=92d1807717f0f6d57d1ac1207ffdb952e8377e916c7b0bb4718f745239774232 \
     GPG_KEYS=A0D6EEA1DCAE49A635A3B2F0779B22DFB3E717B7 \
     LWS_VERSION=2.4.2
 
@@ -13,7 +13,7 @@ RUN set -x && \
         build-base \
         cmake \
         gnupg \
-        libressl-dev \
+        openssl-dev \
         util-linux-dev && \
     wget https://github.com/warmcat/libwebsockets/archive/v${LWS_VERSION}.tar.gz -O /tmp/lws.tar.gz && \
     mkdir -p /build/lws && \
@@ -55,14 +55,13 @@ RUN set -x && \
     tar --strip=1 -xf /tmp/mosq.tar.gz -C /build/mosq && \
     rm /tmp/mosq.tar.gz && \
     make -C /build/mosq -j "$(nproc)" \
-        CFLAGS="-Wall -O2 -I/build/lws/include -flto" \
-        LDFLAGS="-L/build/lws/lib -flto" \
+        CFLAGS="-Wall -O2 -I/build/lws/include" \
+        LDFLAGS="-L/build/lws/lib" \
         WITH_ADNS=no \
         WITH_DOCS=no \
         WITH_SHARED_LIBRARIES=yes \
         WITH_SRV=no \
         WITH_STRIP=yes \
-		WITH_TLS_PSK=no \
         WITH_WEBSOCKETS=yes \
         prefix=/usr \
         binary && \
@@ -71,6 +70,7 @@ RUN set -x && \
     mkdir -p /mosquitto/config /mosquitto/data /mosquitto/log && \
     install -d /usr/sbin/ && \
     install -s -m755 /build/mosq/client/mosquitto_pub /usr/bin/mosquitto_pub && \
+    install -s -m755 /build/mosq/client/mosquitto_rr /usr/bin/mosquitto_rr && \
     install -s -m755 /build/mosq/client/mosquitto_sub /usr/bin/mosquitto_sub && \
     install -s -m644 /build/mosq/lib/libmosquitto.so.1 /usr/lib/libmosquitto.so.1 && \
     install -s -m755 /build/mosq/src/mosquitto /usr/sbin/mosquitto && \
@@ -78,7 +78,7 @@ RUN set -x && \
     install -m644 /build/mosq/mosquitto.conf /mosquitto/config/mosquitto.conf && \
     chown -R mosquitto:mosquitto /mosquitto && \
     apk --no-cache add \
-        ca-certificates libuuid && \
+        ca-certificates && \
     apk del build-deps && \
     rm -rf /build
 
