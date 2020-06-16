@@ -1,7 +1,7 @@
 <!--
 .. title: Download
 .. slug: download
-.. date: 2020-06-09 12:28:00 UTC+1
+.. date: 2020-06-16 12:28:00 UTC+1
 .. tags: tag
 .. category: category
 .. link: link
@@ -24,8 +24,8 @@ distributions.
 
 ## Windows
 
-* [mosquitto-1.6.10-install-windows-x64.exe](https://mosquitto.org/files/binary/win64/mosquitto-1.6.10-install-windows-x64.exe) (~1.4 MB) (64-bit build, Windows Vista and up, built with Visual Studio Community 2017)
-* [mosquitto-1.6.10-install-windows-x32.exe](https://mosquitto.org/files/binary/win32/mosquitto-1.6.10-install-windows-x86.exe) (~1.4 MB) (32-bit build, Windows Vista and up, built with Visual Studio Community 2017)
+* [mosquitto-1.6.10a-install-windows-x64.exe](https://mosquitto.org/files/binary/win64/mosquitto-1.6.10a-install-windows-x64.exe) (~1.4 MB) (64-bit build, Windows Vista and up, built with Visual Studio Community 2019)
+* [mosquitto-1.6.10a-install-windows-x32.exe](https://mosquitto.org/files/binary/win32/mosquitto-1.6.10a-install-windows-x86.exe) (~1.4 MB) (32-bit build, Windows Vista and up, built with Visual Studio Community 2019)
 
 See also readme-windows.txt after installing.
 
