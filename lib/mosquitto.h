@@ -1779,13 +1779,10 @@ libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk
  * Callback Parameters:
  *  mosq - the mosquitto instance making the callback.
  *  obj - the user data provided in <mosquitto_new>
- *  rc -  the return code of the connection response, one of:
- *
- * * 0 - success
- * * 1 - connection refused (unacceptable protocol version)
- * * 2 - connection refused (identifier rejected)
- * * 3 - connection refused (broker unavailable)
- * * 4-255 - reserved for future use
+ *  rc -  the return code of the connection response. The values are defined by
+ *        the MQTT protocol version in use.
+ *        For MQTT v5.0, look at section 3.2.2.2 Connect Reason code: https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html
+ *        For MQTT v3.1.1, look at section 3.2.2.3 Connect Return code: http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/mqtt-v3.1.1.html
  */
 libmosq_EXPORT void mosquitto_connect_callback_set(struct mosquitto *mosq, void (*on_connect)(struct mosquitto *, void *, int));
 
@@ -1803,14 +1800,11 @@ libmosq_EXPORT void mosquitto_connect_callback_set(struct mosquitto *mosq, void 
  * Callback Parameters:
  *  mosq - the mosquitto instance making the callback.
  *  obj - the user data provided in <mosquitto_new>
- *  rc -  the return code of the connection response, one of:
+ *  rc -  the return code of the connection response. The values are defined by
+ *        the MQTT protocol version in use.
+ *        For MQTT v5.0, look at section 3.2.2.2 Connect Reason code: https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html
+ *        For MQTT v3.1.1, look at section 3.2.2.3 Connect Return code: http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/mqtt-v3.1.1.html
  *  flags - the connect flags.
- *
- * * 0 - success
- * * 1 - connection refused (unacceptable protocol version)
- * * 2 - connection refused (identifier rejected)
- * * 3 - connection refused (broker unavailable)
- * * 4-255 - reserved for future use
  */
 libmosq_EXPORT void mosquitto_connect_with_flags_callback_set(struct mosquitto *mosq, void (*on_connect)(struct mosquitto *, void *, int, int));
 
@@ -1828,12 +1822,10 @@ libmosq_EXPORT void mosquitto_connect_with_flags_callback_set(struct mosquitto *
  * Callback Parameters:
  *  mosq - the mosquitto instance making the callback.
  *  obj - the user data provided in <mosquitto_new>
- *  rc -  the return code of the connection response, one of:
- * * 0 - success
- * * 1 - connection refused (unacceptable protocol version)
- * * 2 - connection refused (identifier rejected)
- * * 3 - connection refused (broker unavailable)
- * * 4-255 - reserved for future use
+ *  rc -  the return code of the connection response. The values are defined by
+ *        the MQTT protocol version in use.
+ *        For MQTT v5.0, look at section 3.2.2.2 Connect Reason code: https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html
+ *        For MQTT v3.1.1, look at section 3.2.2.3 Connect Return code: http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/mqtt-v3.1.1.html
  *  flags - the connect flags.
  *  props - list of MQTT 5 properties, or NULL
  *

@@ -1,6 +1,9 @@
 Broker:
 - Fix usage message only mentioning v3.1.1. Closes #1713.
 
+Client library:
+- Improved documentation around connect callback return codes. Close #1730.
+
 
 1.6.10 - 2020-05-25
 ===================
