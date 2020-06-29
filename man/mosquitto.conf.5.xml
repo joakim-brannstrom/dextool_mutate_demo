@@ -458,7 +458,8 @@ D.conf
 					<para>Send log messages to a particular destination.
 						Possible destinations are: <option>stdout</option>
 						<option>stderr</option> <option>syslog</option>
-						<option>topic</option>.</para>
+						<option>topic</option> <option>file</option> 
+						<option>dlt</option>.</para>
 					<para><option>stdout</option> and
 						<option>stderr</option> log to the console on the
 						named output.</para>
@@ -478,6 +479,10 @@ D.conf
 						will be closed and reopened when the broker receives a
 						HUP signal. Only a single file destination may be
 						configured.</para>
+					<para>The <option>dlt</option> destination is for the
+						automotive `Diagnostic Log and Trace` tool. This
+						requires that Mosquitto has been compiled with DLT
+						support.</para>
 					<para>Use "log_dest none" if you wish to disable logging.
 						Defaults to stderr. This option may be specified
 						multiple times.</para>

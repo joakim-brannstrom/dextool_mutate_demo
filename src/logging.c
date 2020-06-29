@@ -119,8 +119,10 @@ int log__init(struct mosquitto__config *config)
 		restore_privileges();
 	}
 #ifdef WITH_DLT
-	DLT_REGISTER_APP("MQTT","mosquitto log");
-	dlt_register_context(&dltContext, "MQTT", "mosquitto DLT context");
+	if(log_destinations & MQTT3_LOG_DLT){
+		DLT_REGISTER_APP("MQTT","mosquitto log");
+		dlt_register_context(&dltContext, "MQTT", "mosquitto DLT context");
+	}
 #endif
 	return rc;
 }
@@ -142,8 +144,10 @@ int log__close(struct mosquitto__config *config)
 	}
 
 #ifdef WITH_DLT
-	dlt_unregister_context(&dltContext);
-	DLT_UNREGISTER_APP();
+	if(log_destinations & MQTT3_LOG_DLT){
+		dlt_unregister_context(&dltContext);
+		DLT_UNREGISTER_APP();
+	}
 #endif
 	/* FIXME - do something for all destinations! */
 	return MOSQ_ERR_SUCCESS;
@@ -347,7 +351,7 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			}
 		}
 #ifdef WITH_DLT
-		if(priority != MOSQ_LOG_INTERNAL){
+		if(log_destinations & MQTT3_LOG_DLT && priority != MOSQ_LOG_INTERNAL){
 			DLT_LOG_STRING(dltContext, get_dlt_level(priority), s);
 		}
 #endif

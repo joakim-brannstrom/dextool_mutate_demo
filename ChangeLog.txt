@@ -10,6 +10,8 @@ Broker:
   being false.
 - Allow MQTT v5.0 outgoing bridges to fall back to MQTT v3.1.1 if connecting
   to a v3.x only broker.
+- DLT logging is now configurable at runtime with `log_dest dlt`.
+  Closes #1735.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are

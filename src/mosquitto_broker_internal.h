@@ -70,6 +70,7 @@ Contributors:
 #define MQTT3_LOG_STDOUT 0x04
 #define MQTT3_LOG_STDERR 0x08
 #define MQTT3_LOG_TOPIC 0x10
+#define MQTT3_LOG_DLT 0x20
 #define MQTT3_LOG_ALL 0xFF
 
 #define WEBSOCKET_CLIENT -2

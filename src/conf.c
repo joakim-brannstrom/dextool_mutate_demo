@@ -177,7 +177,7 @@ static void config__init_reload(struct mosquitto_db *db, struct mosquitto__confi
 	}
 #else
 	config->log_facility = LOG_DAEMON;
-	config->log_dest = MQTT3_LOG_STDERR;
+	config->log_dest = MQTT3_LOG_STDERR | MQTT3_LOG_DLT;
 	if(db->verbose){
 		config->log_type = UINT_MAX;
 	}else{
@@ -1511,6 +1511,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 							cr->log_dest |= MQTT3_LOG_STDERR;
 						}else if(!strcmp(token, "topic")){
 							cr->log_dest |= MQTT3_LOG_TOPIC;
+						}else if(!strcmp(token, "dlt")){
+							cr->log_dest |= MQTT3_LOG_DLT;
 						}else if(!strcmp(token, "file")){
 							cr->log_dest |= MQTT3_LOG_FILE;
 							if(config->log_fptr || config->log_file){
