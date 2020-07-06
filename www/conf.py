@@ -156,6 +156,7 @@ PAGES = (
     ("pages/*.txt", "", "story.tmpl"),
     ("pages/*.html", "", "story.tmpl"),
     ("pages/*.md", "", "story.tmpl"),
+    ("pages/documentation/*.md", "", "story.tmpl"),
     ("man/*.xml", "man", "story.tmpl"),
 )
 
