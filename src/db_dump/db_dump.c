@@ -402,7 +402,10 @@ int main(int argc, char *argv[])
 	}
 	memset(&db, 0, sizeof(struct mosquitto_db));
 	fd = fopen(filename, "rb");
-	if(!fd) return 0;
+	if(!fd){
+		fprintf(stderr, "Error: Unable to open %s\n", filename);
+		return 0;
+	}
 	read_e(fd, &header, 15);
 	if(!memcmp(header, magic, 15)){
 		if(do_print) printf("Mosquitto DB dump\n");
