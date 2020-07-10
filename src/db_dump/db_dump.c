@@ -267,10 +267,17 @@ static int dump__msg_store_chunk_process(struct mosquitto_db *db, FILE *db_fptr,
 		message_expiry_interval = 0;
 	}
 
-	rc = db__message_store(db, &chunk.source, chunk.F.source_mid,
-			chunk.topic, chunk.F.qos, chunk.F.payloadlen,
-			&chunk.payload, chunk.F.retain, &stored, message_expiry_interval,
-			chunk.properties, chunk.F.store_id, mosq_mo_client);
+	stored = mosquitto__calloc(1, sizeof(struct mosquitto_msg_store));
+	stored->source_mid = chunk.F.source_mid;
+	stored->topic = chunk.topic;
+	stored->qos = chunk.F.qos;
+	stored->retain = chunk.F.retain;
+	stored->payloadlen = chunk.F.payloadlen;
+	UHPA_MOVE(stored->payload, chunk.payload, chunk.F.payloadlen);
+	stored->properties = chunk.properties;
+
+	rc = db__message_store(db, &chunk.source, stored, message_expiry_interval,
+			chunk.F.store_id, mosq_mo_client);
 
 	mosquitto__free(chunk.source.id);
 	mosquitto__free(chunk.source.username);
