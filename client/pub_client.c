@@ -185,12 +185,18 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 
 void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
 {
+	char *reason_string = NULL;
 	UNUSED(obj);
 	UNUSED(properties);
 
 	last_mid_sent = mid;
 	if(reason_code > 127){
 		err_printf(&cfg, "Warning: Publish %d failed: %s.\n", mid, mosquitto_reason_string(reason_code));
+		mosquitto_property_read_string(properties, MQTT_PROP_REASON_STRING, &reason_string, false);
+		if(reason_string){
+			err_printf(&cfg, "%s\n", reason_string);
+			free(reason_string);
+		}
 	}
 	publish_count++;
 
