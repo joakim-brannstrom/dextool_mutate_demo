@@ -291,10 +291,28 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		message_expiry_interval = 0;
 	}
 
-	rc = db__message_store(db, &chunk.source, chunk.F.source_mid,
-			chunk.topic, chunk.F.qos, chunk.F.payloadlen,
-			&chunk.payload, chunk.F.retain, &stored, message_expiry_interval,
-			chunk.properties, chunk.F.store_id, mosq_mo_client);
+	stored = mosquitto__calloc(1, sizeof(struct mosquitto_msg_store));
+	if(stored == NULL){
+		fclose(db_fptr);
+		mosquitto__free(chunk.source.id);
+		mosquitto__free(chunk.source.username);
+		mosquitto__free(chunk.topic);
+		UHPA_FREE(chunk.payload, chunk.F.payloadlen);
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		return MOSQ_ERR_NOMEM;
+	}
+	stored->ref_count = 1;
+
+	stored->source_mid = chunk.F.source_mid;
+	stored->topic = chunk.topic;
+	stored->qos = chunk.F.qos;
+	stored->payloadlen = chunk.F.payloadlen;
+	stored->retain = chunk.F.retain;
+	stored->properties = chunk.properties;
+	UHPA_MOVE(stored->payload, chunk.payload, stored->payloadlen);
+
+	rc = db__message_store(db, &chunk.source, stored, message_expiry_interval,
+			chunk.F.store_id, mosq_mo_client);
 
 	mosquitto__free(chunk.source.id);
 	mosquitto__free(chunk.source.username);

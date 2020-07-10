@@ -596,28 +596,35 @@ int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, 
 {
 	struct mosquitto_msg_store *stored;
 	char *source_id;
-	char *topic_heap;
-	mosquitto__payload_uhpa payload_uhpa;
-	mosquitto_property *local_properties = NULL;
 	enum mosquitto_msg_origin origin;
 
 	assert(db);
 
-	payload_uhpa.ptr = NULL;
-
 	if(!topic) return MOSQ_ERR_INVAL;
-	topic_heap = mosquitto__strdup(topic);
-	if(!topic_heap) return MOSQ_ERR_INVAL;
 
-	if(db->config->retain_available == false){
-		retain = 0;
+	stored = mosquitto__calloc(1, sizeof(struct mosquitto_msg_store));
+	if(stored == NULL) return MOSQ_ERR_NOMEM;
+	stored->ref_count = 1;
+
+	stored->topic = mosquitto__strdup(topic);
+	if(stored->topic == NULL){
+		db__msg_store_free(stored);
+		return MOSQ_ERR_INVAL;
 	}
 
-	if(UHPA_ALLOC(payload_uhpa, payloadlen) == 0){
-		mosquitto__free(topic_heap);
+	stored->qos = qos;
+	if(db->config->retain_available == false){
+		stored->retain = 0;
+	}else{
+		stored->retain = retain;
+	}
+
+	stored->payloadlen = payloadlen;
+	if(UHPA_ALLOC(stored->payload, stored->payloadlen) == 0){
+		db__msg_store_free(stored);
 		return MOSQ_ERR_NOMEM;
 	}
-	memcpy(UHPA_ACCESS(payload_uhpa, payloadlen), payload, payloadlen);
+	memcpy(UHPA_ACCESS(stored->payload, stored->payloadlen), payload, stored->payloadlen);
 
 	if(context && context->id){
 		source_id = context->id;
@@ -625,7 +632,7 @@ int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, 
 		source_id = "";
 	}
 	if(properties){
-		local_properties = *properties;
+		stored->properties = *properties;
 		*properties = NULL;
 	}
 
@@ -634,98 +641,61 @@ int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, 
 	}else{
 		origin = mosq_mo_broker;
 	}
-	if(db__message_store(db, context, 0, topic_heap, qos, payloadlen, &payload_uhpa, retain, &stored, message_expiry_interval, local_properties, 0, origin)) return 1;
+	if(db__message_store(db, context, stored, message_expiry_interval, 0, origin)) return 1;
 
-	return sub__messages_queue(db, source_id, topic_heap, qos, retain, &stored);
+	return sub__messages_queue(db, source_id, stored->topic, stored->qos, stored->retain, &stored);
 }
 
 /* This function requires topic to be allocated on the heap. Once called, it owns topic and will free it on error. Likewise payload and properties. */
-int db__message_store(struct mosquitto_db *db, const struct mosquitto *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, mosquitto__payload_uhpa *payload, int retain, struct mosquitto_msg_store **stored, uint32_t message_expiry_interval, mosquitto_property *properties, dbid_t store_id, enum mosquitto_msg_origin origin)
+int db__message_store(struct mosquitto_db *db, const struct mosquitto *source, struct mosquitto_msg_store *stored, uint32_t message_expiry_interval, dbid_t store_id, enum mosquitto_msg_origin origin)
+//int db__message_store(struct mosquitto_db *db, const struct mosquitto *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, mosquitto__payload_uhpa *payload, int retain, struct mosquitto_msg_store **stored, uint32_t message_expiry_interval, mosquitto_property *properties, dbid_t store_id, enum mosquitto_msg_origin origin)
 {
-	struct mosquitto_msg_store *temp = NULL;
-	int rc = MOSQ_ERR_SUCCESS;
-
 	assert(db);
 	assert(stored);
 
-	temp = mosquitto__calloc(1, sizeof(struct mosquitto_msg_store));
-	if(!temp){
-		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		rc = MOSQ_ERR_NOMEM;
-		goto error;
-	}
-
-	temp->topic = NULL;
-	temp->payload.ptr = NULL;
-
-	temp->ref_count = 0;
 	if(source && source->id){
-		temp->source_id = mosquitto__strdup(source->id);
+		stored->source_id = mosquitto__strdup(source->id);
 	}else{
-		temp->source_id = mosquitto__strdup("");
+		stored->source_id = mosquitto__strdup("");
 	}
-	if(!temp->source_id){
+	if(!stored->source_id){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		rc = MOSQ_ERR_NOMEM;
-		goto error;
+		db__msg_store_free(stored);
+		return MOSQ_ERR_NOMEM;
 	}
 
 	if(source && source->username){
-		temp->source_username = mosquitto__strdup(source->username);
-		if(!temp->source_username){
-			rc = MOSQ_ERR_NOMEM;
-			goto error;
+		stored->source_username = mosquitto__strdup(source->username);
+		if(!stored->source_username){
+			db__msg_store_free(stored);
+			return MOSQ_ERR_NOMEM;
 		}
 	}
 	if(source){
-		temp->source_listener = source->listener;
+		stored->source_listener = source->listener;
 	}
-	temp->source_mid = source_mid;
-	temp->mid = 0;
-	temp->qos = qos;
-	temp->retain = retain;
-	temp->topic = topic;
-	topic = NULL;
-	temp->payloadlen = payloadlen;
-	temp->properties = properties;
-	temp->origin = origin;
-	if(payloadlen){
-		UHPA_MOVE(temp->payload, *payload, payloadlen);
-	}else{
-		temp->payload.ptr = NULL;
-	}
+	stored->mid = 0;
+	stored->origin = origin;
 	if(message_expiry_interval > 0){
-		temp->message_expiry_time = time(NULL) + message_expiry_interval;
+		stored->message_expiry_time = time(NULL) + message_expiry_interval;
 	}else{
-		temp->message_expiry_time = 0;
+		stored->message_expiry_time = 0;
 	}
 
-	temp->dest_ids = NULL;
-	temp->dest_id_count = 0;
+	stored->dest_ids = NULL;
+	stored->dest_id_count = 0;
 	db->msg_store_count++;
-	db->msg_store_bytes += payloadlen;
-	(*stored) = temp;
+	db->msg_store_bytes += stored->payloadlen;
 
 	if(!store_id){
-		temp->db_id = ++db->last_db_id;
+		stored->db_id = ++db->last_db_id;
 	}else{
-		temp->db_id = store_id;
+		stored->db_id = store_id;
 	}
 
-	db__msg_store_add(db, temp);
+	db__msg_store_add(db, stored);
 
 	return MOSQ_ERR_SUCCESS;
-error:
-	mosquitto__free(topic);
-	if(temp){
-		mosquitto__free(temp->source_id);
-		mosquitto__free(temp->source_username);
-		mosquitto__free(temp->topic);
-		mosquitto__free(temp);
-	}
-	mosquitto_property_free_all(&properties);
-	UHPA_FREE(*payload, payloadlen);
-	return rc;
 }
 
 int db__message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored)
