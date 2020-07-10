@@ -666,6 +666,7 @@ void db__msg_store_ref_inc(struct mosquitto_msg_store *store);
 void db__msg_store_ref_dec(struct mosquitto_db *db, struct mosquitto_msg_store **store);
 void db__msg_store_clean(struct mosquitto_db *db);
 void db__msg_store_compact(struct mosquitto_db *db);
+void db__msg_store_free(struct mosquitto_msg_store *store);
 int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *context);
 void sys_tree__init(struct mosquitto_db *db);
 void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time);

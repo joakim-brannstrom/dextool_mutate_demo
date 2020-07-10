@@ -187,10 +187,26 @@ void db__msg_store_add(struct mosquitto_db *db, struct mosquitto_msg_store *stor
 }
 
 
-void db__msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *store)
+void db__msg_store_free(struct mosquitto_msg_store *store)
 {
 	int i;
 
+	mosquitto__free(store->source_id);
+	mosquitto__free(store->source_username);
+	if(store->dest_ids){
+		for(i=0; i<store->dest_id_count; i++){
+			mosquitto__free(store->dest_ids[i]);
+		}
+		mosquitto__free(store->dest_ids);
+	}
+	mosquitto__free(store->topic);
+	mosquitto_property_free_all(&store->properties);
+	UHPA_FREE_PAYLOAD(store);
+	mosquitto__free(store);
+}
+
+void db__msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *store)
+{
 	if(store->prev){
 		store->prev->next = store->next;
 		if(store->next){
@@ -205,18 +221,7 @@ void db__msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *s
 	db->msg_store_count--;
 	db->msg_store_bytes -= store->payloadlen;
 
-	mosquitto__free(store->source_id);
-	mosquitto__free(store->source_username);
-	if(store->dest_ids){
-		for(i=0; i<store->dest_id_count; i++){
-			mosquitto__free(store->dest_ids[i]);
-		}
-		mosquitto__free(store->dest_ids);
-	}
-	mosquitto__free(store->topic);
-	mosquitto_property_free_all(&store->properties);
-	UHPA_FREE_PAYLOAD(store);
-	mosquitto__free(store);
+	db__msg_store_free(store);
 }
 
 
