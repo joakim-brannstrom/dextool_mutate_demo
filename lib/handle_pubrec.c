@@ -104,7 +104,7 @@ int handle__pubrec(struct mosquitto_db *db, struct mosquitto *mosq)
 	}else if(rc != MOSQ_ERR_SUCCESS){
 		return rc;
 	}
-	rc = send__pubrel(mosq, mid);
+	rc = send__pubrel(mosq, mid, NULL);
 	if(rc) return rc;
 
 	return MOSQ_ERR_SUCCESS;

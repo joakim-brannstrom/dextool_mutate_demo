@@ -940,7 +940,7 @@ int db__message_release_incoming(struct mosquitto_db *db, struct mosquitto *cont
 		tail->timestamp = mosquitto_time();
 
 		if(tail->qos == 2){
-			send__pubrec(context, tail->mid, 0);
+			send__pubrec(context, tail->mid, 0, NULL);
 			tail->state = mosq_ms_wait_for_pubrel;
 			db__message_dequeue_first(context, &context->msgs_in);
 		}
@@ -993,7 +993,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 
 		switch(tail->state){
 			case mosq_ms_send_pubrec:
-				rc = send__pubrec(context, mid, 0);
+				rc = send__pubrec(context, mid, 0, NULL);
 				if(!rc){
 					tail->state = mosq_ms_wait_for_pubrel;
 				}else{
@@ -1002,7 +1002,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 				break;
 
 			case mosq_ms_resend_pubcomp:
-				rc = send__pubcomp(context, mid);
+				rc = send__pubcomp(context, mid, NULL);
 				if(!rc){
 					tail->state = mosq_ms_wait_for_pubrel;
 				}else{
@@ -1087,7 +1087,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 				break;
 
 			case mosq_ms_resend_pubrel:
-				rc = send__pubrel(context, mid);
+				rc = send__pubrel(context, mid, NULL);
 				if(!rc){
 					tail->state = mosq_ms_wait_for_pubcomp;
 				}else{
@@ -1117,7 +1117,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 		if(tail->qos == 2){
 			tail->state = mosq_ms_send_pubrec;
 			db__message_dequeue_first(context, &context->msgs_in);
-			rc = send__pubrec(context, tail->mid, 0);
+			rc = send__pubrec(context, tail->mid, 0, NULL);
 			if(!rc){
 				tail->state = mosq_ms_wait_for_pubrel;
 			}else{

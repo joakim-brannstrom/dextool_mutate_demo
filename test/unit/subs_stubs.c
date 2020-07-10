@@ -73,17 +73,17 @@ int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint3
 	return MOSQ_ERR_SUCCESS;
 }
 
-int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
+int send__pubcomp(struct mosquitto *mosq, uint16_t mid, const mosquitto_property *properties)
 {
 	return MOSQ_ERR_SUCCESS;
 }
 
-int send__pubrec(struct mosquitto *mosq, uint16_t mid, uint8_t reason_code)
+int send__pubrec(struct mosquitto *mosq, uint16_t mid, uint8_t reason_code, const mosquitto_property *properties)
 {
 	return MOSQ_ERR_SUCCESS;
 }
 
-int send__pubrel(struct mosquitto *mosq, uint16_t mid)
+int send__pubrel(struct mosquitto *mosq, uint16_t mid, const mosquitto_property *properties)
 {
 	return MOSQ_ERR_SUCCESS;
 }

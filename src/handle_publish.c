@@ -267,9 +267,9 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			util__decrement_receive_quota(context);
 			rc2 = sub__messages_queue(db, context->id, topic, qos, retain, &stored);
 			if(rc2 == MOSQ_ERR_SUCCESS || context->protocol != mosq_p_mqtt5){
-				if(send__puback(context, mid, 0)) rc = 1;
+				if(send__puback(context, mid, 0, NULL)) rc = 1;
 			}else if(rc2 == MOSQ_ERR_NO_SUBSCRIBERS){
-				if(send__puback(context, mid, MQTT_RC_NO_MATCHING_SUBSCRIBERS)) rc = 1;
+				if(send__puback(context, mid, MQTT_RC_NO_MATCHING_SUBSCRIBERS, NULL)) rc = 1;
 			}else{
 				rc = rc2;
 			}
@@ -283,7 +283,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			/* db__message_insert() returns 2 to indicate dropped message
 			 * due to queue. This isn't an error so don't disconnect them. */
 			if(!res){
-				if(send__pubrec(context, mid, 0)) rc = 1;
+				if(send__pubrec(context, mid, 0, NULL)) rc = 1;
 			}else if(res == 1){
 				rc = 1;
 			}
@@ -298,12 +298,12 @@ process_bad_message:
 		case 0:
 			return MOSQ_ERR_SUCCESS;
 		case 1:
-			return send__puback(context, mid, reason_code);
+			return send__puback(context, mid, reason_code, NULL);
 		case 2:
 			if(context->protocol == mosq_p_mqtt5){
-				return send__pubrec(context, mid, reason_code);
+				return send__pubrec(context, mid, reason_code, NULL);
 			}else{
-				return send__pubrec(context, mid, 0);
+				return send__pubrec(context, mid, 0, NULL);
 			}
 	}
 	return 1;

@@ -292,13 +292,13 @@ void message__retry_check(struct mosquitto *mosq)
 			case mosq_ms_wait_for_pubrel:
 				msg->timestamp = now;
 				msg->dup = true;
-				send__pubrec(mosq, msg->msg.mid, 0);
+				send__pubrec(mosq, msg->msg.mid, 0, NULL);
 				break;
 			case mosq_ms_resend_pubrel:
 			case mosq_ms_wait_for_pubcomp:
 				msg->timestamp = now;
 				msg->dup = true;
-				send__pubrel(mosq, msg->msg.mid);
+				send__pubrel(mosq, msg->msg.mid, NULL);
 				break;
 			default:
 				break;
