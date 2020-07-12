@@ -14,6 +14,8 @@ Broker:
   Closes #1735.
 - Add `mosquitto_plugin_publish()` function, which can be used by plugins to
   publish messages.
+- Add `mosquitto_client_protocol_version()` function which can be used by
+  plugins to determine which version of MQTT a client has connected with.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are

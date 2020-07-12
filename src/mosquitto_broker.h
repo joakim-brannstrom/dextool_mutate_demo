@@ -132,6 +132,18 @@ int mosquitto_client_protocol(const struct mosquitto *client);
 
 
 /*
+ * Function: mosquitto_client_protocol_version
+ *
+ * Retrieve the MQTT protocol version with which the client has connected. Can be one of:
+ *
+ * 3 - for MQTT v3 / v3.1
+ * 4 - for MQTT v3.1.1
+ * 5 - for MQTT v5
+ */
+int mosquitto_client_protocol_version(const struct mosquitto *client);
+
+
+/*
  * Function: mosquitto_client_sub_count
  *
  * Retrieve the number of subscriptions that have been made by a client.

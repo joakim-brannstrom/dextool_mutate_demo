@@ -77,6 +77,21 @@ int mosquitto_client_protocol(const struct mosquitto *client)
 }
 
 
+int mosquitto_client_protocol_version(const struct mosquitto *client)
+{
+	switch(client->protocol){
+		case mosq_p_mqtt31:
+			return 3;
+		case mosq_p_mqtt311:
+			return 4;
+		case mosq_p_mqtt5:
+			return 5;
+		default:
+			return 0;
+	}
+}
+
+
 int mosquitto_client_sub_count(const struct mosquitto *client)
 {
 	return client->sub_count;
