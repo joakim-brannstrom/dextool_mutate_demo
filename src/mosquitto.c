@@ -333,10 +333,6 @@ int main(int argc, char *argv[])
 #endif
 		}
 	}
-	if(listensock == NULL){
-		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to start any listening sockets, exiting.");
-		return 1;
-	}
 
 	rc = drop_privileges(&config, false);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;

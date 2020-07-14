@@ -1,5 +1,7 @@
 Broker:
 - Fix usage message only mentioning v3.1.1. Closes #1713.
+- Fix broker refusing to start if only websockets listeners were defined.
+  Closes #1740.
 
 Client library:
 - Improved documentation around connect callback return codes. Close #1730.
