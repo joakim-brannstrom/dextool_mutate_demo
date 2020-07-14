@@ -1182,7 +1182,7 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 					<listitem>
 						<para>Set <option>use_username_as_clientid</option> to
 							true to replace the clientid that a client
-							connected with with its username. This allows
+							connected with its username. This allows
 							authentication to be tied to the clientid, which
 							means that it is possible to prevent one client
 							disconnecting another by using the same
@@ -1926,7 +1926,7 @@ topic clients/total in 0 test/mosquitto/org/ $SYS/broker/
 							disable the hostname verification.</para>
 						<para>Setting this option to
 							<replaceable>true</replaceable> means that a
-							malicious third party could potentially inpersonate
+							malicious third party could potentially impersonate
 							your server, so it should always be set to
 							<replaceable>false</replaceable> in production
 							environments.</para>
