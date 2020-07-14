@@ -6,6 +6,7 @@ Broker:
   Closes #821.
 - Don't quit with an error if opening the log file isn't possible.
   Closes #821.
+- Fix bridge topic remapping when using "" as the topic. Closes #1749.
 
 Client library:
 - Improved documentation around connect callback return codes. Close #1730.
