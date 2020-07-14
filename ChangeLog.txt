@@ -2,6 +2,10 @@ Broker:
 - Fix usage message only mentioning v3.1.1. Closes #1713.
 - Fix broker refusing to start if only websockets listeners were defined.
   Closes #1740.
+- Change systemd unit files to create /var/log/mosquitto before starting.
+  Closes #821.
+- Don't quit with an error if opening the log file isn't possible.
+  Closes #821.
 
 Client library:
 - Improved documentation around connect callback return codes. Close #1730.

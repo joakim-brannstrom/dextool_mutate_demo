@@ -114,7 +114,6 @@ int log__init(struct mosquitto__config *config)
 			log_destinations = MQTT3_LOG_STDERR;
 			log_priorities = MOSQ_LOG_ERR;
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
-			return MOSQ_ERR_INVAL;
 		}
 		restore_privileges();
 	}
