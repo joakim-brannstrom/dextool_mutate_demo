@@ -99,8 +99,9 @@ int load_file(const char *filename)
 		return 1;
 	}else if(cfg.msglen == 0){
 		fclose(fptr);
-		err_printf(&cfg, "Error: File \"%s\" is empty.\n", filename);
-		return 1;
+		cfg.message = NULL;
+		cfg.msglen = 0;
+		return 0;
 	}else if(cfg.msglen < 0){
 		fclose(fptr);
 		err_printf(&cfg, "Error: Unable to determine size of file \"%s\".\n", filename);
