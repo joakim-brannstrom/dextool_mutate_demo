@@ -394,6 +394,10 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 				}
 			}
 		}
+		if(context->bridge && context->bridge->clean_start == true){
+			mosquitto_property_free_all(&properties);
+			return 2;
+		}
 	}
 
 	if(context->sock != INVALID_SOCKET){

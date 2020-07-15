@@ -7,6 +7,8 @@ Broker:
 - Don't quit with an error if opening the log file isn't possible.
   Closes #821.
 - Fix bridge topic remapping when using "" as the topic. Closes #1749.
+- Fix messages being queued for disconnected bridges when clean start was
+  set to true. Closes #1729.
 
 Client library:
 - Improved documentation around connect callback return codes. Close #1730.
