@@ -100,6 +100,7 @@ int load_file(const char *filename)
 	fseek(fptr, 0, SEEK_END);
 	flen = ftell(fptr);
 	if(flen > MQTT_MAX_PAYLOAD){
+		fclose(fptr);
 		err_printf(&cfg, "Error: File must be less than %u bytes.\n\n", MQTT_MAX_PAYLOAD);
 		free(cfg.message);
 		return 1;
