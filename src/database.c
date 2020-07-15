@@ -339,6 +339,9 @@ int db__message_delete_outgoing(struct mosquitto_db *db, struct mosquitto *conte
 		}
 		db__message_dequeue_first(context, &context->msgs_out);
 	}
+#ifdef WITH_PERSISTENCE
+	db->persistence_changes++;
+#endif
 
 	return MOSQ_ERR_SUCCESS;
 }

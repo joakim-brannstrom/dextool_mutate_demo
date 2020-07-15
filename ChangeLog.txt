@@ -9,6 +9,8 @@ Broker:
 - Fix bridge topic remapping when using "" as the topic. Closes #1749.
 - Fix messages being queued for disconnected bridges when clean start was
   set to true. Closes #1729.
+- Fix `autosave_interval` not being triggered by messages being delivered.
+  Closes #1726.
 
 Client library:
 - Improved documentation around connect callback return codes. Close #1730.
