@@ -13,6 +13,8 @@ Broker:
   Closes #1726.
 - Fix websockets clients sometimes not being disconnected promptly.
   Closes #1718.
+- Fix "slow" file based logging by switching to line based buffering.
+  Closes #1689. Closes #1741.
 
 Client library:
 - Improved documentation around connect callback return codes. Close #1730.

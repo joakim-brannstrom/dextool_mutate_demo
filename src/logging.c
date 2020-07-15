@@ -115,6 +115,7 @@ int log__init(struct mosquitto__config *config)
 			log_priorities = MOSQ_LOG_ERR;
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
 		}
+		setvbuf(config->log_fptr, NULL, _IOLBF, 0);
 		restore_privileges();
 	}
 #ifdef WITH_DLT
@@ -181,7 +182,6 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 	const char *topic;
 	int syslog_priority;
 	time_t now = time(NULL);
-	static time_t last_flush = 0;
 	char time_buf[50];
 	bool log_timestamp = true;
 	char *log_timestamp_format = NULL;
@@ -293,7 +293,6 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			}else{
 				fprintf(stdout, "%s\n", s);
 			}
-			fflush(stdout);
 		}
 		if(log_destinations & MQTT3_LOG_STDERR){
 			if(log_timestamp){
@@ -305,7 +304,6 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			}else{
 				fprintf(stderr, "%s\n", s);
 			}
-			fflush(stderr);
 		}
 		if(log_destinations & MQTT3_LOG_FILE && log_fptr){
 			if(log_timestamp){
@@ -316,10 +314,6 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 				}
 			}else{
 				fprintf(log_fptr, "%s\n", s);
-			}
-			if(now - last_flush > 1){
-				fflush(log_fptr);
-				last_flush = now;
 			}
 		}
 		if(log_destinations & MQTT3_LOG_SYSLOG){
