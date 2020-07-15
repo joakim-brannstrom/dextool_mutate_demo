@@ -14,6 +14,8 @@ Broker:
 
 Client library:
 - Improved documentation around connect callback return codes. Close #1730.
+- Fix `mosquitto_publish*()` no longer returning `MOSQ_ERR_NO_CONN` when not
+  connected. Closes #1725.
 
 
 1.6.10 - 2020-05-25
