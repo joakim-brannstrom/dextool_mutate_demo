@@ -60,8 +60,7 @@ def do_test(proto_ver):
 
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port2, use_conf=True)
 
-    #try:
-    if True:
+    try:
         (bridge, address) = ssock.accept()
         bridge.settimeout(20)
 
@@ -98,7 +97,7 @@ def do_test(proto_ver):
                                 rc = 0
 
         bridge.close()
-    #finally:
+    finally:
         os.remove(conf_file)
         try:
             bridge.close()
