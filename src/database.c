@@ -604,7 +604,6 @@ int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, 
 
 	stored = mosquitto__calloc(1, sizeof(struct mosquitto_msg_store));
 	if(stored == NULL) return MOSQ_ERR_NOMEM;
-	stored->ref_count = 1;
 
 	stored->topic = mosquitto__strdup(topic);
 	if(stored->topic == NULL){

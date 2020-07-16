@@ -301,7 +301,6 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
-	stored->ref_count = 1;
 
 	stored->source_mid = chunk.F.source_mid;
 	stored->topic = chunk.topic;
