@@ -45,54 +45,53 @@ void db__msg_store_free(struct mosquitto_msg_store *store)
 	mosquitto__free(store);
 }
 
-int db__message_store(struct mosquitto_db *db, const struct mosquitto *source, struct mosquitto_msg_store *temp, struct mosquitto_msg_store **stored, uint32_t message_expiry_interval, dbid_t store_id, enum mosquitto_msg_origin origin)
+int db__message_store(struct mosquitto_db *db, const struct mosquitto *source, struct mosquitto_msg_store *stored, uint32_t message_expiry_interval, dbid_t store_id, enum mosquitto_msg_origin origin)
 {
     int rc = MOSQ_ERR_SUCCESS;
 
     if(source && source->id){
-        temp->source_id = mosquitto__strdup(source->id);
+        stored->source_id = mosquitto__strdup(source->id);
     }else{
-        temp->source_id = mosquitto__strdup("");
+        stored->source_id = mosquitto__strdup("");
     }
-    if(!temp->source_id){
+    if(!stored->source_id){
         rc = MOSQ_ERR_NOMEM;
         goto error;
     }
 
     if(source && source->username){
-        temp->source_username = mosquitto__strdup(source->username);
-        if(!temp->source_username){
+        stored->source_username = mosquitto__strdup(source->username);
+        if(!stored->source_username){
             rc = MOSQ_ERR_NOMEM;
             goto error;
         }
     }
     if(source){
-        temp->source_listener = source->listener;
+        stored->source_listener = source->listener;
     }
-    temp->mid = 0;
+    stored->mid = 0;
     if(message_expiry_interval > 0){
-        temp->message_expiry_time = time(NULL) + message_expiry_interval;
+        stored->message_expiry_time = time(NULL) + message_expiry_interval;
     }else{
-        temp->message_expiry_time = 0;
+        stored->message_expiry_time = 0;
     }
 
-    temp->dest_ids = NULL;
-    temp->dest_id_count = 0;
+    stored->dest_ids = NULL;
+    stored->dest_id_count = 0;
     db->msg_store_count++;
-    db->msg_store_bytes += temp->payloadlen;
-    (*stored) = temp;
+    db->msg_store_bytes += stored->payloadlen;
 
     if(!store_id){
-        temp->db_id = ++db->last_db_id;
+        stored->db_id = ++db->last_db_id;
     }else{
-        temp->db_id = store_id;
+        stored->db_id = store_id;
     }
 
-	db->msg_store = temp;
+	db->msg_store = stored;
 
     return MOSQ_ERR_SUCCESS;
 error:
-	db__msg_store_free(temp);
+	db__msg_store_free(stored);
     return rc;
 }
 
