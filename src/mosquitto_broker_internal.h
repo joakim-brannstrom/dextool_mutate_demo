@@ -656,7 +656,7 @@ int db__message_release_incoming(struct mosquitto_db *db, struct mosquitto *cont
 int db__message_update_outgoing(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_state state, int qos);
 int db__message_write(struct mosquitto_db *db, struct mosquitto *context);
 void db__message_dequeue_first(struct mosquitto *context, struct mosquitto_msg_data *msg_data);
-int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context);
+int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context, bool force_free);
 int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, uint32_t message_expiry_interval, mosquitto_property **properties);
 int db__message_store(struct mosquitto_db *db, const struct mosquitto *source, struct mosquitto_msg_store *stored, uint32_t message_expiry_interval, dbid_t store_id, enum mosquitto_msg_origin origin);
 int db__message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored);
@@ -688,7 +688,7 @@ void sub__topic_tokens_free(struct sub__token *tokens);
  * Context functions
  * ============================================================ */
 struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock);
-void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool do_free);
+void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool force_free);
 void context__disconnect(struct mosquitto_db *db, struct mosquitto *context);
 void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context);
 void context__free_disused(struct mosquitto_db *db);

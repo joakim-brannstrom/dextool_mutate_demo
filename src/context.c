@@ -97,13 +97,13 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
  * but it will mean that CONNACK messages will never get sent for bad protocol
  * versions for example.
  */
-void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool do_free)
+void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool force_free)
 {
 	struct mosquitto__packet *packet;
 
 	if(!context) return;
 
-	if(do_free){
+	if(force_free){
 		context->clean_start = true;
 	}
 
@@ -125,10 +125,10 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 	context->password = NULL;
 
 	net__socket_close(db, context);
-	if(do_free){
+	if(force_free){
 		sub__clean_session(db, context);
 	}
-	db__messages_delete(db, context);
+	db__messages_delete(db, context, force_free);
 
 	mosquitto__free(context->address);
 	context->address = NULL;
@@ -159,7 +159,7 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		mosquitto__free(context->adns);
 	}
 #endif
-	if(do_free){
+	if(force_free){
 		mosquitto__free(context);
 	}
 }

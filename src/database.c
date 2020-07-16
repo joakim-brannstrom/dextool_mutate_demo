@@ -565,11 +565,11 @@ void db__messages_delete_list(struct mosquitto_db *db, struct mosquitto_client_m
 }
 
 
-int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context)
+int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context, bool force_free)
 {
 	if(!context) return MOSQ_ERR_INVAL;
 
-	if(context->clean_start || (context->bridge && context->bridge->clean_start)){
+	if(force_free || context->clean_start || (context->bridge && context->bridge->clean_start)){
 		db__messages_delete_list(db, &context->msgs_in.inflight);
 		db__messages_delete_list(db, &context->msgs_in.queued);
 		context->msgs_in.msg_bytes = 0;
@@ -578,7 +578,7 @@ int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context)
 		context->msgs_in.msg_count12 = 0;
 	}
 
-	if((context->bridge && context->bridge->clean_start_local)
+	if(force_free || (context->bridge && context->bridge->clean_start_local)
 			|| (context->bridge == NULL && context->clean_start)){
 
 		db__messages_delete_list(db, &context->msgs_out.inflight);
