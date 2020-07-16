@@ -334,7 +334,7 @@ ifeq ($(WITH_COVERAGE),yes)
 endif
 
 ifeq ($(WITH_CJSON),yes)
-	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_CJSON -I/usr/include/cjson
+	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_CJSON -I/usr/include/cjson -I/usr/local/include/cjson
 	CLIENT_LDADD:=$(CLIENT_LDADD) -lcjson
 endif
 
