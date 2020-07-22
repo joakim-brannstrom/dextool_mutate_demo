@@ -65,7 +65,7 @@ parts:
       - gcc
       - g++
     stage-packages:
-      - libssl1.1
+      - libssl1.0.0
       - ca-certificates
     prime:
       - usr/sbin/mosquitto
