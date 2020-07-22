@@ -1,7 +1,7 @@
 name: mosquitto
 version: 1.6.10
 summary: Eclipse Mosquitto MQTT broker
-description: This is a message broker that supports version 3.1 and 3.1.1 of the MQTT
+description: This is a message broker that supports version 5.0, 3.1.1, and 3.1 of the MQTT
     protocol.
     MQTT provides a method of carrying out messaging using a publish/subscribe
     model. It is lightweight, both in terms of bandwidth usage and ease of
@@ -10,6 +10,7 @@ description: This is a message broker that supports version 3.1 and 3.1.1 of the
     example.
 confinement: strict
 grade: stable
+base: core18
 
 apps:
   mosquitto:
@@ -64,7 +65,7 @@ parts:
       - gcc
       - g++
     stage-packages:
-      - libssl1.0.0
+      - libssl1.1
       - ca-certificates
     prime:
       - usr/sbin/mosquitto
