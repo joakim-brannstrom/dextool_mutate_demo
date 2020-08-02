@@ -16,8 +16,8 @@ Broker:
   publish messages.
 - Add `mosquitto_client_protocol_version()` function which can be used by
   plugins to determine which version of MQTT a client has connected with.
-- Send DISCONNECT with `malformed-packet` reason code on invalid UNSUBSCRIBE
-  packets.
+- Send DISCONNECT with `malformed-packet` reason code on invalid SUBSCRIBE,
+  UNSUBSCRIBE packets.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are

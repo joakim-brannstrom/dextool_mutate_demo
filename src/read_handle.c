@@ -56,7 +56,8 @@ int handle__packet(struct mosquitto_db *db, struct mosquitto *context)
 		case CMD_DISCONNECT:
 			return handle__disconnect(db, context);
 		case CMD_SUBSCRIBE:
-			return handle__subscribe(db, context);
+			rc = handle__subscribe(db, context);
+			break;
 		case CMD_UNSUBSCRIBE:
 			rc = handle__unsubscribe(db, context);
 			break;

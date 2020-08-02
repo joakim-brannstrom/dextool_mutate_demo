@@ -36,26 +36,26 @@ try:
     unsubscribe_packet = mosq_test.gen_unsubscribe(topic="test/topic", mid=1, proto_ver=5, cmd=160)
     do_test(unsubscribe_packet, mqtt5_rc.MQTT_RC_MALFORMED_PACKET, "command flags != 0x02")
 
-    # Truncated packet, no mid
-    unsubscribe_packet = struct.pack("!BB", 162, 0)
-    do_test(unsubscribe_packet, mqtt5_rc.MQTT_RC_MALFORMED_PACKET, "Truncated packet, no mid")
-
     # Incorrect property
     props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_SESSION_EXPIRY_INTERVAL, 0)
     unsubscribe_packet = mosq_test.gen_unsubscribe(topic="test/topic", mid=1, proto_ver=5, properties=props)
     do_test(unsubscribe_packet, mqtt5_rc.MQTT_RC_MALFORMED_PACKET, "Incorrect property")
 
-    # Truncated packet, no topic
+    # Truncated packet, no mid
+    unsubscribe_packet = struct.pack("!BB", 162, 0)
+    do_test(unsubscribe_packet, mqtt5_rc.MQTT_RC_MALFORMED_PACKET, "Truncated packet, no mid")
+
+    # Truncated packet, no properties
     unsubscribe_packet = struct.pack("!BBH", 162, 2, 1)
-    do_test(unsubscribe_packet, mqtt5_rc.MQTT_RC_MALFORMED_PACKET, "Truncated packet, no topic")
+    do_test(unsubscribe_packet, mqtt5_rc.MQTT_RC_MALFORMED_PACKET, "Truncated packet, no properties")
 
-    # Truncated packet, empty topic
+    # Truncated packet, with properties field, no topic
     unsubscribe_packet = struct.pack("!BBHH", 162, 4, 1, 0)
-    do_test(unsubscribe_packet, mqtt5_rc.MQTT_RC_MALFORMED_PACKET, "Truncated packet, empty topic")
+    do_test(unsubscribe_packet, mqtt5_rc.MQTT_RC_MALFORMED_PACKET, "Truncated packet, with properties field, no topic")
 
-    # Truncated packet, empty topic, with properties field
+    # Truncated packet, with properties field, empty topic
     unsubscribe_packet = struct.pack("!BBHHH", 162, 5, 1, 0, 0)
-    do_test(unsubscribe_packet, mqtt5_rc.MQTT_RC_MALFORMED_PACKET, "Truncated packet, empty topic, with properties field")
+    do_test(unsubscribe_packet, mqtt5_rc.MQTT_RC_MALFORMED_PACKET, "Truncated packet, with properties field, empty topic")
 
     # Bad topic
     unsubscribe_packet = mosq_test.gen_unsubscribe(topic="#/test/topic", mid=1, proto_ver=5)

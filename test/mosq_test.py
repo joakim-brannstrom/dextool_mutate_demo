@@ -507,9 +507,9 @@ def gen_pubcomp(mid, proto_ver=4, reason_code=-1, properties=None):
     return _gen_command_with_mid(112, mid, proto_ver, reason_code, properties)
 
 
-def gen_subscribe(mid, topic, qos, proto_ver=4, properties=b""):
+def gen_subscribe(mid, topic, qos, cmd=130, proto_ver=4, properties=b""):
     topic = topic.encode("utf-8")
-    packet = struct.pack("!B", 130)
+    packet = struct.pack("!B", cmd)
     if proto_ver == 5:
         if properties == b"":
             packet += pack_remaining_length(2+1+2+len(topic)+1)

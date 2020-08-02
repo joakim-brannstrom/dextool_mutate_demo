@@ -218,4 +218,5 @@ endif
 	./12-prop-topic-alias-invalid.py
 
 13 :
+	./13-malformed-subscribe-v5.py
 	./13-malformed-unsubscribe-v5.py

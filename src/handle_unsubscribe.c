@@ -55,6 +55,9 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 	if(context->protocol == mosq_p_mqtt5){
 		rc = property__read_all(CMD_UNSUBSCRIBE, &context->in_packet, &properties);
 		if(rc){
+			/* FIXME - it would be better if property__read_all() returned
+			 * MOSQ_ERR_MALFORMED_PACKET, but this is would change the library
+			 * return codes so needs doc changes as well. */
 			if(rc == MOSQ_ERR_PROTOCOL){
 				return MOSQ_ERR_MALFORMED_PACKET;
 			}else{
