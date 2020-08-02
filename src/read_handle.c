@@ -46,7 +46,8 @@ int handle__packet(struct mosquitto_db *db, struct mosquitto *context)
 		case CMD_PUBCOMP:
 			return handle__pubackcomp(db, context, "PUBCOMP");
 		case CMD_PUBLISH:
-			return handle__publish(db, context);
+			rc = handle__publish(db, context);
+			break;
 		case CMD_PUBREC:
 			return handle__pubrec(db, context);
 		case CMD_PUBREL:
@@ -80,6 +81,12 @@ int handle__packet(struct mosquitto_db *db, struct mosquitto *context)
 			send__disconnect(context, MQTT_RC_PROTOCOL_ERROR, NULL);
 		}else if(rc == MOSQ_ERR_MALFORMED_PACKET){
 			send__disconnect(context, MQTT_RC_MALFORMED_PACKET, NULL);
+		}else if(rc == MOSQ_ERR_QOS_NOT_SUPPORTED){
+			send__disconnect(context, MQTT_RC_QOS_NOT_SUPPORTED, NULL);
+		}else if(rc == MOSQ_ERR_RETAIN_NOT_SUPPORTED){
+			send__disconnect(context, MQTT_RC_RETAIN_NOT_SUPPORTED, NULL);
+		}else if(rc == MOSQ_ERR_TOPIC_ALIAS_INVALID){
+			send__disconnect(context, MQTT_RC_TOPIC_ALIAS_INVALID, NULL);
 		}else if(rc == MOSQ_ERR_UNKNOWN || rc == MOSQ_ERR_NOMEM){
 			send__disconnect(context, MQTT_RC_UNSPECIFIED, NULL);
 		}

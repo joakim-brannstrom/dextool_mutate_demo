@@ -182,6 +182,7 @@ tests = [
     (1, './12-prop-subpub-payload-format.py'),
     (1, './12-prop-topic-alias-invalid.py'),
 
+    (1, './13-malformed-publish-v5.py'),
     (1, './13-malformed-subscribe-v5.py'),
     (1, './13-malformed-unsubscribe-v5.py'),
     ]

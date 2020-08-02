@@ -228,14 +228,14 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 	context->maximum_qos = context->listener->maximum_qos;
 
 	if(context->protocol == mosq_p_mqtt5){
-		if(context->maximum_qos != 2){
-			if(mosquitto_property_add_byte(&connack_props, MQTT_PROP_MAXIMUM_QOS, context->maximum_qos)){
+		if(context->listener->max_topic_alias > 0){
+			if(mosquitto_property_add_int16(&connack_props, MQTT_PROP_TOPIC_ALIAS_MAXIMUM, context->listener->max_topic_alias)){
 				rc = MOSQ_ERR_NOMEM;
 				goto error;
 			}
 		}
-		if(context->listener->max_topic_alias > 0){
-			if(mosquitto_property_add_int16(&connack_props, MQTT_PROP_TOPIC_ALIAS_MAXIMUM, context->listener->max_topic_alias)){
+		if(context->maximum_qos != 2){
+			if(mosquitto_property_add_byte(&connack_props, MQTT_PROP_MAXIMUM_QOS, context->maximum_qos)){
 				rc = MOSQ_ERR_NOMEM;
 				goto error;
 			}

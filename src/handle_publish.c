@@ -66,38 +66,35 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		log__printf(NULL, MOSQ_LOG_INFO,
 				"Invalid QoS in PUBLISH from %s, disconnecting.", context->id);
 		db__msg_store_free(msg);
-		return 1;
+		return MOSQ_ERR_MALFORMED_PACKET;
 	}
 	if(msg->qos > context->maximum_qos){
 		log__printf(NULL, MOSQ_LOG_INFO,
 				"Too high QoS in PUBLISH from %s, disconnecting.", context->id);
 		db__msg_store_free(msg);
-		return 1;
+		return MOSQ_ERR_QOS_NOT_SUPPORTED;
 	}
 	msg->retain = (header & 0x01);
 
 	if(msg->retain && db->config->retain_available == false){
-		if(context->protocol == mosq_p_mqtt5){
-			send__disconnect(context, MQTT_RC_RETAIN_NOT_SUPPORTED, NULL);
-		}
 		db__msg_store_free(msg);
-		return 1;
+		return MOSQ_ERR_RETAIN_NOT_SUPPORTED;
 	}
 
 	if(packet__read_string(&context->in_packet, &msg->topic, &slen)){
 		db__msg_store_free(msg);
-		return 1;
+		return MOSQ_ERR_MALFORMED_PACKET;
 	}
 	if(!slen && context->protocol != mosq_p_mqtt5){
 		/* Invalid publish topic, disconnect client. */
 		db__msg_store_free(msg);
-		return 1;
+		return MOSQ_ERR_MALFORMED_PACKET;
 	}
 
 	if(msg->qos > 0){
 		if(packet__read_uint16(&context->in_packet, &mid)){
 			db__msg_store_free(msg);
-			return 1;
+			return MOSQ_ERR_MALFORMED_PACKET;
 		}
 		if(mid == 0){
 			db__msg_store_free(msg);
@@ -113,7 +110,11 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		rc = property__read_all(CMD_PUBLISH, &context->in_packet, &properties);
 		if(rc){
 			db__msg_store_free(msg);
-			return rc;
+			if(rc == MOSQ_ERR_PROTOCOL){
+				return MOSQ_ERR_MALFORMED_PACKET;
+			}else{
+				return rc;
+			}
 		}
 
 		p = properties;
@@ -171,8 +172,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 
 	if(topic_alias == 0 || (context->listener && topic_alias > context->listener->max_topic_alias)){
 		db__msg_store_free(msg);
-		send__disconnect(context, MQTT_RC_TOPIC_ALIAS_INVALID, NULL);
-		return MOSQ_ERR_PROTOCOL;
+		return MOSQ_ERR_TOPIC_ALIAS_INVALID;
 	}else if(topic_alias > 0){
 		if(msg->topic){
 			rc = alias__add(context, msg->topic, topic_alias);
@@ -183,9 +183,8 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		}else{
 			rc = alias__find(context, &msg->topic, topic_alias);
 			if(rc){
-				send__disconnect(context, MQTT_RC_TOPIC_ALIAS_INVALID, NULL);
 				db__msg_store_free(msg);
-				return rc;
+				return MOSQ_ERR_TOPIC_ALIAS_INVALID;
 			}
 		}
 	}
@@ -201,7 +200,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	if(mosquitto_pub_topic_check(msg->topic) != MOSQ_ERR_SUCCESS){
 		/* Invalid publish topic, just swallow it. */
 		db__msg_store_free(msg);
-		return 1;
+		return MOSQ_ERR_PROTOCOL;
 	}
 
 	msg->payloadlen = context->in_packet.remaining_length - context->in_packet.pos;
@@ -233,7 +232,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 
 		if(packet__read_bytes(&context->in_packet, UHPA_ACCESS(msg->payload, msg->payloadlen), msg->payloadlen)){
 			db__msg_store_free(msg);
-			return MOSQ_ERR_UNKNOWN;
+			return MOSQ_ERR_MALFORMED_PACKET;
 		}
 	}
 

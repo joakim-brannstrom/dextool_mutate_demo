@@ -25,7 +25,11 @@ def do_test(proto_ver):
         time.sleep(0.5)
 
         sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-        mosq_test.do_send_receive(sock, publish_packet, b"", "puback")
+        if proto_ver == 4:
+            mosq_test.do_send_receive(sock, publish_packet, b"", "puback")
+        else:
+            disconnect_packet = mosq_test.gen_disconnect(proto_ver=5, reason_code=mqtt5_rc.MQTT_RC_MALFORMED_PACKET)
+            mosq_test.do_send_receive(sock, publish_packet, disconnect_packet, "puback")
 
         rc = 0
 
