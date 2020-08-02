@@ -181,6 +181,8 @@ tests = [
     (1, './12-prop-subpub-content-type.py'),
     (1, './12-prop-subpub-payload-format.py'),
     (1, './12-prop-topic-alias-invalid.py'),
+
+    (1, './13-malformed-unsubscribe-v5.py'),
     ]
 
 ptest.run_tests(tests)

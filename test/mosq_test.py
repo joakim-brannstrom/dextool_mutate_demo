@@ -532,14 +532,23 @@ def gen_suback(mid, qos, proto_ver=4):
     else:
         return struct.pack('!BBHB', 144, 2+1, mid, qos)
 
-def gen_unsubscribe(mid, topic, proto_ver=4):
+def gen_unsubscribe(mid, topic, cmd=162, proto_ver=4, properties=b""):
     topic = topic.encode("utf-8")
     if proto_ver == 5:
-        pack_format = "!BBHBH"+str(len(topic))+"s"
-        return struct.pack(pack_format, 162, 2+2+len(topic)+1, mid, 0, len(topic), topic)
+        if properties == b"":
+            pack_format = "!BBHBH"+str(len(topic))+"s"
+            return struct.pack(pack_format, cmd, 2+2+len(topic)+1, mid, 0, len(topic), topic)
+        else:
+            properties = mqtt5_props.prop_finalise(properties)
+            packet = struct.pack("!B", cmd)
+            l = 2+2+len(topic)+1+len(properties)
+            packet += pack_remaining_length(l)
+            pack_format = "!HB"+str(len(properties))+"sH"+str(len(topic))+"s"
+            packet += struct.pack(pack_format, mid, len(properties), properties, len(topic), topic)
+            return packet
     else:
         pack_format = "!BBHH"+str(len(topic))+"s"
-        return struct.pack(pack_format, 162, 2+2+len(topic), mid, len(topic), topic)
+        return struct.pack(pack_format, cmd, 2+2+len(topic), mid, len(topic), topic)
 
 def gen_unsubscribe_multiple(mid, topics, proto_ver=4):
     packet = b""

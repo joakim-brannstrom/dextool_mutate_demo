@@ -308,6 +308,9 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context, int reaso
 				switch(reason){
 					case MOSQ_ERR_SUCCESS:
 						break;
+					case MOSQ_ERR_MALFORMED_PACKET:
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected due to malformed packet.", id);
+						break;
 					case MOSQ_ERR_PROTOCOL:
 						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected due to protocol error.", id);
 						break;

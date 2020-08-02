@@ -46,15 +46,21 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 
 	if(context->protocol != mosq_p_mqtt31){
 		if((context->in_packet.command&0x0F) != 0x02){
-			return MOSQ_ERR_PROTOCOL;
+			return MOSQ_ERR_MALFORMED_PACKET;
 		}
 	}
-	if(packet__read_uint16(&context->in_packet, &mid)) return 1;
-	if(mid == 0) return MOSQ_ERR_PROTOCOL;
+	if(packet__read_uint16(&context->in_packet, &mid)) return MOSQ_ERR_MALFORMED_PACKET;
+	if(mid == 0) return MOSQ_ERR_MALFORMED_PACKET;
 
 	if(context->protocol == mosq_p_mqtt5){
 		rc = property__read_all(CMD_UNSUBSCRIBE, &context->in_packet, &properties);
-		if(rc) return rc;
+		if(rc){
+			if(rc == MOSQ_ERR_PROTOCOL){
+				return MOSQ_ERR_MALFORMED_PACKET;
+			}else{
+				return rc;
+			}
+		}
 		/* Immediately free, we don't do anything with User Property at the moment */
 		mosquitto_property_free_all(&properties);
 	}
@@ -62,7 +68,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 	if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt5){
 		if(context->in_packet.pos == context->in_packet.remaining_length){
 			/* No topic specified, protocol error. */
-			return MOSQ_ERR_PROTOCOL;
+			return MOSQ_ERR_MALFORMED_PACKET;
 		}
 	}
 
@@ -76,7 +82,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 		sub = NULL;
 		if(packet__read_string(&context->in_packet, &sub, &slen)){
 			mosquitto__free(reason_codes);
-			return 1;
+			return MOSQ_ERR_MALFORMED_PACKET;
 		}
 
 		if(!slen){
@@ -85,7 +91,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 					context->id);
 			mosquitto__free(sub);
 			mosquitto__free(reason_codes);
-			return 1;
+			return MOSQ_ERR_MALFORMED_PACKET;
 		}
 		if(mosquitto_sub_topic_check(sub)){
 			log__printf(NULL, MOSQ_LOG_INFO,
@@ -93,7 +99,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 					context->id);
 			mosquitto__free(sub);
 			mosquitto__free(reason_codes);
-			return 1;
+			return MOSQ_ERR_MALFORMED_PACKET;
 		}
 
 		log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);

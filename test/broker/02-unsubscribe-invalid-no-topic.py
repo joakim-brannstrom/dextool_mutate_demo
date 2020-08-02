@@ -22,7 +22,11 @@ def do_test(proto_ver):
 
     try:
         sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-        mosq_test.do_send_receive(sock, unsubscribe_packet, b"", "disconnect")
+        if proto_ver == 4:
+            mosq_test.do_send_receive(sock, unsubscribe_packet, b"", "disconnect")
+        else:
+            disconnect_packet = mosq_test.gen_disconnect(proto_ver=5, reason_code=mqtt5_rc.MQTT_RC_MALFORMED_PACKET)
+            mosq_test.do_send_receive(sock, unsubscribe_packet, disconnect_packet, "disconnect")
 
         rc = 0
 
