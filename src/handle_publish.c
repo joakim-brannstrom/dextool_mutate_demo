@@ -248,6 +248,13 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, msg->qos, msg->retain, msg->source_mid, msg->topic, (long)msg->payloadlen);
+
+	if(!strncmp(msg->topic, "$CONTROL/", 9)){
+		rc = control__process(db, context, msg);
+		db__msg_store_free(msg);
+		return rc;
+	}
+
 	if(msg->qos > 0){
 		db__message_store_find(context, msg->source_mid, &stored);
 	}

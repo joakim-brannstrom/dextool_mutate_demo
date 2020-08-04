@@ -8,6 +8,7 @@ set (MOSQ_SRCS
 	conf.c
 	conf_includedir.c
 	context.c
+	control.c
 	database.c
 	handle_auth.c
 	handle_connack.c

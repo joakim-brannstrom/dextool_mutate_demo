@@ -697,6 +697,13 @@ void context__remove_from_by_id(struct mosquitto_db *db, struct mosquitto *conte
 
 int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, void *auth_data_out, uint16_t auth_data_out_len);
 
+
+/* ============================================================
+ * Control functions
+ * ============================================================ */
+int control__process(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_msg_store *stored);
+
+
 /* ============================================================
  * Logging functions
  * ============================================================ */
