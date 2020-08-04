@@ -17,6 +17,8 @@ Broker:
   Closes #1689. Closes #1741.
 - Log protocol error message where appropriate from a bad UNSUBSCRIBE, rather
   than the generic "socket error".
+- Don't try to start DLT logging if DLT unavailable, to avoid a long delay
+  when shutting down the broker. Closes #1735.
 
 Client library:
 - Improved documentation around connect callback return codes. Close #1730.
