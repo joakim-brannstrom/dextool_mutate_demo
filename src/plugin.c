@@ -128,8 +128,17 @@ int mosquitto_plugin_publish(
 	msg->next = NULL;
 	msg->prev = NULL;
 	msg->topic = mosquitto__strdup(topic);
+	if(msg->topic == NULL){
+		mosquitto__free(msg);
+		return MOSQ_ERR_NOMEM;
+	}
 	msg->payloadlen = payloadlen;
 	msg->payload = mosquitto__calloc(1, payloadlen+1);
+	if(msg->payload == NULL){
+		mosquitto__free(msg->topic);
+		mosquitto__free(msg);
+		return MOSQ_ERR_NOMEM;
+	}
 	memcpy(msg->payload, payload, payloadlen);
 	msg->qos = qos;
 	msg->retain = retain;
