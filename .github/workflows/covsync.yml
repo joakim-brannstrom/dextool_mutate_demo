@@ -13,13 +13,7 @@ jobs:
         with:
           fetch-depth: 0
       - run: |
-          git diff --exit-code -s origin/coverity-fixes origin/fixes
-          if [ "$?" = "1" ]; then
-            git checkout -b coverity-fixes origin/fixes
-            git push origin coverity-fixes
-          fi
-          git diff --exit-code -s origin/coverity-develop origin/develop
-          if [ "$?" = "1" ]; then
-            git checkout -b coverity-develop origin/develop
-            git push origin coverity-develop
-          fi
+          git checkout -b coverity-fixes origin/fixes
+          git push origin coverity-fixes
+          git checkout -b coverity-develop origin/develop
+          git push origin coverity-develop
