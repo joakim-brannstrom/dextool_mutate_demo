@@ -196,6 +196,8 @@ static int json_print_properties(cJSON *root, const mosquitto_property *properti
 				}
 				cJSON_AddItemToObject(user_json, strname, tmp);
 				free(strname);
+				strname = NULL;
+				strvalue = NULL;
 				tmp = NULL; /* Don't add this to prop_json below */
 				break;
 		}
