@@ -169,11 +169,11 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 
 					if(db__message_write(db, context) == MOSQ_ERR_SUCCESS){
 						if(context->current_out_packet || context->state == mosq_cs_connect_pending || context->ws_want_write){
-							rc = mux__add_out(db, context);
+							mux__add_out(db, context);
 							context->ws_want_write = false;
 						}
 						else{
-							rc = mux__remove_out(db, context);
+							mux__remove_out(db, context);
 						}
 					}else{
 						do_disconnect(db, context, MOSQ_ERR_CONN_LOST);

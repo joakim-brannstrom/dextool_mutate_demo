@@ -769,7 +769,7 @@ void bridge_check(struct mosquitto_db *db)
 							if(context->bridge->round_robin == false && context->bridge->cur_address != 0){
 								context->bridge->primary_retry = now + 5;
 							}
-							rc = mux__add_in(db, context);
+							mux__add_in(db, context);
 							if(context->current_out_packet){
 								rc = mux__add_out(db, context);
 							}
