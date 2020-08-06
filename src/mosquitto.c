@@ -224,7 +224,7 @@ int listeners__start(struct mosquitto_db *db, mosq_sock_t **listensock, int *lis
 			}
 			(*listensock_count) += db->config->listeners[i].sock_count;
 			*listensock = mosquitto__realloc(*listensock, sizeof(mosq_sock_t)*(*listensock_count));
-			if(!listensock){
+			if(!(*listensock)){
 				db__close(db);
 				if(db->config->pid_file){
 					remove(db->config->pid_file);
