@@ -885,7 +885,7 @@ int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port,
 	mosq_sock_t sock = INVALID_SOCKET;
 	int rc, rc2;
 
-	if(!mosq || !host || port < 0) return MOSQ_ERR_INVAL;
+	if(!mosq || !host) return MOSQ_ERR_INVAL;
 
 	rc = net__try_connect(host, port, &sock, bind_address, blocking);
 	if(rc > 0) return rc;
