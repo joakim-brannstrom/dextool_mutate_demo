@@ -19,6 +19,7 @@ Broker:
   than the generic "socket error".
 - Don't try to start DLT logging if DLT unavailable, to avoid a long delay
   when shutting down the broker. Closes #1735.
+- Fix potential memory leaks. Closes #1773. Closes #1774.
 
 Client library:
 - Improved documentation around connect callback return codes. Close #1730.

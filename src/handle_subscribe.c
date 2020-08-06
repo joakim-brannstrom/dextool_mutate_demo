@@ -119,6 +119,8 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 
 				retain_handling = (subscription_options & 0x30);
 				if(retain_handling == 0x30 || (subscription_options & 0xC0) != 0){
+					mosquitto__free(sub);
+					mosquitto__free(payload);
 					return MOSQ_ERR_PROTOCOL;
 				}
 			}
