@@ -107,6 +107,9 @@ void queue_plugin_msgs(struct mosquitto_db *db)
 	DL_FOREACH_SAFE(db->plugin_msgs, msg, tmp){
 		DL_DELETE(db->plugin_msgs, msg);
 		db__messages_easy_queue(db, NULL, msg->topic, msg->qos, msg->payloadlen, msg->payload, msg->retain, 0, &msg->properties);
+		mosquitto__free(msg->topic);
+		mosquitto__free(msg->payload);
+		mosquitto_property_free_all(&msg->properties);
 		mosquitto__free(msg);
 	}
 }
