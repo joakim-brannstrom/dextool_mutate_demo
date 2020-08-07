@@ -38,7 +38,7 @@ Contributors:
 #include "util_mosq.h"
 
 
-int persist__chunk_header_read_v5(FILE *db_fptr, int *chunk, int *length)
+int persist__chunk_header_read_v56(FILE *db_fptr, int *chunk, int *length)
 {
 	size_t rlen;
 	struct PF_header header;
@@ -53,7 +53,7 @@ int persist__chunk_header_read_v5(FILE *db_fptr, int *chunk, int *length)
 }
 
 
-int persist__chunk_cfg_read_v5(FILE *db_fptr, struct PF_cfg *chunk)
+int persist__chunk_cfg_read_v56(FILE *db_fptr, struct PF_cfg *chunk)
 {
 	if(fread(chunk, sizeof(struct PF_cfg), 1, db_fptr) != 1){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
@@ -64,28 +64,46 @@ int persist__chunk_cfg_read_v5(FILE *db_fptr, struct PF_cfg *chunk)
 }
 
 
-int persist__chunk_client_read_v5(FILE *db_fptr, struct P_client *chunk)
+int persist__chunk_client_read_v56(FILE *db_fptr, struct P_client *chunk, int db_version)
 {
 	int rc;
 
-	read_e(db_fptr, &chunk->F, sizeof(struct PF_client));
+	if(db_version == 6){
+		read_e(db_fptr, &chunk->F, sizeof(struct PF_client));
+		chunk->F.username_len = ntohs(chunk->F.username_len);
+		chunk->F.listener_port = ntohs(chunk->F.listener_port);
+	}else if(db_version == 5){
+		read_e(db_fptr, &chunk->F, sizeof(struct PF_client_v5));
+	}else{
+		return 1;
+	}
+	
 	chunk->F.session_expiry_interval = ntohl(chunk->F.session_expiry_interval);
 	chunk->F.last_mid = ntohs(chunk->F.last_mid);
 	chunk->F.id_len = ntohs(chunk->F.id_len);
 
+
 	rc = persist__read_string_len(db_fptr, &chunk->client_id, chunk->F.id_len);
 	if(rc || !chunk->client_id){
 		return 1;
-	}else{
-		return MOSQ_ERR_SUCCESS;
 	}
+
+	if(chunk->F.username_len > 0){
+		rc = persist__read_string_len(db_fptr, &chunk->username, chunk->F.username_len);
+		if(rc || !chunk->username){
+			mosquitto__free(chunk->client_id);
+			return 1;
+		}
+	}
+
+	return MOSQ_ERR_SUCCESS;
 error:
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
 	return 1;
 }
 
 
-int persist__chunk_client_msg_read_v5(FILE *db_fptr, struct P_client_msg *chunk, uint32_t length)
+int persist__chunk_client_msg_read_v56(FILE *db_fptr, struct P_client_msg *chunk, uint32_t length)
 {
 	mosquitto_property *properties = NULL;
 	struct mosquitto__packet prop_packet;
@@ -125,7 +143,7 @@ error:
 }
 
 
-int persist__chunk_msg_store_read_v5(FILE *db_fptr, struct P_msg_store *chunk, uint32_t length)
+int persist__chunk_msg_store_read_v56(FILE *db_fptr, struct P_msg_store *chunk, uint32_t length)
 {
 	int rc = 0;
 	mosquitto_property *properties = NULL;
@@ -215,7 +233,7 @@ error:
 }
 
 
-int persist__chunk_retain_read_v5(FILE *db_fptr, struct P_retain *chunk)
+int persist__chunk_retain_read_v56(FILE *db_fptr, struct P_retain *chunk)
 {
 	if(fread(&chunk->F, sizeof(struct P_retain), 1, db_fptr) != 1){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
@@ -225,7 +243,7 @@ int persist__chunk_retain_read_v5(FILE *db_fptr, struct P_retain *chunk)
 }
 
 
-int persist__chunk_sub_read_v5(FILE *db_fptr, struct P_sub *chunk)
+int persist__chunk_sub_read_v56(FILE *db_fptr, struct P_sub *chunk)
 {
 	int rc;
 

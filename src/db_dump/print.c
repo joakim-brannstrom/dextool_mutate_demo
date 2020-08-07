@@ -145,6 +145,12 @@ void print__client(struct P_client *chunk, int length)
 	printf("DB_CHUNK_CLIENT:\n");
 	printf("\tLength: %d\n", length);
 	printf("\tClient ID: %s\n", chunk->client_id);
+	if(chunk->username){
+		printf("\tUsername: %s\n", chunk->username);
+	}
+	if(chunk->F.listener_port > 0){
+		printf("\tListener port: %u\n", chunk->F.listener_port);
+	}
 	printf("\tLast MID: %d\n", chunk->F.last_mid);
 	printf("\tSession expiry time: %" PRIu64 "\n", chunk->F.session_expiry_time);
 	printf("\tSession expiry interval: %u\n", chunk->F.session_expiry_interval);

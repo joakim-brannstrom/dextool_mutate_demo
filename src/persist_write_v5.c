@@ -37,7 +37,7 @@ Contributors:
 #include "time_mosq.h"
 #include "util_mosq.h"
 
-int persist__chunk_cfg_write_v5(FILE *db_fptr, struct PF_cfg *chunk)
+int persist__chunk_cfg_write_v6(FILE *db_fptr, struct PF_cfg *chunk)
 {
 	struct PF_header header;
 
@@ -53,22 +53,28 @@ error:
 }
 
 
-int persist__chunk_client_write_v5(FILE *db_fptr, struct P_client *chunk)
+int persist__chunk_client_write_v6(FILE *db_fptr, struct P_client *chunk)
 {
 	struct PF_header header;
 	uint16_t id_len = chunk->F.id_len;
+	uint16_t username_len = chunk->F.username_len;
 
 	chunk->F.session_expiry_interval = htonl(chunk->F.session_expiry_interval);
 	chunk->F.last_mid = htons(chunk->F.last_mid);
 	chunk->F.id_len = htons(chunk->F.id_len);
+	chunk->F.username_len = htons(chunk->F.username_len);
+	chunk->F.listener_port = htons(chunk->F.listener_port);
 
 	header.chunk = htonl(DB_CHUNK_CLIENT);
-	header.length = htonl(sizeof(struct PF_client)+id_len);
+	header.length = htonl(sizeof(struct PF_client)+id_len+username_len);
 
 	write_e(db_fptr, &header, sizeof(struct PF_header));
 	write_e(db_fptr, &chunk->F, sizeof(struct PF_client));
 
 	write_e(db_fptr, chunk->client_id, id_len);
+	if(username_len > 0){
+		write_e(db_fptr, chunk->username, username_len);
+	}
 
 	return MOSQ_ERR_SUCCESS;
 error:
@@ -77,7 +83,7 @@ error:
 }
 
 
-int persist__chunk_client_msg_write_v5(FILE *db_fptr, struct P_client_msg *chunk)
+int persist__chunk_client_msg_write_v6(FILE *db_fptr, struct P_client_msg *chunk)
 {
 	struct PF_header header;
 	struct mosquitto__packet prop_packet;
@@ -123,7 +129,7 @@ error:
 }
 
 
-int persist__chunk_message_store_write_v5(FILE *db_fptr, struct P_msg_store *chunk)
+int persist__chunk_message_store_write_v6(FILE *db_fptr, struct P_msg_store *chunk)
 {
 	struct PF_header header;
 	uint32_t payloadlen = chunk->F.payloadlen;
@@ -188,7 +194,7 @@ error:
 }
 
 
-int persist__chunk_retain_write_v5(FILE *db_fptr, struct P_retain *chunk)
+int persist__chunk_retain_write_v6(FILE *db_fptr, struct P_retain *chunk)
 {
 	struct PF_header header;
 
@@ -205,7 +211,7 @@ error:
 }
 
 
-int persist__chunk_sub_write_v5(FILE *db_fptr, struct P_sub *chunk)
+int persist__chunk_sub_write_v6(FILE *db_fptr, struct P_sub *chunk)
 {
 	struct PF_header header;
 	uint16_t id_len = chunk->F.id_len;
