@@ -110,8 +110,8 @@ static int dump__cfg_chunk_process(struct mosquitto_db *db, FILE *db_fd, uint32_
 
 	memset(&chunk, 0, sizeof(struct PF_cfg));
 
-	if(db_version == 5){
-		rc = persist__chunk_cfg_read_v5(db_fd, &chunk);
+	if(db_version == 6 || db_version == 5){
+		rc = persist__chunk_cfg_read_v56(db_fd, &chunk);
 	}else{
 		rc = persist__chunk_cfg_read_v234(db_fd, &chunk);
 	}
@@ -147,8 +147,8 @@ static int dump__client_chunk_process(struct mosquitto_db *db, FILE *db_fd, uint
 
 	memset(&chunk, 0, sizeof(struct P_client));
 
-	if(db_version == 5){
-		rc = persist__chunk_client_read_v5(db_fd, &chunk);
+	if(db_version == 6 || db_version == 5){
+		rc = persist__chunk_client_read_v56(db_fd, &chunk, db_version);
 	}else{
 		rc = persist__chunk_client_read_v234(db_fd, &chunk, db_version);
 	}
@@ -189,8 +189,8 @@ static int dump__client_msg_chunk_process(struct mosquitto_db *db, FILE *db_fd, 
 	client_msg_count++;
 
 	memset(&chunk, 0, sizeof(struct P_client_msg));
-	if(db_version == 5){
-		rc = persist__chunk_client_msg_read_v5(db_fd, &chunk, length);
+	if(db_version == 6 || db_version == 5){
+		rc = persist__chunk_client_msg_read_v56(db_fd, &chunk, length);
 	}else{
 		rc = persist__chunk_client_msg_read_v234(db_fd, &chunk);
 	}
@@ -234,8 +234,8 @@ static int dump__msg_store_chunk_process(struct mosquitto_db *db, FILE *db_fptr,
 	msg_store_count++;
 
 	memset(&chunk, 0, sizeof(struct P_msg_store));
-	if(db_version == 5){
-		rc = persist__chunk_msg_store_read_v5(db_fptr, &chunk, length);
+	if(db_version == 6 || db_version == 5){
+		rc = persist__chunk_msg_store_read_v56(db_fptr, &chunk, length);
 	}else{
 		rc = persist__chunk_msg_store_read_v234(db_fptr, &chunk, db_version);
 	}
@@ -321,8 +321,8 @@ static int dump__retain_chunk_process(struct mosquitto_db *db, FILE *db_fd, uint
 	if(do_print) printf("DB_CHUNK_RETAIN:\n");
 	if(do_print) printf("\tLength: %d\n", length);
 
-	if(db_version == 5){
-		rc = persist__chunk_retain_read_v5(db_fd, &chunk);
+	if(db_version == 6 || db_version == 5){
+		rc = persist__chunk_retain_read_v56(db_fd, &chunk);
 	}else{
 		rc = persist__chunk_retain_read_v234(db_fd, &chunk);
 	}
@@ -345,8 +345,8 @@ static int dump__sub_chunk_process(struct mosquitto_db *db, FILE *db_fd, uint32_
 	sub_count++;
 
 	memset(&chunk, 0, sizeof(struct P_sub));
-	if(db_version == 5){
-		rc = persist__chunk_sub_read_v5(db_fd, &chunk);
+	if(db_version == 6 || db_version == 5){
+		rc = persist__chunk_sub_read_v56(db_fd, &chunk);
 	}else{
 		rc = persist__chunk_sub_read_v234(db_fd, &chunk);
 	}

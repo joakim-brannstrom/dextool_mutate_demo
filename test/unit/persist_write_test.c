@@ -110,7 +110,7 @@ static void TEST_empty_file(void)
 }
 
 
-static void TEST_v5_config_ok(void)
+static void TEST_v6_config_ok(void)
 {
 	struct mosquitto_db db;
 	struct mosquitto__config config;
@@ -121,20 +121,20 @@ static void TEST_v5_config_ok(void)
 	db.config = &config;
 
 	config.persistence = true;
-	config.persistence_filepath = "files/persist_read/v5-cfg.test-db";
+	config.persistence_filepath = "files/persist_read/v6-cfg.test-db";
 	rc = persist__restore(&db);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 
-	config.persistence_filepath = "v5-cfg.db";
+	config.persistence_filepath = "v6-cfg.db";
 	rc = persist__backup(&db, true);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 
-	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v5-cfg.test-db", "v5-cfg.db"));
-	unlink("v5-cfg.db");
+	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v6-cfg.test-db", "v6-cfg.db"));
+	unlink("v6-cfg.db");
 }
 
 
-static void TEST_v5_message_store_no_ref(void)
+static void TEST_v6_message_store_no_ref(void)
 {
 	struct mosquitto_db db;
 	struct mosquitto__config config;
@@ -145,20 +145,20 @@ static void TEST_v5_message_store_no_ref(void)
 	db.config = &config;
 
 	config.persistence = true;
-	config.persistence_filepath = "files/persist_read/v5-message-store.test-db";
+	config.persistence_filepath = "files/persist_read/v6-message-store.test-db";
 	rc = persist__restore(&db);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 
-	config.persistence_filepath = "v5-message-store-no-ref.db";
+	config.persistence_filepath = "v6-message-store-no-ref.db";
 	rc = persist__backup(&db, true);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 
-	CU_ASSERT_EQUAL(0, file_diff("files/persist_write/v5-message-store-no-ref.test-db", "v5-message-store-no-ref.db"));
-	unlink("v5-message-store-no-ref.db");
+	CU_ASSERT_EQUAL(0, file_diff("files/persist_write/v6-message-store-no-ref.test-db", "v6-message-store-no-ref.db"));
+	unlink("v6-message-store-no-ref.db");
 }
 
 
-static void TEST_v5_message_store_props(void)
+static void TEST_v6_message_store_props(void)
 {
 	struct mosquitto_db db;
 	struct mosquitto__config config;
@@ -170,48 +170,25 @@ static void TEST_v5_message_store_props(void)
 	memset(&listener, 0, sizeof(struct mosquitto__listener));
 	db.config = &config;
 	listener.port = 1883;
+	config.per_listener_settings = true;
 	config.listeners = &listener;
 	config.listener_count = 1;
 
 	config.persistence = true;
-	config.persistence_filepath = "files/persist_read/v5-message-store-props.test-db";
+	config.persistence_filepath = "files/persist_read/v6-message-store-props.test-db";
 	rc = persist__restore(&db);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 
-	config.persistence_filepath = "v5-message-store-props.db";
+	config.persistence_filepath = "v6-message-store-props.db";
 	rc = persist__backup(&db, true);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 
-	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v5-message-store-props.test-db", "v5-message-store-props.db"));
-	unlink("v5-message-store-props.db");
+	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v6-message-store-props.test-db", "v6-message-store-props.db"));
+	unlink("v6-message-store-props.db");
 }
 
 
-static void TEST_v5_client(void)
-{
-	struct mosquitto_db db;
-	struct mosquitto__config config;
-	int rc;
-
-	memset(&db, 0, sizeof(struct mosquitto_db));
-	memset(&config, 0, sizeof(struct mosquitto__config));
-	db.config = &config;
-
-	config.persistence = true;
-	config.persistence_filepath = "files/persist_read/v5-client.test-db";
-	rc = persist__restore(&db);
-	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
-
-	config.persistence_filepath = "v5-client.db";
-	rc = persist__backup(&db, true);
-	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
-
-	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v5-client.test-db", "v5-client.db"));
-	unlink("v5-client.db");
-}
-
-
-static void TEST_v5_client_message(void)
+static void TEST_v6_client(void)
 {
 	struct mosquitto_db db;
 	struct mosquitto__config config;
@@ -223,24 +200,25 @@ static void TEST_v5_client_message(void)
 	memset(&listener, 0, sizeof(struct mosquitto__listener));
 	db.config = &config;
 	listener.port = 1883;
+	config.per_listener_settings = true;
 	config.listeners = &listener;
 	config.listener_count = 1;
 
 	config.persistence = true;
-	config.persistence_filepath = "files/persist_read/v5-client-message.test-db";
+	config.persistence_filepath = "files/persist_read/v6-client.test-db";
 	rc = persist__restore(&db);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 
-	config.persistence_filepath = "v5-client-message.db";
+	config.persistence_filepath = "v6-client.db";
 	rc = persist__backup(&db, true);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 
-	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v5-client-message.test-db", "v5-client-message.db"));
-	unlink("v5-client-message.db");
+	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v6-client.test-db", "v6-client.db"));
+	unlink("v6-client.db");
 }
 
 
-static void TEST_v5_client_message_props(void)
+static void TEST_v6_client_message(void)
 {
 	struct mosquitto_db db;
 	struct mosquitto__config config;
@@ -252,11 +230,42 @@ static void TEST_v5_client_message_props(void)
 	memset(&listener, 0, sizeof(struct mosquitto__listener));
 	db.config = &config;
 	listener.port = 1883;
+	config.per_listener_settings = true;
 	config.listeners = &listener;
 	config.listener_count = 1;
 
 	config.persistence = true;
-	config.persistence_filepath = "files/persist_read/v5-client-message-props.test-db";
+	config.persistence_filepath = "files/persist_read/v6-client-message.test-db";
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+
+	config.persistence_filepath = "v6-client-message.db";
+	rc = persist__backup(&db, true);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+
+	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v6-client-message.test-db", "v6-client-message.db"));
+	unlink("v6-client-message.db");
+}
+
+
+static void TEST_v6_client_message_props(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	struct mosquitto__listener listener;
+	int rc;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	memset(&listener, 0, sizeof(struct mosquitto__listener));
+	db.config = &config;
+	listener.port = 1883;
+	config.per_listener_settings = true;
+	config.listeners = &listener;
+	config.listener_count = 1;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v6-client-message-props.test-db";
 	rc = persist__restore(&db);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 
@@ -268,16 +277,16 @@ static void TEST_v5_client_message_props(void)
 		}
 	}
 
-	config.persistence_filepath = "v5-client-message-props.db";
+	config.persistence_filepath = "v6-client-message-props.db";
 	rc = persist__backup(&db, true);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 
-	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v5-client-message-props.test-db", "v5-client-message-props.db"));
-	unlink("v5-client-message-props.db");
+	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v6-client-message-props.test-db", "v6-client-message-props.db"));
+	unlink("v6-client-message-props.db");
 }
 
 
-static void TEST_v5_sub(void)
+static void TEST_v6_sub(void)
 {
 	struct mosquitto_db db;
 	struct mosquitto__config config;
@@ -289,22 +298,23 @@ static void TEST_v5_sub(void)
 	memset(&listener, 0, sizeof(struct mosquitto__listener));
 	db.config = &config;
 	listener.port = 1883;
+	config.per_listener_settings = true;
 	config.listeners = &listener;
 	config.listener_count = 1;
 
 	db__open(&config, &db);
 
 	config.persistence = true;
-	config.persistence_filepath = "files/persist_read/v5-sub.test-db";
+	config.persistence_filepath = "files/persist_read/v6-sub.test-db";
 	rc = persist__restore(&db);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 
-	config.persistence_filepath = "v5-sub.db";
+	config.persistence_filepath = "v6-sub.db";
 	rc = persist__backup(&db, true);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 
-	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v5-sub.test-db", "v5-sub.db"));
-	unlink("v5-sub.db");
+	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v6-sub.test-db", "v6-sub.db"));
+	unlink("v6-sub.db");
 }
 
 
@@ -362,13 +372,13 @@ int main(int argc, char *argv[])
 	if(0
 			|| !CU_add_test(test_suite, "Persistence disabled", TEST_persistence_disabled)
 			|| !CU_add_test(test_suite, "Empty file", TEST_empty_file)
-			|| !CU_add_test(test_suite, "v5 config ok", TEST_v5_config_ok)
-			|| !CU_add_test(test_suite, "v5 message store (message has no refs)", TEST_v5_message_store_no_ref)
-			|| !CU_add_test(test_suite, "v5 message store + props", TEST_v5_message_store_props)
-			|| !CU_add_test(test_suite, "v5 client", TEST_v5_client)
-			|| !CU_add_test(test_suite, "v5 client message", TEST_v5_client_message)
-			|| !CU_add_test(test_suite, "v5 client message+props", TEST_v5_client_message_props)
-			|| !CU_add_test(test_suite, "v5 sub", TEST_v5_sub)
+			|| !CU_add_test(test_suite, "v6 config ok", TEST_v6_config_ok)
+			|| !CU_add_test(test_suite, "v6 message store (message has no refs)", TEST_v6_message_store_no_ref)
+			|| !CU_add_test(test_suite, "v6 message store + props", TEST_v6_message_store_props)
+			|| !CU_add_test(test_suite, "v6 client", TEST_v6_client)
+			|| !CU_add_test(test_suite, "v6 client message", TEST_v6_client_message)
+			|| !CU_add_test(test_suite, "v6 client message+props", TEST_v6_client_message_props)
+			|| !CU_add_test(test_suite, "v6 sub", TEST_v6_sub)
 			//|| !CU_add_test(test_suite, "v5 full", TEST_v5_full)
 			){
 
