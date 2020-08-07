@@ -112,6 +112,7 @@ const char *mosquitto_client_username(const struct mosquitto *context)
 
 
 int mosquitto_broker_publish(
+		const char *clientid,
 		const char *topic,
 		int payloadlen,
 		void *payload,
@@ -135,8 +136,18 @@ int mosquitto_broker_publish(
 	
 	msg->next = NULL;
 	msg->prev = NULL;
+	if(clientid){
+		msg->clientid = mosquitto__strdup(clientid);
+		if(msg->clientid == NULL){
+			mosquitto__free(msg);
+			return MOSQ_ERR_NOMEM;
+		}
+	}else{
+		msg->clientid = NULL;
+	}
 	msg->topic = mosquitto__strdup(topic);
 	if(msg->topic == NULL){
+		mosquitto__free(msg->clientid);
 		mosquitto__free(msg);
 		return MOSQ_ERR_NOMEM;
 	}
@@ -155,6 +166,7 @@ int mosquitto_broker_publish(
 
 
 int mosquitto_broker_publish_copy(
+		const char *clientid,
 		const char *topic,
 		int payloadlen,
 		const void *payload,
@@ -179,6 +191,7 @@ int mosquitto_broker_publish_copy(
 	memcpy(payload_out, payload, payloadlen);
 
 	return mosquitto_broker_publish(
+			clientid,
 			topic,
 			payloadlen,
 			payload_out,

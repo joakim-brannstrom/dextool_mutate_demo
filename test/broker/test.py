@@ -157,6 +157,7 @@ tests = [
     (1, './09-plugin-auth-unpwd-success.py'),
     (1, './09-plugin-auth-v2-unpwd-fail.py'),
     (1, './09-plugin-auth-v2-unpwd-success.py'),
+    (1, './09-plugin-publish.py'),
     (1, './09-pwfile-parse-invalid.py'),
 
     (2, './10-listener-mount-point.py'),

@@ -189,6 +189,7 @@ endif
 	./09-plugin-auth-unpwd-success.py
 	./09-plugin-auth-v2-unpwd-fail.py
 	./09-plugin-auth-v2-unpwd-success.py
+	./09-plugin-publish.py
 	./09-pwfile-parse-invalid.py
 
 10 :

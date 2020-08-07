@@ -189,10 +189,15 @@ int mosquitto_set_username(struct mosquitto *client, const char *username);
  * will be enforced as normal for individual clients when they are due to
  * receive the message.
  *
- * payload must be allocated on the heap, and will be freed by mosquitto after
- * use.
+ * It can be used to send messages to all clients that have a matching
+ * subscription, or to a single client whether or not it has a matching
+ * subscription.
  *
  * Parameters:
+ *  clientid -   optional string. If set to NULL, the message is delivered to all
+ *               clients. If non-NULL, the message is delivered only to the
+ *               client with the corresponding client id. If the client id
+ *               specified is not connected, the message will be dropped.
  *  topic -      message topic
  *  payloadlen - payload length in bytes. Can be 0 for an empty payload.
  *  payload -    payload bytes. If payloadlen > 0 this must not be NULL. Must
@@ -212,6 +217,7 @@ int mosquitto_set_username(struct mosquitto *client, const char *username);
  *   MOSQ_ERR_NOMEM - on out of memory
  */
 int mosquitto_broker_publish(
+		const char *clientid,
 		const char *topic,
 		int payloadlen,
 		void *payload,
@@ -228,6 +234,10 @@ int mosquitto_broker_publish(
  * of `payload` is taken.
  *
  * Parameters:
+ *  clientid -   optional string. If set to NULL, the message is delivered to all
+ *               clients. If non-NULL, the message is delivered only to the
+ *               client with the corresponding client id. If the client id
+ *               specified is not connected, the message will be dropped.
  *  topic -      message topic
  *  payloadlen - payload length in bytes. Can be 0 for an empty payload.
  *  payload -    payload bytes. If payloadlen > 0 this must not be NULL.
@@ -246,6 +256,7 @@ int mosquitto_broker_publish(
  *   MOSQ_ERR_NOMEM - on out of memory
  */
 int mosquitto_broker_publish_copy(
+		const char *clientid,
 		const char *topic,
 		int payloadlen,
 		const void *payload,

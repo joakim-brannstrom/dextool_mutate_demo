@@ -446,6 +446,8 @@ struct mosquitto_message_v5{
 	char *topic;
 	void *payload;
 	mosquitto_property *properties;
+	char *clientid; /* Used only by mosquitto_broker_publish*() to indicate
+					   this message is for a specific client. */
 	int payloadlen;
 	int qos;
 	bool retain;

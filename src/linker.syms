@@ -12,5 +12,13 @@
 	mosquitto_client_username;
 	mosquitto_log_printf;
 	mosquitto_plugin_publish;
+	mosquitto_property_add_binary;
+	mosquitto_property_add_byte;
+	mosquitto_property_add_int16;
+	mosquitto_property_add_int32;
+	mosquitto_property_add_string;
+	mosquitto_property_add_string_pair;
+	mosquitto_property_add_varint;
+	mosquitto_property_free_all;
 	mosquitto_set_username;
 };

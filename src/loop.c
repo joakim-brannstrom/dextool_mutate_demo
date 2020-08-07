@@ -99,17 +99,59 @@ void lws__sul_callback(struct lws_sorted_usec_list *l)
 static struct lws_sorted_usec_list sul;
 #endif
 
+static int single_publish(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_message_v5 *msg)
+{
+	struct mosquitto_msg_store *stored;
+	int mid;
+
+	stored = mosquitto__calloc(1, sizeof(struct mosquitto_msg_store));
+	if(stored == NULL) return MOSQ_ERR_NOMEM;
+
+	stored->topic = msg->topic;
+	msg->topic = NULL;
+	stored->retain = 0;
+	stored->payloadlen = msg->payloadlen;
+	if(UHPA_ALLOC(stored->payload, stored->payloadlen) == 0){
+		db__msg_store_free(stored);
+		return MOSQ_ERR_NOMEM;
+	}
+	memcpy(UHPA_ACCESS(stored->payload, stored->payloadlen), msg->payload, stored->payloadlen);
+
+	if(msg->properties){
+		stored->properties = msg->properties;
+		msg->properties = NULL;
+	}
+
+	if(db__message_store(db, context, stored, 0, 0, mosq_mo_broker)) return 1;
+
+	if(msg->qos){
+		mid = mosquitto__mid_generate(context);
+	}else{
+		mid = 0;
+	}
+	return db__message_insert(db, context, mid, mosq_md_out, msg->qos, 0, stored, msg->properties);
+}
+
 
 void queue_plugin_msgs(struct mosquitto_db *db)
 {
 	struct mosquitto_message_v5 *msg, *tmp;
+	struct mosquitto *context;
 
 	DL_FOREACH_SAFE(db->plugin_msgs, msg, tmp){
 		DL_DELETE(db->plugin_msgs, msg);
-		db__messages_easy_queue(db, NULL, msg->topic, msg->qos, msg->payloadlen, msg->payload, msg->retain, 0, &msg->properties);
+		if(msg->clientid){
+			HASH_FIND(hh_id, db->contexts_by_id, msg->clientid, strlen(msg->clientid), context);
+			if(context){
+				single_publish(db, context, msg);
+			}
+		}else{
+			db__messages_easy_queue(db, NULL, msg->topic, msg->qos, msg->payloadlen, msg->payload, msg->retain, 0, &msg->properties);
+		}
 		mosquitto__free(msg->topic);
 		mosquitto__free(msg->payload);
 		mosquitto_property_free_all(&msg->properties);
+		mosquitto__free(msg->clientid);
 		mosquitto__free(msg);
 	}
 }
