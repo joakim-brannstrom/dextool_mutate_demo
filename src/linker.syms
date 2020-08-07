@@ -1,4 +1,6 @@
 {
+	mosquitto_broker_publish;
+	mosquitto_broker_publish_copy;
 	mosquitto_client_address;
 	mosquitto_client_certificate;
 	mosquitto_client_clean_session;

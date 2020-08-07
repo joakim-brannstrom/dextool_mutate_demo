@@ -179,7 +179,7 @@ const char *mosquitto_client_username(const struct mosquitto *client);
 int mosquitto_set_username(struct mosquitto *client, const char *username);
 
 
-/* Function: mosquitto_plugin_publish
+/* Function: mosquitto_broker_publish
  *
  * Publish a message from within a plugin.
  *
@@ -188,8 +188,33 @@ int mosquitto_set_username(struct mosquitto *client, const char *username);
  * `mosquitto_auth_acl_check(, MOSQ_ACL_WRITE, , )` for checking. Read access
  * will be enforced as normal for individual clients when they are due to
  * receive the message.
+ *
+ * payload must be allocated on the heap, and will be freed by mosquitto after
+ * use.
  */
-int mosquitto_plugin_publish(
+int mosquitto_broker_publish(
+		const char *topic,
+		int payloadlen,
+		void *payload,
+		int qos,
+		bool retain,
+		mosquitto_property *properties);
+
+
+/* Function: mosquitto_broker_publish_copy
+ *
+ * Publish a message from within a plugin.
+ *
+ * This function allows a plugin to publish a message. Messages published in
+ * this way are treated as coming from the broker and so will not be passed to
+ * `mosquitto_auth_acl_check(, MOSQ_ACL_WRITE, , )` for checking. Read access
+ * will be enforced as normal for individual clients when they are due to
+ * receive the message.
+ *
+ * This function is identical to mosquitto_broker_publish, except that a copy
+ * of `payload` is taken.
+ */
+int mosquitto_broker_publish_copy(
 		const char *topic,
 		int payloadlen,
 		const void *payload,

@@ -111,10 +111,10 @@ const char *mosquitto_client_username(const struct mosquitto *context)
 }
 
 
-int mosquitto_plugin_publish(
+int mosquitto_broker_publish(
 		const char *topic,
 		int payloadlen,
-		const void *payload,
+		void *payload,
 		int qos,
 		bool retain,
 		mosquitto_property *properties)
@@ -128,18 +128,8 @@ int mosquitto_plugin_publish(
 	msg->next = NULL;
 	msg->prev = NULL;
 	msg->topic = mosquitto__strdup(topic);
-	if(msg->topic == NULL){
-		mosquitto__free(msg);
-		return MOSQ_ERR_NOMEM;
-	}
 	msg->payloadlen = payloadlen;
-	msg->payload = mosquitto__calloc(1, payloadlen+1);
-	if(msg->payload == NULL){
-		mosquitto__free(msg->topic);
-		mosquitto__free(msg);
-		return MOSQ_ERR_NOMEM;
-	}
-	memcpy(msg->payload, payload, payloadlen);
+	msg->payload = payload;
 	msg->qos = qos;
 	msg->retain = retain;
 	msg->properties = properties;
@@ -149,6 +139,32 @@ int mosquitto_plugin_publish(
 	DL_APPEND(db->plugin_msgs, msg);
 
 	return MOSQ_ERR_SUCCESS;
+}
+
+
+int mosquitto_broker_publish_copy(
+		const char *topic,
+		int payloadlen,
+		const void *payload,
+		int qos,
+		bool retain,
+		mosquitto_property *properties)
+{
+	void *payload_out;
+
+	payload_out = calloc(1, payloadlen+1);
+	if(payload_out == NULL){
+		return MOSQ_ERR_NOMEM;
+	}
+	memcpy(payload_out, payload, payloadlen);
+
+	return mosquitto_broker_publish(
+			topic,
+			payloadlen,
+			payload_out,
+			qos,
+			retain,
+			properties);
 }
 
 
