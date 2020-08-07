@@ -79,6 +79,8 @@ Contributors:
 int tls_ex_index_mosq = -1;
 UI_METHOD *_ui_method = NULL;
 
+static bool is_tls_initialized = false;
+
 /* Functions taken from OpenSSL s_server/s_client */
 static int ui_open(UI *ui)
 {
@@ -121,6 +123,7 @@ UI_METHOD *net__get_ui_method(void)
 {
 	return _ui_method;
 }
+
 #endif
 
 int net__init(void)
@@ -136,7 +139,42 @@ int net__init(void)
 	ares_library_init(ARES_LIB_INIT_ALL);
 #endif
 
+	return MOSQ_ERR_SUCCESS;
+}
+
+void net__cleanup(void)
+{
 #ifdef WITH_TLS
+#  if OPENSSL_VERSION_NUMBER < 0x10100000L
+	CRYPTO_cleanup_all_ex_data();
+	ERR_free_strings();
+	ERR_remove_thread_state(NULL);
+	EVP_cleanup();
+
+#    if !defined(OPENSSL_NO_ENGINE)
+	ENGINE_cleanup();
+#    endif
+	is_tls_initialized = false;
+#  endif
+
+	CONF_modules_unload(1);
+	cleanup_ui_method();
+#endif
+
+#ifdef WITH_SRV
+	ares_library_cleanup();
+#endif
+
+#ifdef WIN32
+	WSACleanup();
+#endif
+}
+
+#ifdef WITH_TLS
+void net__init_tls(void)
+{
+	if(is_tls_initialized) return;
+
 #  if OPENSSL_VERSION_NUMBER < 0x10100000L
 	SSL_load_error_strings();
 	SSL_library_init();
@@ -153,37 +191,10 @@ int net__init(void)
 	if(tls_ex_index_mosq == -1){
 		tls_ex_index_mosq = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
 	}
-#endif
-	return MOSQ_ERR_SUCCESS;
+
+	is_tls_initialized = true;
 }
-
-void net__cleanup(void)
-{
-#ifdef WITH_TLS
-#  if OPENSSL_VERSION_NUMBER < 0x10100000L
-	CRYPTO_cleanup_all_ex_data();
-	ERR_free_strings();
-	ERR_remove_thread_state(NULL);
-	EVP_cleanup();
-
-#    if !defined(OPENSSL_NO_ENGINE)
-	ENGINE_cleanup();
-#    endif
-#  endif
-
-	CONF_modules_unload(1);
-	cleanup_ui_method();
 #endif
-
-#ifdef WITH_SRV
-	ares_library_cleanup();
-#endif
-
-#ifdef WIN32
-	WSACleanup();
-#endif
-}
-
 
 /* Close a socket associated with a context and set it to -1.
  * Returns 1 on failure (context is NULL)
@@ -606,6 +617,8 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 	 * MOSQ_OPT_SSL_CTX_WITH_DEFAULTS are set. */
 	if(mosq->tls_cafile || mosq->tls_capath || mosq->tls_psk){
 		if(!mosq->ssl_ctx){
+			net__init_tls();
+
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 			mosq->ssl_ctx = SSL_CTX_new(SSLv23_client_method());
 #else
