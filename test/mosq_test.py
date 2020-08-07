@@ -15,6 +15,10 @@ vg_index = 1
 vg_logfiles = []
 
 
+class TestError(Exception):
+    def __init__(self, message="Mismatched packets"):
+        self.message = message
+
 def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False):
     global vg_index
     global vg_logfiles
@@ -34,7 +38,7 @@ def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False):
             cmd = ['../../src/mosquitto', '-v', '-c', filename.replace('.py', '.conf')]
         elif cmd is not None and port == 0:
             port = 1888
-            
+
     if os.environ.get('MOSQ_USE_VALGRIND') is not None:
         logfile = filename+'.'+str(vg_index)+'.vglog'
         cmd = ['valgrind', '-q', '--trace-children=yes', '--leak-check=full', '--show-leak-kinds=all', '--log-file='+logfile] + cmd
@@ -83,7 +87,10 @@ def expect_packet(sock, name, expected):
         rlen = 1
 
     packet_recvd = sock.recv(rlen)
-    return packet_matches(name, packet_recvd, expected)
+    if packet_matches(name, packet_recvd, expected):
+        return True
+    else:
+        raise TestError
 
 
 def packet_matches(name, recvd, expected):
@@ -102,9 +109,9 @@ def packet_matches(name, recvd, expected):
             for i in range(0, len(expected)):
                 print('%c'%(expected[i]),)
 
-        return 0
+        return False
     else:
-        return 1
+        return True
 
 
 def do_send_receive(sock, send_packet, receive_packet, error_string="send receive error"):
