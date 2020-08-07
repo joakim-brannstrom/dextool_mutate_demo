@@ -122,12 +122,24 @@ int mosquitto_broker_publish(
 	struct mosquitto_message_v5 *msg;
 	struct mosquitto_db *db;
 
+	if(topic == NULL
+			|| payloadlen < 0
+			|| (payloadlen > 0 && payload == NULL)
+			|| qos < 0 || qos > 2){
+
+		return MOSQ_ERR_INVAL;
+	}
+
 	msg = mosquitto__malloc(sizeof(struct mosquitto_message_v5));
 	if(msg == NULL) return MOSQ_ERR_NOMEM;
 	
 	msg->next = NULL;
 	msg->prev = NULL;
 	msg->topic = mosquitto__strdup(topic);
+	if(msg->topic == NULL){
+		mosquitto__free(msg);
+		return MOSQ_ERR_NOMEM;
+	}
 	msg->payloadlen = payloadlen;
 	msg->payload = payload;
 	msg->qos = qos;
@@ -151,6 +163,14 @@ int mosquitto_broker_publish_copy(
 		mosquitto_property *properties)
 {
 	void *payload_out;
+
+	if(topic == NULL
+			|| payloadlen < 0
+			|| (payloadlen > 0 && payload == NULL)
+			|| qos < 0 || qos > 2){
+
+		return MOSQ_ERR_INVAL;
+	}
 
 	payload_out = calloc(1, payloadlen+1);
 	if(payload_out == NULL){
