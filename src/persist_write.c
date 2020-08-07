@@ -70,7 +70,7 @@ static int persist__client_messages_save(struct mosquitto_db *db, FILE *db_fptr,
 		chunk.client_id = context->id;
 		chunk.properties = cmsg->properties;
 
-		rc = persist__chunk_client_msg_write_v5(db_fptr, &chunk);
+		rc = persist__chunk_client_msg_write_v6(db_fptr, &chunk);
 		if(rc){
 			return rc;
 		}
@@ -146,7 +146,7 @@ static int persist__message_store_save(struct mosquitto_db *db, FILE *db_fptr)
 		chunk.payload = stored->payload;
 		chunk.properties = stored->properties;
 
-		rc = persist__chunk_message_store_write_v5(db_fptr, &chunk);
+		rc = persist__chunk_message_store_write_v6(db_fptr, &chunk);
 		if(rc){
 			return rc;
 		}
@@ -174,8 +174,15 @@ static int persist__client_save(struct mosquitto_db *db, FILE *db_fptr)
 			chunk.F.last_mid = context->last_mid;
 			chunk.F.id_len = strlen(context->id);
 			chunk.client_id = context->id;
+			if(context->username){
+				chunk.F.username_len = strlen(context->username);
+				chunk.username = context->username;
+				if(context->listener){
+					chunk.F.listener_port = context->listener->port;
+				}
+			}
 
-			rc = persist__chunk_client_write_v5(db_fptr, &chunk);
+			rc = persist__chunk_client_write_v6(db_fptr, &chunk);
 			if(rc){
 				return rc;
 			}
@@ -224,7 +231,7 @@ static int persist__subs_retain_save(struct mosquitto_db *db, FILE *db_fptr, str
 			sub_chunk.client_id = sub->context->id;
 			sub_chunk.topic = thistopic;
 
-			rc = persist__chunk_sub_write_v5(db_fptr, &sub_chunk);
+			rc = persist__chunk_sub_write_v6(db_fptr, &sub_chunk);
 			if(rc){
 				mosquitto__free(thistopic);
 				return rc;
@@ -236,7 +243,7 @@ static int persist__subs_retain_save(struct mosquitto_db *db, FILE *db_fptr, str
 		if(strncmp(node->retained->topic, "$SYS", 4)){
 			/* Don't save $SYS messages. */
 			retain_chunk.F.store_id = node->retained->db_id;
-			rc = persist__chunk_retain_write_v5(db_fptr, &retain_chunk);
+			rc = persist__chunk_retain_write_v6(db_fptr, &retain_chunk);
 			if(rc){
 				mosquitto__free(thistopic);
 				return rc;
@@ -334,7 +341,7 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 	cfg_chunk.last_db_id = db->last_db_id;
 	cfg_chunk.shutdown = shutdown;
 	cfg_chunk.dbid_size = sizeof(dbid_t);
-	if(persist__chunk_cfg_write_v5(db_fptr, &cfg_chunk)){
+	if(persist__chunk_cfg_write_v6(db_fptr, &cfg_chunk)){
 		goto error;
 	}
 
