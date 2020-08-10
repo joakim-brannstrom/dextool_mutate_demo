@@ -25,6 +25,8 @@ Client library:
 - Improved documentation around connect callback return codes. Close #1730.
 - Fix `mosquitto_publish*()` no longer returning `MOSQ_ERR_NO_CONN` when not
   connected. Closes #1725.
+- `mosquitto_loop_start()` now sets a thread name on Linux, FreeBSD, NetBSD,
+  and OpenBSD. Closes #1777.
 
 
 1.6.10 - 2020-05-25

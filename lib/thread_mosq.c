@@ -20,6 +20,12 @@ Contributors:
 #include <time.h>
 #endif
 
+#if defined(__linux__) || defined(__NetBSD__)
+#  include <pthread.h>
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+#  include <pthread_np.h>
+#endif
+
 #include "mosquitto_internal.h"
 #include "net_mosq.h"
 #include "util_mosq.h"
@@ -33,6 +39,13 @@ int mosquitto_loop_start(struct mosquitto *mosq)
 
 	mosq->threaded = mosq_ts_self;
 	if(!pthread_create(&mosq->thread_id, NULL, mosquitto__thread_main, mosq)){
+#if defined(__linux__)
+		pthread_setname_np(mosq->thread_id, "mosquitto loop");
+#elif defined(__NetBSD__)
+		pthread_setname_np(mosq->thread_id, "%s", "mosquitto loop");
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+		pthread_set_name_np(mosq->thread_id, "mosquitto loop");
+#endif
 		return MOSQ_ERR_SUCCESS;
 	}else{
 		return MOSQ_ERR_ERRNO;
