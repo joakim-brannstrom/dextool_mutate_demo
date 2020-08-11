@@ -24,6 +24,8 @@ Broker:
 - Don't try to start DLT logging if DLT unavailable, to avoid a long delay
   when shutting down the broker. Closes #1735.
 - Fix potential memory leaks. Closes #1773. Closes #1774.
+- Fix clients not receiving messages after a previous client with the same
+  client ID and positive will delay interval quit. Closes #1752.
 
 Client library:
 - Improved documentation around connect callback return codes. Close #1730.

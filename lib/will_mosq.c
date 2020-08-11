@@ -120,6 +120,7 @@ int will__clear(struct mosquitto *mosq)
 
 	mosquitto__free(mosq->will);
 	mosq->will = NULL;
+	mosq->will_delay_interval = 0;
 
 	return MOSQ_ERR_SUCCESS;
 }
