@@ -289,6 +289,18 @@ int main(int argc, char *argv[])
 	rc = mosquitto_security_init(&int_db, false);
 	if(rc) return rc;
 
+	/* After loading persisted clients and ACLs, try to associate them,
+	 * so persisted subscriptions can start storing messages */
+	HASH_ITER(hh_id, int_db.contexts_by_id, ctxt, ctxt_tmp){
+		if(ctxt && !ctxt->clean_start && ctxt->username){
+			rc = acl__find_acls(&int_db, ctxt);
+			if(rc){
+				log__printf(NULL, MOSQ_LOG_WARNING, "Failed to associate persisted user %s with ACLs, "
+					"likely due to changed ports while using a per_listener_settings configuration.", ctxt->username);
+			}
+		}
+	}
+
 #ifdef WITH_SYS_TREE
 	sys_tree__init(&int_db);
 #endif
@@ -333,10 +345,6 @@ int main(int argc, char *argv[])
 #endif
 		}
 	}
-	if(listensock == NULL){
-		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to start any listening sockets, exiting.");
-		return 1;
-	}
 
 	rc = drop_privileges(&config, false);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
@@ -364,6 +372,7 @@ int main(int argc, char *argv[])
 	}
 #endif
 
+	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s running", VERSION);
 #ifdef WITH_SYSTEMD
 	sd_notify(0, "READY=1");
 #endif

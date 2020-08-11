@@ -20,6 +20,12 @@ Contributors:
 #include <time.h>
 #endif
 
+#if defined(__linux__) || defined(__NetBSD__)
+#  include <pthread.h>
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+#  include <pthread_np.h>
+#endif
+
 #include "mosquitto_internal.h"
 #include "net_mosq.h"
 #include "util_mosq.h"
@@ -28,11 +34,18 @@ void *mosquitto__thread_main(void *obj);
 
 int mosquitto_loop_start(struct mosquitto *mosq)
 {
-#if defined(WITH_THREADING) && defined(HAVE_PTHREAD_CANCEL)
+#if defined(WITH_THREADING)
 	if(!mosq || mosq->threaded != mosq_ts_none) return MOSQ_ERR_INVAL;
 
 	mosq->threaded = mosq_ts_self;
 	if(!pthread_create(&mosq->thread_id, NULL, mosquitto__thread_main, mosq)){
+#if defined(__linux__)
+		pthread_setname_np(mosq->thread_id, "mosquitto loop");
+#elif defined(__NetBSD__)
+		pthread_setname_np(mosq->thread_id, "%s", "mosquitto loop");
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+		pthread_set_name_np(mosq->thread_id, "mosquitto loop");
+#endif
 		return MOSQ_ERR_SUCCESS;
 	}else{
 		return MOSQ_ERR_ERRNO;
@@ -44,7 +57,7 @@ int mosquitto_loop_start(struct mosquitto *mosq)
 
 int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 {
-#if defined(WITH_THREADING) && defined(HAVE_PTHREAD_CANCEL)
+#if defined(WITH_THREADING)
 #  ifndef WITH_BROKER
 	char sockpair_data = 0;
 #  endif
@@ -63,9 +76,11 @@ int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 #endif
 	}
 	
+#ifdef HAVE_PTHREAD_CANCEL
 	if(force){
 		pthread_cancel(mosq->thread_id);
 	}
+#endif
 	pthread_join(mosq->thread_id, NULL);
 	mosq->thread_id = pthread_self();
 	mosq->threaded = mosq_ts_none;

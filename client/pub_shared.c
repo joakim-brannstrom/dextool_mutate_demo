@@ -71,7 +71,7 @@ int load_stdin(void)
 		pos += rlen;
 	}
 	if(pos > MQTT_MAX_PAYLOAD){
-		err_printf(&cfg, "Error: Message length must be less that %u bytes.\n\n", MQTT_MAX_PAYLOAD);
+		err_printf(&cfg, "Error: Message length must be less than %u bytes.\n\n", MQTT_MAX_PAYLOAD);
 		free(cfg.message);
 		return 1;
 	}
@@ -100,13 +100,9 @@ int load_file(const char *filename)
 	fseek(fptr, 0, SEEK_END);
 	flen = ftell(fptr);
 	if(flen > MQTT_MAX_PAYLOAD){
-		err_printf(&cfg, "Error: Message length must be less that %u bytes.\n\n", MQTT_MAX_PAYLOAD);
-		free(cfg.message);
-		return 1;
-	}
-	if(flen > 268435455){
 		fclose(fptr);
-		err_printf(&cfg, "Error: File \"%s\" is too large (>268,435,455 bytes).\n", filename);
+		err_printf(&cfg, "Error: File must be less than %u bytes.\n\n", MQTT_MAX_PAYLOAD);
+		free(cfg.message);
 		return 1;
 	}else if(flen == 0){
 		fclose(fptr);

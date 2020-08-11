@@ -1,3 +1,45 @@
+1.6.11 - 2020-08-11
+===================
+
+Security:
+- On Windows the Mosquitto service was being installed without appropriate
+  path quoting, this has been fixed.
+
+Broker:
+- Fix usage message only mentioning v3.1.1. Closes #1713.
+- Fix broker refusing to start if only websockets listeners were defined.
+  Closes #1740.
+- Change systemd unit files to create /var/log/mosquitto before starting.
+  Closes #821.
+- Don't quit with an error if opening the log file isn't possible.
+  Closes #821.
+- Fix bridge topic remapping when using "" as the topic. Closes #1749.
+- Fix messages being queued for disconnected bridges when clean start was
+  set to true. Closes #1729.
+- Fix `autosave_interval` not being triggered by messages being delivered.
+  Closes #1726.
+- Fix websockets clients sometimes not being disconnected promptly.
+  Closes #1718.
+- Fix "slow" file based logging by switching to line based buffering.
+  Closes #1689. Closes #1741.
+- Log protocol error message where appropriate from a bad UNSUBSCRIBE, rather
+  than the generic "socket error".
+- Don't try to start DLT logging if DLT unavailable, to avoid a long delay
+  when shutting down the broker. Closes #1735.
+- Fix potential memory leaks. Closes #1773. Closes #1774.
+- Fix clients not receiving messages after a previous client with the same
+  client ID and positive will delay interval quit. Closes #1752.
+- Fix overly broad HAVE_PTHREAD_CANCEL compile guard. Closes #1547.
+
+Client library:
+- Improved documentation around connect callback return codes. Close #1730.
+- Fix `mosquitto_publish*()` no longer returning `MOSQ_ERR_NO_CONN` when not
+  connected. Closes #1725.
+- `mosquitto_loop_start()` now sets a thread name on Linux, FreeBSD, NetBSD,
+  and OpenBSD. Closes #1777.
+- Fix `mosquitto_loop_stop()` not stopping on Windows. Closes #1748. Closes #117.
+
+
 1.6.10 - 2020-05-25
 ===================
 

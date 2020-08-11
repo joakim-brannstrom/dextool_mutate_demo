@@ -256,6 +256,9 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 
 	while(run){
 		do{
+#ifdef HAVE_PTHREAD_CANCEL
+			pthread_testcancel();
+#endif
 			rc = mosquitto_loop(mosq, timeout, max_packets);
 		}while(run && rc == MOSQ_ERR_SUCCESS);
 		/* Quit after fatal errors. */
@@ -280,6 +283,9 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 			return rc;
 		}
 		do{
+#ifdef HAVE_PTHREAD_CANCEL
+			pthread_testcancel();
+#endif
 			rc = MOSQ_ERR_SUCCESS;
 			state = mosquitto__get_state(mosq);
 			if(state == mosq_cs_disconnecting || state == mosq_cs_disconnected){

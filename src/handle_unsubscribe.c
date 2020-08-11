@@ -49,7 +49,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 			return MOSQ_ERR_PROTOCOL;
 		}
 	}
-	if(packet__read_uint16(&context->in_packet, &mid)) return 1;
+	if(packet__read_uint16(&context->in_packet, &mid)) return MOSQ_ERR_PROTOCOL;
 	if(mid == 0) return MOSQ_ERR_PROTOCOL;
 
 	if(context->protocol == mosq_p_mqtt5){
@@ -76,7 +76,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 		sub = NULL;
 		if(packet__read_string(&context->in_packet, &sub, &slen)){
 			mosquitto__free(reason_codes);
-			return 1;
+			return MOSQ_ERR_PROTOCOL;
 		}
 
 		if(!slen){
@@ -85,7 +85,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 					context->id);
 			mosquitto__free(sub);
 			mosquitto__free(reason_codes);
-			return 1;
+			return MOSQ_ERR_PROTOCOL;
 		}
 		if(mosquitto_sub_topic_check(sub)){
 			log__printf(NULL, MOSQ_LOG_INFO,
@@ -93,7 +93,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 					context->id);
 			mosquitto__free(sub);
 			mosquitto__free(reason_codes);
-			return 1;
+			return MOSQ_ERR_PROTOCOL;
 		}
 
 		log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);

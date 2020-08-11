@@ -24,6 +24,7 @@ Contributors:
 #include <time.h>
 
 #ifdef WITH_DLT
+#include <sys/stat.h>
 #include <dlt/dlt.h>
 #endif
 
@@ -55,6 +56,29 @@ static int log_priorities = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | 
 
 #ifdef WITH_DLT
 static DltContext dltContext;
+static bool dlt_allowed = false;
+
+void dlt_fifo_check(void)
+{
+	struct stat statbuf;
+	int fd;
+
+	/* If we start DLT but the /tmp/dlt fifo doesn't exist, or isn't available
+	 * for writing then there is a big delay when we try and close the log
+	 * later, so check for it first. This has the side effect of not letting
+	 * people using DLT create the fifo after Mosquitto has started, but at the
+	 * benefit of not having a massive delay for everybody else. */
+	memset(&statbuf, 0, sizeof(statbuf));
+	if(stat("/tmp/dlt", &statbuf) == 0){
+		if(S_ISFIFO(statbuf.st_mode)){
+			fd = open("/tmp/dlt", O_NONBLOCK | O_WRONLY);
+			if(fd != -1){
+				dlt_allowed = true;
+				close(fd);
+			}
+		}
+	}
+}
 #endif
 
 static int get_time(struct tm **ti)
@@ -110,17 +134,21 @@ int log__init(struct mosquitto__config *config)
 			return 1;
 		}
 		config->log_fptr = mosquitto__fopen(config->log_file, "at", true);
-		if(!config->log_fptr){
+		if(config->log_fptr){
+			setvbuf(config->log_fptr, NULL, _IOLBF, 0);
+		}else{
 			log_destinations = MQTT3_LOG_STDERR;
 			log_priorities = MOSQ_LOG_ERR;
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
-			return MOSQ_ERR_INVAL;
 		}
 		restore_privileges();
 	}
 #ifdef WITH_DLT
-	DLT_REGISTER_APP("MQTT","mosquitto log");
-	dlt_register_context(&dltContext, "MQTT", "mosquitto DLT context");
+	dlt_fifo_check();
+	if(dlt_allowed){
+		DLT_REGISTER_APP("MQTT","mosquitto log");
+		dlt_register_context(&dltContext, "MQTT", "mosquitto DLT context");
+	}
 #endif
 	return rc;
 }
@@ -142,8 +170,10 @@ int log__close(struct mosquitto__config *config)
 	}
 
 #ifdef WITH_DLT
-	dlt_unregister_context(&dltContext);
-	DLT_UNREGISTER_APP();
+	if(dlt_allowed){
+		dlt_unregister_context(&dltContext);
+		DLT_UNREGISTER_APP();
+	}
 #endif
 	/* FIXME - do something for all destinations! */
 	return MOSQ_ERR_SUCCESS;
@@ -182,7 +212,6 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 	const char *topic;
 	int syslog_priority;
 	time_t now = time(NULL);
-	static time_t last_flush = 0;
 	char time_buf[50];
 	bool log_timestamp = true;
 	char *log_timestamp_format = NULL;
@@ -294,7 +323,6 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			}else{
 				fprintf(stdout, "%s\n", s);
 			}
-			fflush(stdout);
 		}
 		if(log_destinations & MQTT3_LOG_STDERR){
 			if(log_timestamp){
@@ -306,7 +334,6 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			}else{
 				fprintf(stderr, "%s\n", s);
 			}
-			fflush(stderr);
 		}
 		if(log_destinations & MQTT3_LOG_FILE && log_fptr){
 			if(log_timestamp){
@@ -317,10 +344,6 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 				}
 			}else{
 				fprintf(log_fptr, "%s\n", s);
-			}
-			if(now - last_flush > 1){
-				fflush(log_fptr);
-				last_flush = now;
 			}
 		}
 		if(log_destinations & MQTT3_LOG_SYSLOG){

@@ -32,7 +32,7 @@ static void print_error(void)
 	char *buf;
 
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-		NULL, GetLastError(), LANG_NEUTRAL, &buf, 0, NULL);
+		NULL, GetLastError(), LANG_NEUTRAL, (LPTSTR)&buf, 0, NULL);
 
 	fprintf(stderr, "Error: %s\n", buf);
 	LocalFree(buf);
@@ -70,7 +70,7 @@ void __stdcall service_main(DWORD dwArgc, LPTSTR *lpszArgv)
 
 	service_handle = RegisterServiceCtrlHandler("mosquitto", service_handler);
 	if(service_handle){
-		memset(conf_path, 0, MAX_PATH + 20);
+		memset(conf_path, 0, sizeof(conf_path));
 		rc = GetEnvironmentVariable("MOSQUITTO_DIR", conf_path, MAX_PATH);
 		if(!rc || rc == MAX_PATH){
 			service_status.dwCurrentState = SERVICE_STOPPED;
@@ -103,25 +103,26 @@ void __stdcall service_main(DWORD dwArgc, LPTSTR *lpszArgv)
 void service_install(void)
 {
 	SC_HANDLE sc_manager, svc_handle;
-	char exe_path[MAX_PATH + 5];
+	char service_string[MAX_PATH + 20];
+	char exe_path[MAX_PATH + 1];
 	SERVICE_DESCRIPTION svc_desc;
 
-	memset(exe_path, 0, MAX_PATH+5);
+	memset(exe_path, 0, sizeof(exe_path));
 	if(GetModuleFileName(NULL, exe_path, MAX_PATH) == MAX_PATH){
 		fprintf(stderr, "Error: Path too long.\n");
 		return;
 	}
-	strcat(exe_path, " run");
+	snprintf(service_string, sizeof(service_string), "\"%s\" run", exe_path);
 
 	sc_manager = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
 	if(sc_manager){
 		svc_handle = CreateService(sc_manager, "mosquitto", "Mosquitto Broker", 
 				SERVICE_START | SERVICE_STOP | SERVICE_CHANGE_CONFIG,
 				SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
-				exe_path, NULL, NULL, NULL, NULL, NULL);
+				service_string, NULL, NULL, NULL, NULL, NULL);
 
 		if(svc_handle){
-			svc_desc.lpDescription = "MQTT v3.1.1 broker";
+			svc_desc.lpDescription = "Eclipse Mosquitto MQTT v5/v3.1.1 broker";
 			ChangeServiceConfig2(svc_handle, SERVICE_CONFIG_DESCRIPTION, &svc_desc);
 			CloseServiceHandle(svc_handle);
 		}else{
