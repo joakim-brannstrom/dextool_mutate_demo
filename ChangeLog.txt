@@ -1,3 +1,7 @@
+Security:
+- On Windows the Mosquitto service was being installed without appropriate
+  path quoting, this has been fixed.
+
 Broker:
 - Fix usage message only mentioning v3.1.1. Closes #1713.
 - Fix broker refusing to start if only websockets listeners were defined.
