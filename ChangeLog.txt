@@ -1,3 +1,6 @@
+1.6.11 - 2020-08-11
+===================
+
 Security:
 - On Windows the Mosquitto service was being installed without appropriate
   path quoting, this has been fixed.
