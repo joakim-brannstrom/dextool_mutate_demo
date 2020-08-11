@@ -34,7 +34,7 @@ void *mosquitto__thread_main(void *obj);
 
 int mosquitto_loop_start(struct mosquitto *mosq)
 {
-#if defined(WITH_THREADING) && defined(HAVE_PTHREAD_CANCEL)
+#if defined(WITH_THREADING)
 	if(!mosq || mosq->threaded != mosq_ts_none) return MOSQ_ERR_INVAL;
 
 	mosq->threaded = mosq_ts_self;
@@ -57,7 +57,7 @@ int mosquitto_loop_start(struct mosquitto *mosq)
 
 int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 {
-#if defined(WITH_THREADING) && defined(HAVE_PTHREAD_CANCEL)
+#if defined(WITH_THREADING)
 #  ifndef WITH_BROKER
 	char sockpair_data = 0;
 #  endif
@@ -76,9 +76,11 @@ int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 #endif
 	}
 	
+#ifdef HAVE_PTHREAD_CANCEL
 	if(force){
 		pthread_cancel(mosq->thread_id);
 	}
+#endif
 	pthread_join(mosq->thread_id, NULL);
 	mosq->thread_id = pthread_self();
 	mosq->threaded = mosq_ts_none;

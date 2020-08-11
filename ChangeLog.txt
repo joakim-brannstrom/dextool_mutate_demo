@@ -26,6 +26,7 @@ Broker:
 - Fix potential memory leaks. Closes #1773. Closes #1774.
 - Fix clients not receiving messages after a previous client with the same
   client ID and positive will delay interval quit. Closes #1752.
+- Fix overly broad HAVE_PTHREAD_CANCEL compile guard. Closes #1547.
 
 Client library:
 - Improved documentation around connect callback return codes. Close #1730.
