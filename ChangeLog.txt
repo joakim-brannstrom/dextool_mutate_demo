@@ -27,6 +27,7 @@ Client library:
   connected. Closes #1725.
 - `mosquitto_loop_start()` now sets a thread name on Linux, FreeBSD, NetBSD,
   and OpenBSD. Closes #1777.
+- Fix `mosquitto_loop_stop()` not stopping on Windows. Closes #1748. Closes #117.
 
 
 1.6.10 - 2020-05-25
