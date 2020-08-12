@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
 	while(run == -1){
 		mosquitto_loop(mosq, 100, 1);
 	}
+	mosquitto_destroy(mosq);
 
 	mosquitto_lib_cleanup();
 	return run;

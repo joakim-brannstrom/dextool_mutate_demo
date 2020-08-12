@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
 	if(mosq->tls_set("this/file/doesnt/exist") == MOSQ_ERR_INVAL){
 		rc = 0;
 	}
+	delete mosq;
 	mosqpp::lib_cleanup();
 
 	return rc;

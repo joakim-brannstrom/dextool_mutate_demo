@@ -27,6 +27,8 @@ int main(int argc, char *argv[])
 	rc = mosquitto_connect(mosq, "localhost", port, 60);
 
 	rc = mosquitto_loop_forever(mosq, -1, 1);
+	mosquitto_destroy(mosq);
+	mosquitto_lib_cleanup();
 	if(rc == MOSQ_ERR_ERRNO && errno == EPROTO){
 		return 0;
 	}else{
