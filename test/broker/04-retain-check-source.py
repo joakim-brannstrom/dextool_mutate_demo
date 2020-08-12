@@ -49,20 +49,22 @@ def do_test(proto_ver, per_listener):
         sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback 1")
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            sock.close()
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        sock.close()
 
-            # Remove "write" ability
-            write_acl_2(acl_file)
-            broker.send_signal(signal.SIGHUP)
+        # Remove "write" ability
+        write_acl_2(acl_file)
+        broker.send_signal(signal.SIGHUP)
 
-            sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-            mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback 2")
-            # If we receive the retained message here, it is a failure.
-            mosq_test.do_ping(sock)
-            rc = 0
+        sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
+        mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback 2")
+        # If we receive the retained message here, it is a failure.
+        mosq_test.do_ping(sock)
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         os.remove(conf_file)
         os.remove(acl_file)

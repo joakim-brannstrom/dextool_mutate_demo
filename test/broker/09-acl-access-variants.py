@@ -56,6 +56,8 @@ def single_test(port, per_listener, username, topic, expect_deny):
         sock.close()
 
         rc = 0
+    except mosq_test.TestError:
+        pass
     finally:
         os.remove(conf_file)
         broker.terminate()

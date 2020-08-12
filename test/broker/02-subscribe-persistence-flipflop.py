@@ -69,10 +69,12 @@ def do_test(proto_ver):
         pub_sock = mosq_test.do_client_connect(connect_packet_pub, connack_packet_pub, port=port)
         mosq_test.do_send_receive(pub_sock, publish_packet, puback_packet, "publish")
 
-        if mosq_test.expect_packet(sub_sock, "publish receive", publish_packet):
-            rc = 0
+        mosq_test.expect_packet(sub_sock, "publish receive", publish_packet)
+        rc = 0
 
         sub_sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

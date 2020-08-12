@@ -42,15 +42,17 @@ def len_test(test, pubrel_packet):
         (conn, address) = sock.accept()
         conn.settimeout(15)
 
-        if mosq_test.expect_packet(conn, "connect", connect_packet):
-            conn.send(connack_packet)
+        mosq_test.expect_packet(conn, "connect", connect_packet)
+        conn.send(connack_packet)
 
-            mosq_test.do_send_receive(conn, publish_packet, pubrec_packet, "pubrec")
-            mosq_test.do_send_receive(conn, pubrel_packet, pubcomp_packet, "pubcomp")
-            if mosq_test.expect_packet(conn, "disconnect", disconnect_packet):
-                rc = 0
+        mosq_test.do_send_receive(conn, publish_packet, pubrec_packet, "pubrec")
+        mosq_test.do_send_receive(conn, pubrel_packet, pubcomp_packet, "pubcomp")
+        mosq_test.expect_packet(conn, "disconnect", disconnect_packet)
+        rc = 0
 
         conn.close()
+    except mosq_test.TestError:
+        pass
     finally:
         client.terminate()
         client.wait()

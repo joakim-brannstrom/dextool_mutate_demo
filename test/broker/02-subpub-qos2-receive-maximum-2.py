@@ -50,21 +50,23 @@ def do_test(proto_ver):
         pub.wait()
         (stdo, stde) = pub.communicate()
 
-        if mosq_test.expect_packet(sock, "publish1", publish_packet1):
-            if mosq_test.expect_packet(sock, "publish2", publish_packet2):
-                mosq_test.do_send_receive(sock, pubrec_packet1, pubrel_packet1, "pubrel1")
-                sock.send(pubcomp_packet1)
+        mosq_test.expect_packet(sock, "publish1", publish_packet1)
+        mosq_test.expect_packet(sock, "publish2", publish_packet2)
+        mosq_test.do_send_receive(sock, pubrec_packet1, pubrel_packet1, "pubrel1")
+        sock.send(pubcomp_packet1)
 
-                if mosq_test.expect_packet(sock, "publish3", publish_packet3):
-                    mosq_test.do_send_receive(sock, pubrec_packet2, pubrel_packet2, "pubrel2")
-                    sock.send(pubcomp_packet2)
+        mosq_test.expect_packet(sock, "publish3", publish_packet3)
+        mosq_test.do_send_receive(sock, pubrec_packet2, pubrel_packet2, "pubrel2")
+        sock.send(pubcomp_packet2)
 
-                    mosq_test.do_send_receive(sock, pubrec_packet3, pubrel_packet3, "pubrel3")
-                    sock.send(pubcomp_packet3)
+        mosq_test.do_send_receive(sock, pubrec_packet3, pubrel_packet3, "pubrel3")
+        sock.send(pubcomp_packet3)
 
-                    rc = 0
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

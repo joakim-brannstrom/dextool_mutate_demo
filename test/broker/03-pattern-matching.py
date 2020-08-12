@@ -39,15 +39,15 @@ def pattern_test(sub_topic, pub_topic):
 
         helper(port, pub_topic)
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            mosq_test.do_send_receive(sock, unsubscribe_packet, unsuback_packet, "unsuback")
-
-            mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
-
-            if mosq_test.expect_packet(sock, "publish retained", publish_retained_packet):
-                rc = 0
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        mosq_test.do_send_receive(sock, unsubscribe_packet, unsuback_packet, "unsuback")
+        mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
+        mosq_test.expect_packet(sock, "publish retained", publish_retained_packet)
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

@@ -61,25 +61,27 @@ try:
     mosq_test.do_send_receive(sock, publish1_packet, puback1_packet, "puback1a")
     mosq_test.do_send_receive(sock, publish2s_packet, puback2s_packet, "puback2a")
 
-    if mosq_test.expect_packet(sock, "publish2a", publish2a_packet):
-        sock.send(puback2a_packet)
+    mosq_test.expect_packet(sock, "publish2a", publish2a_packet)
+    sock.send(puback2a_packet)
 
-        broker.terminate()
-        broker.wait()
-        (stdo1, stde1) = broker.communicate()
-        sock.close()
+    broker.terminate()
+    broker.wait()
+    (stdo1, stde1) = broker.communicate()
+    sock.close()
 
-        broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
+    broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
-        sock = mosq_test.do_client_connect(connect_packet, connack_packet2, timeout=20, port=port)
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet2, timeout=20, port=port)
 
-        mosq_test.do_send_receive(sock, publish1_packet, puback1_packet, "puback1b")
-        mosq_test.do_send_receive(sock, publish2s_packet, puback2s_packet, "puback2b")
+    mosq_test.do_send_receive(sock, publish1_packet, puback1_packet, "puback1b")
+    mosq_test.do_send_receive(sock, publish2s_packet, puback2s_packet, "puback2b")
 
-        if mosq_test.expect_packet(sock, "publish2b", publish2b_packet):
-            rc = 0
+    mosq_test.expect_packet(sock, "publish2b", publish2b_packet)
+    rc = 0
 
     sock.close()
+except mosq_test.TestError:
+    pass
 finally:
     os.remove(conf_file)
     broker.terminate()

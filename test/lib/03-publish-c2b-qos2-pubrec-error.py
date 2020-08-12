@@ -52,20 +52,16 @@ try:
     (conn, address) = sock.accept()
     conn.settimeout(10)
 
-    if mosq_test.expect_packet(conn, "connect", connect_packet):
-        conn.send(connack_packet)
+    mosq_test.do_receive_send(conn, connect_packet, connack_packet, "connect")
+    mosq_test.do_receive_send(conn, publish_1_packet, pubrec_1_packet, "publish 1")
+    mosq_test.do_receive_send(conn, publish_2_packet, pubrec_2_packet, "publish 2")
+    mosq_test.do_receive_send(conn, pubrel_2_packet, pubcomp_2_packet, "pubrel 2")
 
-        if mosq_test.expect_packet(conn, "publish 1", publish_1_packet):
-                conn.send(pubrec_1_packet)
-
-                if mosq_test.expect_packet(conn, "publish 2", publish_2_packet):
-                    conn.send(pubrec_2_packet)
-
-                    if mosq_test.expect_packet(conn, "pubrel 2", pubrel_2_packet):
-                        conn.send(pubcomp_2_packet)
-                        rc = 0
+    rc = 0
 
     conn.close()
+except mosq_test.TestError:
+    pass
 finally:
     for i in range(0, 5):
         if client.returncode != None:

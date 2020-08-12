@@ -56,26 +56,22 @@ try:
     (conn2, address) = sock.accept()
     conn2.settimeout(10)
 
-    if mosq_test.expect_packet(conn1, "connect1", connect1_packet):
-        conn1.send(connack_packet)
+    mosq_test.do_receive_send(conn1, connect1_packet, connack_packet, "connect1")
+    mosq_test.do_receive_send(conn2, connect2_packet, connack_packet, "connect2")
 
-        if mosq_test.expect_packet(conn2, "connect2", connect2_packet):
-            conn2.send(connack_packet)
+    mosq_test.do_receive_send(conn1, subscribe1_packet, suback_packet, "subscribe1")
+    mosq_test.do_receive_send(conn2, subscribe2_packet, suback_packet, "subscribe2")
 
-            if mosq_test.expect_packet(conn1, "subscribe1", subscribe1_packet):
-                conn1.send(suback_packet)
+    mosq_test.expect_packet(conn1, "publish1", publish1_packet_incoming)
+    conn2.send(publish1_packet_outgoing)
 
-                if mosq_test.expect_packet(conn2, "subscribe2", subscribe2_packet):
-                    conn2.send(suback_packet)
-
-                    if mosq_test.expect_packet(conn1, "publish1", publish1_packet_incoming):
-                        conn2.send(publish1_packet_outgoing)
-
-                        if mosq_test.expect_packet(conn2, "publish2", publish2_packet):
-                            rc = 0
+    mosq_test.expect_packet(conn2, "publish2", publish2_packet)
+    rc = 0
 
     conn1.close()
     conn2.close()
+except mosq_test.TestError:
+    pass
 finally:
     client1.terminate()
     client1.wait()

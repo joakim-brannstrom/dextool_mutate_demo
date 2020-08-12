@@ -49,19 +49,21 @@ def do_test(proto_ver):
         sock = mosq_test.do_client_connect(connect_packet, connack2_packet, port=port, connack_error="connack 2")
         sock.send(publish_dup_packet)
 
-        if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
-            mosq_test.do_send_receive(sock, pubrel_packet, pubcomp_packet, "pubcomp")
+        mosq_test.expect_packet(sock, "pubrec", pubrec_packet)
+        mosq_test.do_send_receive(sock, pubrel_packet, pubcomp_packet, "pubcomp")
 
-            # Again, pretend we didn't receive this pubcomp
-            sock.close()
+        # Again, pretend we didn't receive this pubcomp
+        sock.close()
 
-            sock = mosq_test.do_client_connect(connect_packet, connack2_packet, port=port)
-            mosq_test.do_send_receive(sock, pubrel_dup_packet, pubcomp_packet, "pubcomp")
+        sock = mosq_test.do_client_connect(connect_packet, connack2_packet, port=port)
+        mosq_test.do_send_receive(sock, pubrel_dup_packet, pubcomp_packet, "pubcomp")
 
-            rc = 0
+        rc = 0
 
         sock.close()
         helper.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

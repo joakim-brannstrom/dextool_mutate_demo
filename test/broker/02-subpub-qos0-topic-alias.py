@@ -39,11 +39,13 @@ def do_test():
 
         sock1.send(publish2s_packet)
 
-        if mosq_test.expect_packet(sock2, "publish2r", publish2r_packet):
-            rc = 0
+        mosq_test.expect_packet(sock2, "publish2r", publish2r_packet)
+        rc = 0
 
         sock1.close()
         sock2.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

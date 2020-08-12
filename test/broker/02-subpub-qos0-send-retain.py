@@ -53,19 +53,21 @@ def do_test():
 
         # Expect a message after this, because it is the first subscribe
         mosq_test.do_send_receive(sock, subscribe2_packet, suback2_packet, "suback2")
-        if mosq_test.expect_packet(sock, "publish2r1", publish2r1_packet):
-            # Don't expect a message after this, it is the second subscribe
-            mosq_test.do_send_receive(sock, subscribe2_packet, suback2_packet, "suback2")
+        mosq_test.expect_packet(sock, "publish2r1", publish2r1_packet)
+        # Don't expect a message after this, it is the second subscribe
+        mosq_test.do_send_receive(sock, subscribe2_packet, suback2_packet, "suback2")
 
-            # Always expect a message after this
-            mosq_test.do_send_receive(sock, subscribe1_packet, suback1_packet, "suback1")
-            if mosq_test.expect_packet(sock, "publish1r1", publish1r1_packet):
-                # Always expect a message after this
-                mosq_test.do_send_receive(sock, subscribe1_packet, suback1_packet, "suback1")
-                if mosq_test.expect_packet(sock, "publish1r1", publish1r2_packet):
-                    rc = 0
+        # Always expect a message after this
+        mosq_test.do_send_receive(sock, subscribe1_packet, suback1_packet, "suback1")
+        mosq_test.expect_packet(sock, "publish1r1", publish1r1_packet)
+        # Always expect a message after this
+        mosq_test.do_send_receive(sock, subscribe1_packet, suback1_packet, "suback1")
+        mosq_test.expect_packet(sock, "publish1r1", publish1r2_packet)
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

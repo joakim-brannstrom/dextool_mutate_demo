@@ -56,24 +56,26 @@ def do_test(proto_ver):
         helper(port)
         # Should have now received a publish command
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            # Send our outgoing message. When we disconnect the broker
-            # should get rid of it and assume we're going to retry.
-            sock.send(publish2_packet)
-            sock.close()
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        # Send our outgoing message. When we disconnect the broker
+        # should get rid of it and assume we're going to retry.
+        sock.send(publish2_packet)
+        sock.close()
 
-            sock = mosq_test.do_client_connect(connect_packet, connack2_packet, port=port)
-            if mosq_test.expect_packet(sock, "dup publish", publish_dup_packet):
-                mosq_test.do_send_receive(sock, pubrec_packet, pubrel_packet, "pubrel")
+        sock = mosq_test.do_client_connect(connect_packet, connack2_packet, port=port)
+        mosq_test.expect_packet(sock, "dup publish", publish_dup_packet)
+        mosq_test.do_send_receive(sock, pubrec_packet, pubrel_packet, "pubrel")
 
-                sock.close()
+        sock.close()
 
-                sock = mosq_test.do_client_connect(connect_packet, connack2_packet, port=port)
-                if mosq_test.expect_packet(sock, "dup pubrel", pubrel_packet):
-                    sock.send(pubcomp_packet)
-                    rc = 0
-                sock.close()
+        sock = mosq_test.do_client_connect(connect_packet, connack2_packet, port=port)
+        mosq_test.expect_packet(sock, "dup pubrel", pubrel_packet)
+        sock.send(pubcomp_packet)
+        rc = 0
+        sock.close()
 
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

@@ -48,21 +48,23 @@ def do_test(proto_ver):
         helper(port)
         # Should have now received a publish command
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            # Wait for longer than 5 seconds to get republish with dup set
-            # This is covered by the 8 second timeout
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        # Wait for longer than 5 seconds to get republish with dup set
+        # This is covered by the 8 second timeout
 
-            if mosq_test.expect_packet(sock, "dup publish", publish_dup_packet):
-                mosq_test.do_send_receive(sock, pubrec_packet, pubrel_packet, "pubrel")
+        mosq_test.expect_packet(sock, "dup publish", publish_dup_packet)
+        mosq_test.do_send_receive(sock, pubrec_packet, pubrel_packet, "pubrel")
 
-                # Wait for longer than 5 seconds to get republish with dup set
-                # This is covered by the 8 second timeout
+        # Wait for longer than 5 seconds to get republish with dup set
+        # This is covered by the 8 second timeout
 
-                if mosq_test.expect_packet(sock, "dup pubrel", pubrel_packet):
-                    sock.send(pubcomp_packet)
-                    rc = 0
+        mosq_test.expect_packet(sock, "dup pubrel", pubrel_packet)
+        sock.send(pubcomp_packet)
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

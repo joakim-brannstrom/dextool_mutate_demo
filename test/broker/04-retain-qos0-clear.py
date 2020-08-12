@@ -32,25 +32,27 @@ def do_test(proto_ver):
         # Subscribe to topic, we should get the retained message back.
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            # Now unsubscribe from the topic before we clear the retained
-            # message.
-            mosq_test.do_send_receive(sock, unsubscribe_packet, unsuback_packet, "unsuback")
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        # Now unsubscribe from the topic before we clear the retained
+        # message.
+        mosq_test.do_send_receive(sock, unsubscribe_packet, unsuback_packet, "unsuback")
 
-            # Now clear the retained message.
-            sock.send(retain_clear_packet)
+        # Now clear the retained message.
+        sock.send(retain_clear_packet)
 
-            # Subscribe to topic, we shouldn't get anything back apart
-            # from the SUBACK.
-            mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
-            time.sleep(1)
-            # If we do get something back, it should be before this ping, so if
-            # this succeeds then we're ok.
-            mosq_test.do_ping(sock)
-            # This is the expected event
-            rc = 0
+        # Subscribe to topic, we shouldn't get anything back apart
+        # from the SUBACK.
+        mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
+        time.sleep(1)
+        # If we do get something back, it should be before this ping, so if
+        # this succeeds then we're ok.
+        mosq_test.do_ping(sock)
+        # This is the expected event
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

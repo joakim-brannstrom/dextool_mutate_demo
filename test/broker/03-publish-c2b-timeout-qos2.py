@@ -28,12 +28,14 @@ def do_test(port):
 
         # Timeout is 8 seconds which means the broker should repeat the PUBREC.
 
-        if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
-            mosq_test.do_send_receive(sock, pubrel_packet, pubcomp_packet, "pubcomp")
+        mosq_test.expect_packet(sock, "pubrec", pubrec_packet)
+        mosq_test.do_send_receive(sock, pubrel_packet, pubcomp_packet, "pubcomp")
 
-            rc = 0
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

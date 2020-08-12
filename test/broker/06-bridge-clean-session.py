@@ -217,6 +217,8 @@ def do_test(proto_ver, cs, lcs=None):
 
         success = True
 
+    except mosq_test.TestError:
+        pass
     finally:
         os.remove(conf_file_a)
         os.remove(conf_file_b)

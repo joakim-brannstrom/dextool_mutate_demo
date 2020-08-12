@@ -147,6 +147,8 @@ try:
         raise ValueError
     rc = 0
 
+except mosq_test.TestError:
+    pass
 finally:
     cq.put("quit")
     brokerMonitor.join()

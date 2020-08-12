@@ -45,19 +45,21 @@ def do_test(proto_ver):
         mosq_test.do_send_receive(helper, pubrel1s_packet, pubcomp1s_packet, "pubcomp 1s")
         helper.close()
 
-        if mosq_test.expect_packet(sock, "publish 1r", publish1r_packet):
-            mosq_test.do_send_receive(sock, pubrec1s_packet, pubrel1s_packet, "pubrel 1r")
-            sock.send(puback1r_packet)
-            sock.send(pingreq_packet)
-            p = sock.recv(len(pingresp_packet))
-            if len(p) == 0:
-                rc = 0
+        mosq_test.expect_packet(sock, "publish 1r", publish1r_packet)
+        mosq_test.do_send_receive(sock, pubrec1s_packet, pubrel1s_packet, "pubrel 1r")
+        sock.send(puback1r_packet)
+        sock.send(pingreq_packet)
+        p = sock.recv(len(pingresp_packet))
+        if len(p) == 0:
+            rc = 0
 
         sock.close()
     except socket.error as e:
         if e.errno == errno.ECONNRESET:
             # Connection has been closed by peer, this is the expected behaviour
             rc = 0
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

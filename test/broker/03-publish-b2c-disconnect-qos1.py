@@ -48,23 +48,25 @@ def do_test(proto_ver):
         helper(port)
         # Should have now received a publish command
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            # Send our outgoing message. When we disconnect the broker
-            # should get rid of it and assume we're going to retry.
-            sock.send(publish2_packet)
-            sock.close()
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        # Send our outgoing message. When we disconnect the broker
+        # should get rid of it and assume we're going to retry.
+        sock.send(publish2_packet)
+        sock.close()
 
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.
-            sock.connect(("localhost", port))
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(60) # 60 seconds timeout is much longer than 5 seconds message retry.
+        sock.connect(("localhost", port))
 
-            mosq_test.do_send_receive(sock, connect_packet, connack2_packet, "connack")
+        mosq_test.do_send_receive(sock, connect_packet, connack2_packet, "connack")
 
-            if mosq_test.expect_packet(sock, "dup publish", publish_dup_packet):
-                sock.send(puback_packet)
-                rc = 0
+        mosq_test.expect_packet(sock, "dup publish", publish_dup_packet)
+        sock.send(puback_packet)
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

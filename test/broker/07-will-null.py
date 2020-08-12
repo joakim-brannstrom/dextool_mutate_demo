@@ -31,10 +31,12 @@ def do_test(proto_ver):
 
         helper(port, proto_ver)
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            rc = 0
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

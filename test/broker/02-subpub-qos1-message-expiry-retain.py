@@ -56,26 +56,27 @@ def do_test():
         sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20, port=port)
         mosq_test.do_send_receive(sock, subscribe1_packet, suback1_packet, "suback 1-1")
 
-        if mosq_test.expect_packet(sock, "publish 1", publish1_packet):
-            sock.send(puback1_packet)
+        mosq_test.expect_packet(sock, "publish 1", publish1_packet)
+        sock.send(puback1_packet)
 
-            mosq_test.do_send_receive(sock, subscribe2_packet, suback2_packet, "suback 2-1")
-            if mosq_test.expect_packet(sock, "publish 2", publish2s_packet):
-                sock.send(puback2s_packet)
+        mosq_test.do_send_receive(sock, subscribe2_packet, suback2_packet, "suback 2-1")
+        mosq_test.expect_packet(sock, "publish 2", publish2s_packet)
+        sock.send(puback2s_packet)
+        sock.close()
 
-                sock.close()
+        time.sleep(5)
+        sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20, port=port)
+        mosq_test.do_send_receive(sock, subscribe1_packet, suback1_packet, "suback 1-2")
+        # We shouldn't receive a publish here
+        # This will fail if we do receive a publish
+        mosq_test.do_send_receive(sock, subscribe2_packet, suback2_packet, "suback 2-2")
+        mosq_test.expect_packet(sock, "publish 2", publish2r_packet)
+        sock.send(puback2r_packet)
+        sock.close()
+        rc = 0
 
-            time.sleep(5)
-            sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20, port=port)
-            mosq_test.do_send_receive(sock, subscribe1_packet, suback1_packet, "suback 1-2")
-            # We shouldn't receive a publish here
-            # This will fail if we do receive a publish
-            mosq_test.do_send_receive(sock, subscribe2_packet, suback2_packet, "suback 2-2")
-            if mosq_test.expect_packet(sock, "publish 2", publish2r_packet):
-                sock.send(puback2r_packet)
-                sock.close()
-                rc = 0
-
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

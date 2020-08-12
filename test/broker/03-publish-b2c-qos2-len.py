@@ -47,14 +47,16 @@ def len_test(test, pubrec_packet, pubcomp_packet):
         helper(port)
         # Should have now received a publish command
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            mosq_test.do_send_receive(sock, pubrec_packet, pubrel_packet, "pubrel")
-            sock.send(pubcomp_packet)
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        mosq_test.do_send_receive(sock, pubrec_packet, pubrel_packet, "pubrel")
+        sock.send(pubcomp_packet)
 
-            mosq_test.do_ping(sock)
-            rc = 0
+        mosq_test.do_ping(sock)
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

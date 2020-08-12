@@ -38,10 +38,12 @@ try:
     mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
     mosq_test.do_send_receive(sock, publish_packet, puback_packet, "puback")
 
-    if mosq_test.expect_packet(sock, "publish receive", publish_packet_recv):
-        rc = 0
+    mosq_test.expect_packet(sock, "publish receive", publish_packet_recv)
+    rc = 0
 
     sock.close()
+except mosq_test.TestError:
+    pass
 finally:
     os.remove(conf_file)
     broker.terminate()

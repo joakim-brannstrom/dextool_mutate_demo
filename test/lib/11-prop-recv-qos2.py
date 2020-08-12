@@ -44,17 +44,15 @@ try:
     (conn, address) = sock.accept()
     conn.settimeout(10)
 
-    if mosq_test.expect_packet(conn, "connect", connect_packet):
-        conn.send(connack_packet)
-
-        conn.send(publish_packet)
-        if mosq_test.expect_packet(conn, "pubrec", pubrec_packet):
-            conn.send(pubrel_packet)
-            if mosq_test.expect_packet(conn, "pubcomp", pubcomp_packet):
-                if mosq_test.expect_packet(conn, "ok", ok_packet):
-                    rc = 0
+    mosq_test.do_receive_send(conn, connect_packet, connack_packet, "connect")
+    mosq_test.do_send_receive(conn, publish_packet, pubrec_packet, "pubrec")
+    mosq_test.do_send_receive(conn, pubrel_packet, pubcomp_packet, "pubcomp")
+    mosq_test.expect_packet(conn, "ok", ok_packet)
+    rc = 0
 
     conn.close()
+except mosq_test.TestError:
+    pass
 finally:
     client.terminate()
     client.wait()

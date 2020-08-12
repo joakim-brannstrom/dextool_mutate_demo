@@ -45,16 +45,16 @@ try:
     (conn, address) = sock.accept()
     conn.settimeout(10)
 
-    if mosq_test.expect_packet(conn, "connect", connect_packet):
-        conn.send(connack_packet)
+    mosq_test.do_receive_send(conn, connect_packet, connack_packet, "connect")
+    mosq_test.do_receive_send(conn, publish_1_packet, puback_1_packet, "publish 1")
 
-        if mosq_test.expect_packet(conn, "publish 1", publish_1_packet):
-            conn.send(puback_1_packet)
-            if mosq_test.expect_packet(conn, "publish 2", publish_2_packet):
-                if mosq_test.expect_packet(conn, "disconnect", disconnect_packet):
-                    rc = 0
+    mosq_test.expect_packet(conn, "publish 2", publish_2_packet)
+    mosq_test.expect_packet(conn, "disconnect", disconnect_packet)
+    rc = 0
 
     conn.close()
+except mosq_test.TestError:
+    pass
 finally:
     for i in range(0, 5):
         if client.returncode != None:

@@ -67,23 +67,25 @@ def do_test(proto_ver, outgoing_retain):
         (bridge, address) = ssock.accept()
         bridge.settimeout(20)
 
-        if mosq_test.expect_packet(bridge, "connect", connect_packet):
-            bridge.send(connack_packet)
+        mosq_test.expect_packet(bridge, "connect", connect_packet)
+        bridge.send(connack_packet)
 
-            if mosq_test.expect_packet(bridge, "subscribe", subscribe_packet):
-                bridge.send(suback_packet)
+        mosq_test.expect_packet(bridge, "subscribe", subscribe_packet)
+        bridge.send(suback_packet)
 
-                # Broker is now connected to us on port1.
-                # Connect our client to the broker on port2 and send a publish
-                # message, which we will then receive by way of the bridge
-                helper = mosq_test.do_client_connect(helper_connect_packet, helper_connack_packet, port=port2)
-                helper.send(helper_publish_packet)
-                helper.close()
+        # Broker is now connected to us on port1.
+        # Connect our client to the broker on port2 and send a publish
+        # message, which we will then receive by way of the bridge
+        helper = mosq_test.do_client_connect(helper_connect_packet, helper_connack_packet, port=port2)
+        helper.send(helper_publish_packet)
+        helper.close()
 
-                if mosq_test.expect_packet(bridge, "publish", publish_packet):
-                    rc = 0
+        mosq_test.expect_packet(bridge, "publish", publish_packet)
+        rc = 0
 
         bridge.close()
+    except mosq_test.TestError:
+        pass
     finally:
         os.remove(conf_file)
         try:

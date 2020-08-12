@@ -60,6 +60,8 @@ try:
     # Bad topic
     unsubscribe_packet = mosq_test.gen_unsubscribe(topic="#/test/topic", mid=1, proto_ver=5)
     do_test(unsubscribe_packet, mqtt5_rc.MQTT_RC_MALFORMED_PACKET, "Bad topic")
+except mosq_test.TestError:
+    pass
 finally:
     broker.terminate()
     broker.wait()

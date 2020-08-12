@@ -31,6 +31,8 @@ try:
     mosq_test.do_send_receive(sock, publish2_packet, publish2_packet)
     mosq_test.do_ping(sock, "pingresp2")
     rc = 0
+except mosq_test.TestError:
+    pass
 finally:
     broker.terminate()
     broker.wait()

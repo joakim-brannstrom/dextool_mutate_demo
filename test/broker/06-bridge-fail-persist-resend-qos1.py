@@ -69,21 +69,23 @@ def do_test(proto_ver):
         (conn, address) = sock.accept()
         conn.settimeout(20)
 
-        if mosq_test.expect_packet(conn, "connect", connect_packet):
-            conn.send(connack_packet)
+        mosq_test.expect_packet(conn, "connect", connect_packet)
+        conn.send(connack_packet)
 
-            if mosq_test.expect_packet(conn, "unsubscribe", unsubscribe_packet):
-                conn.send(unsuback_packet)
+        mosq_test.expect_packet(conn, "unsubscribe", unsubscribe_packet)
+        conn.send(unsuback_packet)
 
-                # Send the unexpected puback packet
-                conn.send(puback_packet_unknown)
+        # Send the unexpected puback packet
+        conn.send(puback_packet_unknown)
 
-                # Send a legitimate publish packet to verify everything is still ok
-                conn.send(publish_packet)
+        # Send a legitimate publish packet to verify everything is still ok
+        conn.send(publish_packet)
 
-                if mosq_test.expect_packet(conn, "puback", puback_packet):
-                    rc = 0
+        mosq_test.expect_packet(conn, "puback", puback_packet)
+        rc = 0
 
+    except mosq_test.TestError:
+        pass
     finally:
         os.remove(conf_file)
         broker.terminate()

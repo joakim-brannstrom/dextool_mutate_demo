@@ -26,6 +26,8 @@ try:
     mosq_test.do_send_receive(sock, disconnect_client_packet, disconnect_server_packet, "disconnect")
     sock.close()
     rc = 0
+except mosq_test.TestError:
+    pass
 finally:
     broker.terminate()
     broker.wait()

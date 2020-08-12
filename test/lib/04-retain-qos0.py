@@ -34,13 +34,14 @@ try:
     (conn, address) = sock.accept()
     conn.settimeout(10)
 
-    if mosq_test.expect_packet(conn, "connect", connect_packet):
-        conn.send(connack_packet)
+    mosq_test.do_receive_send(conn, connect_packet, connack_packet, "connect")
 
-        if mosq_test.expect_packet(conn, "publish", publish_packet):
-            rc = 0
+    mosq_test.expect_packet(conn, "publish", publish_packet)
+    rc = 0
 
     conn.close()
+except mosq_test.TestError:
+    pass
 finally:
     client.terminate()
     client.wait()

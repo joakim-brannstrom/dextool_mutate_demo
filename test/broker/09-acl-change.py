@@ -110,6 +110,8 @@ try:
     sock.close()
     rc = 0
 
+except mosq_test.TestError:
+    pass
 finally:
     os.remove(conf_file)
     os.remove(acl_file)

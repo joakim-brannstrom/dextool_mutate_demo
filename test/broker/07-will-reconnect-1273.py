@@ -57,6 +57,8 @@ def do_test(proto_ver):
 
         sock1.close()
         sock2.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

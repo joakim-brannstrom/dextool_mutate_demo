@@ -47,6 +47,8 @@ def do_test(port, per_listener):
         rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         os.remove(conf_file)
         os.remove(acl_file)

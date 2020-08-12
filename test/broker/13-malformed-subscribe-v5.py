@@ -89,6 +89,8 @@ try:
     props = mqtt5_props.gen_varint_prop(mqtt5_props.PROP_SUBSCRIPTION_IDENTIFIER, 0)
     subscribe_packet = mosq_test.gen_subscribe(topic="test/topic", qos=1, mid=1, proto_ver=5, properties=props)
     do_test(subscribe_packet, mqtt5_rc.MQTT_RC_MALFORMED_PACKET, "Subscription ID set to 0")
+except mosq_test.TestError:
+    pass
 finally:
     broker.terminate()
     broker.wait()

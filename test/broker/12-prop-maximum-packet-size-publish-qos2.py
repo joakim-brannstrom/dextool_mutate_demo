@@ -44,8 +44,10 @@ try:
     mosq_test.do_send_receive(sock, publish2_packet, pubrec2_packet, "pubrec 2")
     mosq_test.do_send_receive(sock, pubrel2_packet, pubcomp2_packet, "pubcomp 2")
 
-    if mosq_test.expect_packet(sock, "publish2", publish2_packet):
-        rc = 0
+    mosq_test.expect_packet(sock, "publish2", publish2_packet)
+    rc = 0
+except mosq_test.TestError:
+    pass
 finally:
     broker.terminate()
     broker.wait()

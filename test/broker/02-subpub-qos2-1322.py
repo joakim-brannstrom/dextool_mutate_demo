@@ -87,46 +87,48 @@ def do_test(proto_ver):
         mosq_test.do_send_receive(pub, pubrel_packet, pubcomp_packet, "pubcomp1")
         pub.close()
 
-        if mosq_test.expect_packet(sub1, "publish1", publish1r_packet):
-            pub = mosq_test.do_client_connect(pub_connect_packet, pub_connack2_packet, timeout=10, port=port)
-            mosq_test.do_send_receive(pub, publish2s_packet, pubrec_packet, "pubrec2")
-            mosq_test.do_send_receive(pub, pubrel_packet, pubcomp_packet, "pubcomp2")
-            pub.close()
+        mosq_test.expect_packet(sub1, "publish1", publish1r_packet)
+        pub = mosq_test.do_client_connect(pub_connect_packet, pub_connack2_packet, timeout=10, port=port)
+        mosq_test.do_send_receive(pub, publish2s_packet, pubrec_packet, "pubrec2")
+        mosq_test.do_send_receive(pub, pubrel_packet, pubcomp_packet, "pubcomp2")
+        pub.close()
 
-            # We expect nothing on sub1
-            mosq_test.do_ping(sub1, error_string="pingresp1")
+        # We expect nothing on sub1
+        mosq_test.do_ping(sub1, error_string="pingresp1")
 
-            pub = mosq_test.do_client_connect(pub_connect_packet, pub_connack2_packet, timeout=10, port=port)
-            mosq_test.do_send_receive(pub, publish3s_packet, pubrec_packet, "pubrec3")
-            mosq_test.do_send_receive(pub, pubrel_packet, pubcomp_packet, "pubcomp3")
-            pub.close()
+        pub = mosq_test.do_client_connect(pub_connect_packet, pub_connack2_packet, timeout=10, port=port)
+        mosq_test.do_send_receive(pub, publish3s_packet, pubrec_packet, "pubrec3")
+        mosq_test.do_send_receive(pub, pubrel_packet, pubcomp_packet, "pubcomp3")
+        pub.close()
 
-            if mosq_test.expect_packet(sub1, "publish3", publish3r_packet):
-                sub2 = mosq_test.do_client_connect(sub2_connect_packet, sub2_connack_packet, timeout=10, port=port)
-                mosq_test.do_send_receive(sub2, subscribe2_packet, suback2_packet, "suback2")
+        mosq_test.expect_packet(sub1, "publish3", publish3r_packet)
+        sub2 = mosq_test.do_client_connect(sub2_connect_packet, sub2_connack_packet, timeout=10, port=port)
+        mosq_test.do_send_receive(sub2, subscribe2_packet, suback2_packet, "suback2")
 
-                pub = mosq_test.do_client_connect(pub_connect_packet, pub_connack2_packet, timeout=10, port=port)
-                mosq_test.do_send_receive(pub, publish4s_packet, pubrec_packet, "pubrec4")
-                mosq_test.do_send_receive(pub, pubrel_packet, pubcomp_packet, "pubcomp4")
-                pub.close()
+        pub = mosq_test.do_client_connect(pub_connect_packet, pub_connack2_packet, timeout=10, port=port)
+        mosq_test.do_send_receive(pub, publish4s_packet, pubrec_packet, "pubrec4")
+        mosq_test.do_send_receive(pub, pubrel_packet, pubcomp_packet, "pubcomp4")
+        pub.close()
 
-                # We expect nothing on sub2
-                mosq_test.do_ping(sub2, error_string="pingresp2")
+        # We expect nothing on sub2
+        mosq_test.do_ping(sub2, error_string="pingresp2")
+    
+        mosq_test.expect_packet(sub1, "publish4", publish4r_packet)
+        pub = mosq_test.do_client_connect(pub_connect_packet, pub_connack2_packet, timeout=10, port=port)
+        mosq_test.do_send_receive(pub, publish5s_packet, pubrec_packet, "pubrec5")
+        mosq_test.do_send_receive(pub, pubrel_packet, pubcomp_packet, "pubcomp5")
+        pub.close()
+
+        # We expect nothing on sub2
+        mosq_test.do_ping(sub2, error_string="pingresp2")
             
-                if mosq_test.expect_packet(sub1, "publish4", publish4r_packet):
-                    pub = mosq_test.do_client_connect(pub_connect_packet, pub_connack2_packet, timeout=10, port=port)
-                    mosq_test.do_send_receive(pub, publish5s_packet, pubrec_packet, "pubrec5")
-                    mosq_test.do_send_receive(pub, pubrel_packet, pubcomp_packet, "pubcomp5")
-                    pub.close()
+        mosq_test.expect_packet(sub1, "publish5", publish5r_packet)
+        rc = 0
 
-                    # We expect nothing on sub2
-                    mosq_test.do_ping(sub2, error_string="pingresp2")
-            
-                    if mosq_test.expect_packet(sub1, "publish5", publish5r_packet):
-                        rc = 0
-
-                sub2.close()
+        sub2.close()
         sub1.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

@@ -49,6 +49,8 @@ def do_test(proto_ver):
         rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         if rc:
             print(stde.decode('utf-8'))

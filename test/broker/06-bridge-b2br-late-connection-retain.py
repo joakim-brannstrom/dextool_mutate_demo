@@ -77,18 +77,20 @@ def do_test(proto_ver):
         (bridge, address) = ssock.accept()
         bridge.settimeout(20)
 
-        if mosq_test.expect_packet(bridge, "connect", connect_packet):
-            bridge.send(connack_packet)
+        mosq_test.expect_packet(bridge, "connect", connect_packet)
+        bridge.send(connack_packet)
 
-            if mosq_test.expect_packet(bridge, "publish", publish_packet):
-                bridge.send(puback_packet)
-                # Guard against multiple retained messages of the same type by
-                # sending a pingreq to give us something to expect back. If we get
-                # a publish, it's a fail.
-                mosq_test.do_ping(bridge)
-                rc = 0
+        mosq_test.expect_packet(bridge, "publish", publish_packet)
+        bridge.send(puback_packet)
+        # Guard against multiple retained messages of the same type by
+        # sending a pingreq to give us something to expect back. If we get
+        # a publish, it's a fail.
+        mosq_test.do_ping(bridge)
+        rc = 0
 
         bridge.close()
+    except mosq_test.TestError:
+        pass
     finally:
         os.remove(conf_file)
         try:

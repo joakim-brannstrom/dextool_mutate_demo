@@ -38,23 +38,25 @@ def do_test(proto_ver, clean_session):
 
         # Send a "ready" message
         sock2.send(publish_packet)
-        if mosq_test.expect_packet(sock1, "publish 1", publish_packet):
+        mosq_test.expect_packet(sock1, "publish 1", publish_packet)
 
-            # Connect client with will again as a separate connection, this should
-            # take over from the previous one but not trigger a Will.
-            sock3 = mosq_test.do_client_connect(connect2_packet, connack2b_packet, timeout=5, port=port)
-            sock2.close()
+        # Connect client with will again as a separate connection, this should
+        # take over from the previous one but not trigger a Will.
+        sock3 = mosq_test.do_client_connect(connect2_packet, connack2b_packet, timeout=5, port=port)
+        sock2.close()
 
-            # Send the "ready" message again
-            sock3.send(publish_packet)
-            if mosq_test.expect_packet(sock1, "publish 2", publish_packet):
-                # If the helper has received a will message, then the ping test will fail
-                mosq_test.do_ping(sock1)
-                rc = 0
+        # Send the "ready" message again
+        sock3.send(publish_packet)
+        mosq_test.expect_packet(sock1, "publish 2", publish_packet)
+        # If the helper has received a will message, then the ping test will fail
+        mosq_test.do_ping(sock1)
+        rc = 0
 
         sock1.close()
         sock2.close()
         sock3.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

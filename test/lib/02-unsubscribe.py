@@ -37,16 +37,14 @@ try:
     (conn, address) = sock.accept()
     conn.settimeout(10)
 
-    if mosq_test.expect_packet(conn, "connect", connect_packet):
-        conn.send(connack_packet)
-
-        if mosq_test.expect_packet(conn, "unsubscribe", unsubscribe_packet):
-            conn.send(unsuback_packet)
-
-            if mosq_test.expect_packet(conn, "disconnect", disconnect_packet):
-                rc = 0
+    mosq_test.do_receive_send(conn, connect_packet, connack_packet, "connect")
+    mosq_test.do_receive_send(conn, unsubscribe_packet, unsuback_packet, "unsubscribe")
+    mosq_test.expect_packet(conn, "disconnect", disconnect_packet)
+    rc = 0
 
     conn.close()
+except mosq_test.TestError:
+    pass
 finally:
     client.terminate()
     client.wait()

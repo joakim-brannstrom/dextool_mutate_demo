@@ -84,10 +84,12 @@ def do_test(proto_ver):
         # End of helper
 
         # Should have now received a publish command
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            rc = 0
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         os.remove(conf_file)
         time.sleep(1)

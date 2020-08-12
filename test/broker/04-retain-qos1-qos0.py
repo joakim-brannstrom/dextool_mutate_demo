@@ -32,10 +32,12 @@ def do_test(proto_ver):
         mosq_test.do_send_receive(sock, publish_packet, puback_packet, "puback")
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-        if mosq_test.expect_packet(sock, "publish0", publish0_packet):
-            rc = 0
+        mosq_test.expect_packet(sock, "publish0", publish0_packet)
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

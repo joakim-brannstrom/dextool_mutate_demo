@@ -83,6 +83,8 @@ try:
     # Bad topic
     publish_packet = mosq_test.gen_publish(topic="#/test/topic", qos=1, mid=1, proto_ver=5)
     do_test(publish_packet, mqtt5_rc.MQTT_RC_PROTOCOL_ERROR, "Bad topic")
+except mosq_test.TestError:
+    pass
 finally:
     broker.terminate()
     broker.wait()

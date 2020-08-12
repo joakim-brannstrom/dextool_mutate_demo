@@ -58,23 +58,24 @@ try:
     (conn, address) = sock.accept()
     conn.settimeout(10)
 
-    if mosq_test.expect_packet(conn, "connect", connect_packet):
-        conn.send(connack_packet)
+    mosq_test.do_receive_send(conn, connect_packet, connack_packet, "connect")
 
-        if mosq_test.expect_packet(conn, "publish", publish_packet):
-            # Delay for > 3 seconds (message retry time)
+    mosq_test.expect_packet(conn, "publish", publish_packet)
+    # Delay for > 3 seconds (message retry time)
 
-            if mosq_test.expect_packet(conn, "dup publish", publish_dup_packet):
-                conn.send(pubrec_packet)
+    mosq_test.expect_packet(conn, "dup publish", publish_dup_packet)
+    conn.send(pubrec_packet)
 
-                if mosq_test.expect_packet(conn, "pubrel", pubrel_packet):
-                    if mosq_test.expect_packet(conn, "dup pubrel", pubrel_packet):
-                        conn.send(pubcomp_packet)
+    mosq_test.expect_packet(conn, "pubrel", pubrel_packet)
+    mosq_test.expect_packet(conn, "dup pubrel", pubrel_packet)
+    conn.send(pubcomp_packet)
 
-                        if mosq_test.expect_packet(conn, "disconnect", disconnect_packet):
-                            rc = 0
+    mosq_test.expect_packet(conn, "disconnect", disconnect_packet)
+    rc = 0
 
     conn.close()
+except mosq_test.TestError:
+    pass
 finally:
     client.terminate()
     client.wait()

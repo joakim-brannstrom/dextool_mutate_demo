@@ -47,18 +47,20 @@ def do_test(proto_ver):
 
         helper(port, proto_ver)
 
-        if mosq_test.expect_packet(sock, "publish 1r", publish1r_packet):
-            sock.send(puback1r_packet)
-            sock.send(pingreq_packet)
-            p = sock.recv(len(pingresp_packet))
-            if len(p) == 0:
-                rc = 0
+        mosq_test.expect_packet(sock, "publish 1r", publish1r_packet)
+        sock.send(puback1r_packet)
+        sock.send(pingreq_packet)
+        p = sock.recv(len(pingresp_packet))
+        if len(p) == 0:
+            rc = 0
 
         sock.close()
     except socket.error as e:
         if e.errno == errno.ECONNRESET:
             # Connection has been closed by peer, this is the expected behaviour
             rc = 0
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

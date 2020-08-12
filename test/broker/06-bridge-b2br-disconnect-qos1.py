@@ -68,32 +68,34 @@ def do_test(proto_ver):
         (bridge, address) = ssock.accept()
         bridge.settimeout(20)
 
-        if mosq_test.expect_packet(bridge, "connect", connect_packet):
-            bridge.send(connack_packet)
+        mosq_test.expect_packet(bridge, "connect", connect_packet)
+        bridge.send(connack_packet)
 
-            if mosq_test.expect_packet(bridge, "subscribe", subscribe_packet):
-                bridge.send(suback_packet)
+        mosq_test.expect_packet(bridge, "subscribe", subscribe_packet)
+        bridge.send(suback_packet)
 
-                bridge.send(publish_packet)
-                # Bridge doesn't have time to respond but should expect us to retry
-                # and so remove PUBACK.
-                bridge.close()
+        bridge.send(publish_packet)
+        # Bridge doesn't have time to respond but should expect us to retry
+        # and so remove PUBACK.
+        bridge.close()
 
-                (bridge, address) = ssock.accept()
-                bridge.settimeout(20)
+        (bridge, address) = ssock.accept()
+        bridge.settimeout(20)
 
-                if mosq_test.expect_packet(bridge, "connect", connect_packet):
-                    bridge.send(connack_packet)
+        mosq_test.expect_packet(bridge, "connect", connect_packet)
+        bridge.send(connack_packet)
 
-                    if mosq_test.expect_packet(bridge, "2nd subscribe", subscribe2_packet):
-                        bridge.send(suback2_packet)
+        mosq_test.expect_packet(bridge, "2nd subscribe", subscribe2_packet)
+        bridge.send(suback2_packet)
 
-                        # Send a different publish message to make sure the response isn't to the old one.
-                        bridge.send(publish2_packet)
-                        if mosq_test.expect_packet(bridge, "puback", puback2_packet):
-                            rc = 0
+        # Send a different publish message to make sure the response isn't to the old one.
+        bridge.send(publish2_packet)
+        mosq_test.expect_packet(bridge, "puback", puback2_packet)
+        rc = 0
 
         bridge.close()
+    except mosq_test.TestError:
+        pass
     finally:
         os.remove(conf_file)
         try:

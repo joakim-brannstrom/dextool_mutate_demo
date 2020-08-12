@@ -33,6 +33,8 @@ def do_test(port, connack_rc, username, password):
         sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
         rc = 0
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         if rc:
             raise AssertionError

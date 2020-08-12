@@ -21,6 +21,8 @@ def do_test(proto_ver):
         sock = mosq_test.do_client_connect(connect_packet, b"", timeout=30, port=port)
         rc = 0
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

@@ -44,20 +44,22 @@ try:
     (bridge, address) = ssock.accept()
     bridge.settimeout(20)
 
-    if mosq_test.expect_packet(bridge, "connect", connect_packet):
-        bridge.send(connack_packet)
+    mosq_test.expect_packet(bridge, "connect", connect_packet)
+    bridge.send(connack_packet)
 
-        if mosq_test.expect_packet(bridge, "subscribe", subscribe_packet):
-            bridge.send(suback_packet)
+    mosq_test.expect_packet(bridge, "subscribe", subscribe_packet)
+    bridge.send(suback_packet)
 
-            pub = subprocess.Popen(['./08-ssl-bridge-helper.py', str(port2)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            pub.wait()
-            (stdo, stde) = pub.communicate()
+    pub = subprocess.Popen(['./08-ssl-bridge-helper.py', str(port2)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    pub.wait()
+    (stdo, stde) = pub.communicate()
 
-            if mosq_test.expect_packet(bridge, "publish", publish_packet):
-                rc = 0
+    mosq_test.expect_packet(bridge, "publish", publish_packet)
+    rc = 0
 
     bridge.close()
+except mosq_test.TestError:
+    pass
 finally:
     os.remove(conf_file)
     try:

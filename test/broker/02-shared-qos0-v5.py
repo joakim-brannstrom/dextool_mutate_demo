@@ -94,33 +94,35 @@ try:
     mosq_test.do_send_receive(sock5, subscribe5_packet, suback5_packet, "suback5")
 
     sock1.send(publish1_packet)
-    if mosq_test.expect_packet(sock1, "publish1 1", publish1_packet):
-        if mosq_test.expect_packet(sock2, "publish1 2", publish1_packet):
-            if mosq_test.expect_packet(sock3, "publish1 3", publish1_packet):
+    mosq_test.expect_packet(sock1, "publish1 1", publish1_packet)
+    mosq_test.expect_packet(sock2, "publish1 2", publish1_packet)
+    mosq_test.expect_packet(sock3, "publish1 3", publish1_packet)
 
-                sock1.send(publish2_packet)
-                if mosq_test.expect_packet(sock1, "publish2 1", publish2_packet):
-                    if mosq_test.expect_packet(sock3, "publish2 3", publish2_packet):
-                        if mosq_test.expect_packet(sock4, "publish2 4", publish2_packet):
+    sock1.send(publish2_packet)
+    mosq_test.expect_packet(sock1, "publish2 1", publish2_packet)
+    mosq_test.expect_packet(sock3, "publish2 3", publish2_packet)
+    mosq_test.expect_packet(sock4, "publish2 4", publish2_packet)
 
-                            sock1.send(publish3_packet)
-                            if mosq_test.expect_packet(sock1, "publish3 1", publish3_packet):
-                                if mosq_test.expect_packet(sock3, "publish3 3", publish3_packet):
-                                    if mosq_test.expect_packet(sock5, "publish3 5", publish3_packet):
-                                        mosq_test.do_send_receive(sock1, unsubscribe1_packet, unsuback1_packet, "unsuback1")
-                                        mosq_test.do_send_receive(sock2, unsubscribe2_packet, unsuback2_packet, "unsuback2")
-                                        mosq_test.do_send_receive(sock3, unsubscribe3a_packet, unsuback3a_packet, "unsuback3a")
-                                        mosq_test.do_send_receive(sock3, unsubscribe3b_packet, unsuback3b_packet, "unsuback3b")
-                                        mosq_test.do_send_receive(sock4, unsubscribe4_packet, unsuback4_packet, "unsuback4")
-                                        mosq_test.do_send_receive(sock5, unsubscribe5_packet, unsuback5_packet, "unsuback5")
+    sock1.send(publish3_packet)
+    mosq_test.expect_packet(sock1, "publish3 1", publish3_packet)
+    mosq_test.expect_packet(sock3, "publish3 3", publish3_packet)
+    mosq_test.expect_packet(sock5, "publish3 5", publish3_packet)
+    mosq_test.do_send_receive(sock1, unsubscribe1_packet, unsuback1_packet, "unsuback1")
+    mosq_test.do_send_receive(sock2, unsubscribe2_packet, unsuback2_packet, "unsuback2")
+    mosq_test.do_send_receive(sock3, unsubscribe3a_packet, unsuback3a_packet, "unsuback3a")
+    mosq_test.do_send_receive(sock3, unsubscribe3b_packet, unsuback3b_packet, "unsuback3b")
+    mosq_test.do_send_receive(sock4, unsubscribe4_packet, unsuback4_packet, "unsuback4")
+    mosq_test.do_send_receive(sock5, unsubscribe5_packet, unsuback5_packet, "unsuback5")
 
-                                        rc = 0
+    rc = 0
 
     sock1.close()
     sock2.close()
     sock3.close()
     sock4.close()
     sock5.close()
+except mosq_test.TestError:
+    pass
 finally:
     broker.terminate()
     broker.wait()

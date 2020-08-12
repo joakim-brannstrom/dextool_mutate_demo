@@ -31,6 +31,8 @@ def do_test(topic, succeeds):
         rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

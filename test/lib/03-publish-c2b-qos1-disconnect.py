@@ -39,26 +39,24 @@ try:
     (conn, address) = sock.accept()
     conn.settimeout(15)
 
-    if mosq_test.expect_packet(conn, "connect", connect_packet):
-        conn.send(connack_packet)
+    mosq_test.expect_packet(conn, "connect", connect_packet)
+    conn.send(connack_packet)
 
-        if mosq_test.expect_packet(conn, "publish", publish_packet):
-            # Disconnect client. It should reconnect.
-            conn.close()
+    mosq_test.expect_packet(conn, "publish", publish_packet)
+    # Disconnect client. It should reconnect.
+    conn.close()
 
-            (conn, address) = sock.accept()
-            conn.settimeout(15)
+    (conn, address) = sock.accept()
+    conn.settimeout(15)
 
-            if mosq_test.expect_packet(conn, "connect", connect_packet):
-                conn.send(connack_packet)
-
-                if mosq_test.expect_packet(conn, "retried publish", publish_packet_dup):
-                    conn.send(puback_packet)
-
-                    if mosq_test.expect_packet(conn, "disconnect", disconnect_packet):
-                        rc = 0
+    mosq_test.do_receive_send(conn, connect_packet, connack_packet, "connect")
+    mosq_test.do_receive_send(conn, publish_packet_dup, puback_packet, "retried publish")
+    mosq_test.expect_packet(conn, "disconnect", disconnect_packet)
+    rc = 0
 
     conn.close()
+except mosq_test.TestError:
+    pass
 finally:
     client.terminate()
     client.wait()

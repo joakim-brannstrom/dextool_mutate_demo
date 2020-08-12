@@ -70,61 +70,63 @@ def do_test(proto_ver):
         (bridge, address) = ssock.accept()
         bridge.settimeout(20)
 
-        if mosq_test.expect_packet(bridge, "connect", connect_packet):
-            bridge.send(connack_packet)
+        mosq_test.expect_packet(bridge, "connect", connect_packet)
+        bridge.send(connack_packet)
 
-            if mosq_test.expect_packet(bridge, "subscribe", subscribe_packet):
-                bridge.send(suback_packet)
+        mosq_test.expect_packet(bridge, "subscribe", subscribe_packet)
+        bridge.send(suback_packet)
 
-                # Helper
-                helper_connect_packet = mosq_test.gen_connect("test-helper", keepalive=keepalive, proto_ver=proto_ver)
-                helper_connack_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
+        # Helper
+        helper_connect_packet = mosq_test.gen_connect("test-helper", keepalive=keepalive, proto_ver=proto_ver)
+        helper_connack_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
 
-                mid = 312
-                helper_publish_packet = mosq_test.gen_publish("bridge/disconnect/test", qos=2, mid=mid, payload="disconnect-message", proto_ver=proto_ver)
-                helper_pubrec_packet = mosq_test.gen_pubrec(mid=mid, proto_ver=proto_ver)
-                helper_pubrel_packet = mosq_test.gen_pubrel(mid=mid, proto_ver=proto_ver)
-                helper_pubcomp_packet = mosq_test.gen_pubcomp(mid=mid, proto_ver=proto_ver)
+        mid = 312
+        helper_publish_packet = mosq_test.gen_publish("bridge/disconnect/test", qos=2, mid=mid, payload="disconnect-message", proto_ver=proto_ver)
+        helper_pubrec_packet = mosq_test.gen_pubrec(mid=mid, proto_ver=proto_ver)
+        helper_pubrel_packet = mosq_test.gen_pubrel(mid=mid, proto_ver=proto_ver)
+        helper_pubcomp_packet = mosq_test.gen_pubcomp(mid=mid, proto_ver=proto_ver)
 
-                helper_sock = mosq_test.do_client_connect(helper_connect_packet, helper_connack_packet, port=port2, connack_error="helper connack")
-                mosq_test.do_send_receive(helper_sock, helper_publish_packet, helper_pubrec_packet, "helper pubrec")
-                mosq_test.do_send_receive(helper_sock, helper_pubrel_packet, helper_pubcomp_packet, "helper pubcomp")
-                helper_sock.close()
-                # End helper
+        helper_sock = mosq_test.do_client_connect(helper_connect_packet, helper_connack_packet, port=port2, connack_error="helper connack")
+        mosq_test.do_send_receive(helper_sock, helper_publish_packet, helper_pubrec_packet, "helper pubrec")
+        mosq_test.do_send_receive(helper_sock, helper_pubrel_packet, helper_pubcomp_packet, "helper pubcomp")
+        helper_sock.close()
+        # End helper
 
 
-                if mosq_test.expect_packet(bridge, "publish", publish_packet):
-                    bridge.close()
+        mosq_test.expect_packet(bridge, "publish", publish_packet)
+        bridge.close()
 
-                    (bridge, address) = ssock.accept()
-                    bridge.settimeout(20)
+        (bridge, address) = ssock.accept()
+        bridge.settimeout(20)
 
-                    if mosq_test.expect_packet(bridge, "connect", connect_packet):
-                        bridge.send(connack_packet)
+        mosq_test.expect_packet(bridge, "connect", connect_packet)
+        bridge.send(connack_packet)
 
-                        if mosq_test.expect_packet(bridge, "2nd subscribe", subscribe2_packet):
-                            bridge.send(suback2_packet)
+        mosq_test.expect_packet(bridge, "2nd subscribe", subscribe2_packet)
+        bridge.send(suback2_packet)
 
-                            if mosq_test.expect_packet(bridge, "2nd publish", publish_dup_packet):
-                                bridge.send(pubrec_packet)
+        mosq_test.expect_packet(bridge, "2nd publish", publish_dup_packet)
+        bridge.send(pubrec_packet)
 
-                                if mosq_test.expect_packet(bridge, "pubrel", pubrel_packet):
-                                    bridge.close()
+        mosq_test.expect_packet(bridge, "pubrel", pubrel_packet)
+        bridge.close()
 
-                                    (bridge, address) = ssock.accept()
-                                    bridge.settimeout(20)
+        (bridge, address) = ssock.accept()
+        bridge.settimeout(20)
 
-                                    if mosq_test.expect_packet(bridge, "connect", connect_packet):
-                                        bridge.send(connack_packet)
+        mosq_test.expect_packet(bridge, "connect", connect_packet)
+        bridge.send(connack_packet)
 
-                                        if mosq_test.expect_packet(bridge, "3rd subscribe", subscribe3_packet):
-                                            bridge.send(suback3_packet)
+        mosq_test.expect_packet(bridge, "3rd subscribe", subscribe3_packet)
+        bridge.send(suback3_packet)
 
-                                            if mosq_test.expect_packet(bridge, "2nd pubrel", pubrel_packet):
-                                                bridge.send(pubcomp_packet)
-                                                rc = 0
+        mosq_test.expect_packet(bridge, "2nd pubrel", pubrel_packet)
+        bridge.send(pubcomp_packet)
+        rc = 0
 
         bridge.close()
+    except mosq_test.TestError:
+        pass
     finally:
         os.remove(conf_file)
         try:
