@@ -46,6 +46,7 @@ static bool disconnect_sent = false;
 static int publish_count = 0;
 static bool ready_for_repeat = false;
 static volatile int status = STATUS_CONNECTING;
+static int connack_result = 0;
 
 #ifdef WIN32
 static uint64_t next_publish_tv;
@@ -128,6 +129,8 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 	UNUSED(obj);
 	UNUSED(flags);
 	UNUSED(properties);
+
+	connack_result = result;
 
 	if(!result){
 		switch(cfg.pub_mode){
@@ -555,7 +558,11 @@ int main(int argc, char *argv[])
 	if(rc){
 		err_printf(&cfg, "Error: %s\n", mosquitto_strerror(rc));
 	}
-	return rc;
+	if(connack_result){
+		return connack_result;
+	}else{
+		return rc;
+	}
 
 cleanup:
 	mosquitto_lib_cleanup();

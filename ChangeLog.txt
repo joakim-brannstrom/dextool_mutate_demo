@@ -1,3 +1,7 @@
+Clients:
+- All clients exit with an error exit code on CONNACK failure. Closes #1778.
+
+
 1.6.11 - 2020-08-11
 ===================
 
