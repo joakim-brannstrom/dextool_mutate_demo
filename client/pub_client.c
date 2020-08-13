@@ -235,6 +235,17 @@ int pub_stdin_line_loop(struct mosquitto *mosq)
 	mosquitto_loop_start(mosq);
 	stdin_finished = false;
 	do{
+		if(status == STATUS_CONNECTING){
+#ifdef WIN32
+			Sleep(100);
+#else
+			struct timespec ts;
+			ts.tv_sec = 0;
+			ts.tv_nsec = 100000000;
+			nanosleep(&ts, NULL);
+#endif
+		}
+
 		if(status == STATUS_CONNACK_RECVD){
 			pos = 0;
 			read_len = line_buf_len;
