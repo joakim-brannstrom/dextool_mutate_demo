@@ -895,6 +895,7 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 	unsigned int hash_len;
 	int rc;
 #endif
+	bool allow_anonymous;
 
 	if(!db) return MOSQ_ERR_INVAL;
 
@@ -903,15 +904,21 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 		if(!context->listener) return MOSQ_ERR_INVAL;
 		if(context->listener->security_options.password_file == NULL) return MOSQ_ERR_PLUGIN_DEFER;
 		unpwd_ref = context->listener->unpwd;
+		allow_anonymous = context->listener->security_options.allow_anonymous;
 	}else{
 		if(db->config->security_options.password_file == NULL) return MOSQ_ERR_PLUGIN_DEFER;
 		unpwd_ref = db->unpwd;
+		allow_anonymous = db->config->security_options.allow_anonymous;
 	}
 	if(context->username == NULL){
 		/* Check must be made only after checking unpwd_ref.
 		 * This is DENY here, because in MQTT v5 username can be missing when
 		 * password is present, but we don't support that. */
-		return MOSQ_ERR_AUTH;
+		if(allow_anonymous == true){
+			return MOSQ_ERR_SUCCESS;
+		}else{
+			return MOSQ_ERR_AUTH;
+		}
 	}
 
 	HASH_ITER(hh, unpwd_ref, u, tmp){
