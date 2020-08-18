@@ -157,6 +157,32 @@ void queue_plugin_msgs(struct mosquitto_db *db)
 }
 
 
+void loop__keepalive_check(struct mosquitto_db *db, time_t now)
+{
+	struct mosquitto *context, *ctxt_tmp;
+	static time_t last_keepalive_check = 0;
+
+	if(last_keepalive_check != now){
+		last_keepalive_check = now;
+
+		/* FIXME - this needs replacing with something more efficient */
+		HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
+			if(context->sock != INVALID_SOCKET){
+				/* Local bridges never time out in this fashion. */
+				if(!(context->keepalive)
+						|| context->bridge
+						|| now - context->last_msg_in <= (time_t)(context->keepalive)*3/2){
+
+				}else{
+					/* Client has exceeded keepalive*1.5 */
+					do_disconnect(db, context, MOSQ_ERR_KEEPALIVE);
+				}
+			}
+		}
+	}
+}
+
+
 int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count)
 {
 #ifdef WITH_SYS_TREE
@@ -166,8 +192,6 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 	time_t last_backup = mosquitto_time();
 #endif
 	time_t now = 0;
-	time_t last_keepalive_check = mosquitto_time();
-	struct mosquitto *context, *ctxt_tmp;
 #ifdef WITH_WEBSOCKETS
 	int i;
 #endif
@@ -196,23 +220,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #endif
 
 		now = mosquitto_time();
-		if(last_keepalive_check != now){
-			last_keepalive_check = now;
-
-			HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
-				if(context->sock != INVALID_SOCKET){
-					/* Local bridges never time out in this fashion. */
-					if(!(context->keepalive)
-							|| context->bridge
-							|| now - context->last_msg_in <= (time_t)(context->keepalive)*3/2){
-
-					}else{
-						/* Client has exceeded keepalive*1.5 */
-						do_disconnect(db, context, MOSQ_ERR_KEEPALIVE);
-					}
-				}
-			}
-		}
+		loop__keepalive_check(db, now);
 
 #ifdef WITH_BRIDGE
 		bridge_check(db);
