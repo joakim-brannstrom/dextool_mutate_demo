@@ -888,7 +888,7 @@ static int mosquitto__memcmp_const(const void *a, const void *b, size_t len)
 
 int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *context)
 {
-	struct mosquitto__unpwd *u, *tmp;
+	struct mosquitto__unpwd *u;
 	struct mosquitto__unpwd *unpwd_ref;
 #ifdef WITH_TLS
 	unsigned char hash[EVP_MAX_MD_SIZE];
@@ -921,32 +921,31 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 		}
 	}
 
-	HASH_ITER(hh, unpwd_ref, u, tmp){
-		if(!strcmp(u->username, context->username)){
-			if(u->password){
-				if(context->password){
+	HASH_FIND(hh, unpwd_ref, context->username, strlen(context->username), u);
+	if(u){
+		if(u->password){
+			if(context->password){
 #ifdef WITH_TLS
-					rc = pw__digest(context->password, u->salt, u->salt_len, hash, &hash_len);
-					if(rc == MOSQ_ERR_SUCCESS){
-						if(hash_len == u->password_len && !mosquitto__memcmp_const(u->password, hash, hash_len)){
-							return MOSQ_ERR_SUCCESS;
-						}else{
-							return MOSQ_ERR_AUTH;
-						}
-					}else{
-						return rc;
-					}
-#else
-					if(!strcmp(u->password, context->password)){
+				rc = pw__digest(context->password, u->salt, u->salt_len, hash, &hash_len);
+				if(rc == MOSQ_ERR_SUCCESS){
+					if(hash_len == u->password_len && !mosquitto__memcmp_const(u->password, hash, hash_len)){
 						return MOSQ_ERR_SUCCESS;
+					}else{
+						return MOSQ_ERR_AUTH;
 					}
-#endif
 				}else{
-					return MOSQ_ERR_AUTH;
+					return rc;
 				}
+#else
+				if(!strcmp(u->password, context->password)){
+					return MOSQ_ERR_SUCCESS;
+				}
+#endif
 			}else{
-				return MOSQ_ERR_SUCCESS;
+				return MOSQ_ERR_AUTH;
 			}
+		}else{
+			return MOSQ_ERR_SUCCESS;
 		}
 	}
 
