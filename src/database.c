@@ -137,7 +137,7 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 
 	retain__init(db);
 
-	db->unpwd = NULL;
+	db->config->security_options.unpwd = NULL;
 
 #ifdef WITH_PERSISTENCE
 	if(persist__restore(db)) return 1;

@@ -219,6 +219,8 @@ struct mosquitto__security_options {
 	 * in config__read() with regards whether allow_anonymous
 	 * should be disabled when these options are set.
 	 */
+	struct mosquitto__unpwd *unpwd;
+	struct mosquitto__unpwd *psk_id;
 	struct mosquitto__acl_user *acl_list;
 	struct mosquitto__acl *acl_patterns;
 	char *password_file;
@@ -271,8 +273,6 @@ struct mosquitto__listener {
 	struct libwebsocket_protocols *ws_protocol;
 #endif
 	struct mosquitto__security_options security_options;
-	struct mosquitto__unpwd *unpwd;
-	struct mosquitto__unpwd *psk_id;
 #ifdef WITH_UNIX_SOCKETS
 	char *unix_socket_path;
 #endif
@@ -458,8 +458,6 @@ struct mosquitto_db{
 	dbid_t last_db_id;
 	struct mosquitto__subhier *subs;
 	struct mosquitto__retainhier *retains;
-	struct mosquitto__unpwd *unpwd;
-	struct mosquitto__unpwd *psk_id;
 	struct mosquitto *contexts_by_id;
 	struct mosquitto *contexts_by_sock;
 	struct mosquitto *contexts_for_free;

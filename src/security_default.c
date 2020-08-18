@@ -54,7 +54,7 @@ int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 		for(i=0; i<db->config->listener_count; i++){
 			pwf = db->config->listeners[i].security_options.password_file;
 			if(pwf){
-				rc = unpwd__file_parse(&db->config->listeners[i].unpwd, pwf);
+				rc = unpwd__file_parse(&db->config->listeners[i].security_options.unpwd, pwf);
 				if(rc){
 					log__printf(NULL, MOSQ_LOG_ERR, "Error opening password file \"%s\".", pwf);
 					return rc;
@@ -65,7 +65,7 @@ int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 		if(db->config->security_options.password_file){
 			pwf = db->config->security_options.password_file;
 			if(pwf){
-				rc = unpwd__file_parse(&db->unpwd, pwf);
+				rc = unpwd__file_parse(&db->config->security_options.unpwd, pwf);
 				if(rc){
 					log__printf(NULL, MOSQ_LOG_ERR, "Error opening password file \"%s\".", pwf);
 					return rc;
@@ -100,7 +100,7 @@ int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 		for(i=0; i<db->config->listener_count; i++){
 			pskf = db->config->listeners[i].security_options.psk_file;
 			if(pskf){
-				rc = psk__file_parse(db, &db->config->listeners[i].psk_id, pskf);
+				rc = psk__file_parse(db, &db->config->listeners[i].security_options.psk_id, pskf);
 				if(rc){
 					log__printf(NULL, MOSQ_LOG_ERR, "Error opening psk file \"%s\".", pskf);
 					return rc;
@@ -110,7 +110,7 @@ int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 	}else{
 		char *pskf = db->config->security_options.psk_file;
 		if(pskf){
-			rc = psk__file_parse(db, &db->psk_id, pskf);
+			rc = psk__file_parse(db, &db->config->security_options.psk_id, pskf);
 			if(rc){
 				log__printf(NULL, MOSQ_LOG_ERR, "Error opening psk file \"%s\".", pskf);
 				return rc;
@@ -129,22 +129,22 @@ int mosquitto_security_cleanup_default(struct mosquitto_db *db, bool reload)
 	rc = acl__cleanup(db, reload);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
 
-	rc = unpwd__cleanup(&db->unpwd, reload);
+	rc = unpwd__cleanup(&db->config->security_options.unpwd, reload);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
 
 	for(i=0; i<db->config->listener_count; i++){
-		if(db->config->listeners[i].unpwd){
-			rc = unpwd__cleanup(&db->config->listeners[i].unpwd, reload);
+		if(db->config->listeners[i].security_options.unpwd){
+			rc = unpwd__cleanup(&db->config->listeners[i].security_options.unpwd, reload);
 			if(rc != MOSQ_ERR_SUCCESS) return rc;
 		}
 	}
 
-	rc = unpwd__cleanup(&db->psk_id, reload);
+	rc = unpwd__cleanup(&db->config->security_options.psk_id, reload);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
 
 	for(i=0; i<db->config->listener_count; i++){
-		if(db->config->listeners[i].psk_id){
-			rc = unpwd__cleanup(&db->config->listeners[i].psk_id, reload);
+		if(db->config->listeners[i].security_options.psk_id){
+			rc = unpwd__cleanup(&db->config->listeners[i].security_options.psk_id, reload);
 			if(rc != MOSQ_ERR_SUCCESS) return rc;
 		}
 	}
@@ -903,11 +903,11 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 		if(context->bridge) return MOSQ_ERR_SUCCESS;
 		if(!context->listener) return MOSQ_ERR_INVAL;
 		if(context->listener->security_options.password_file == NULL) return MOSQ_ERR_PLUGIN_DEFER;
-		unpwd_ref = context->listener->unpwd;
+		unpwd_ref = context->listener->security_options.unpwd;
 		allow_anonymous = context->listener->security_options.allow_anonymous;
 	}else{
 		if(db->config->security_options.password_file == NULL) return MOSQ_ERR_PLUGIN_DEFER;
-		unpwd_ref = db->unpwd;
+		unpwd_ref = db->config->security_options.unpwd;
 		allow_anonymous = db->config->security_options.allow_anonymous;
 	}
 	if(context->username == NULL){
@@ -1207,11 +1207,9 @@ int mosquitto_psk_key_get_default(struct mosquitto_db *db, struct mosquitto *con
 
 	if(db->config->per_listener_settings){
 		if(!context->listener) return MOSQ_ERR_INVAL;
-		if(!context->listener->psk_id) return MOSQ_ERR_PLUGIN_DEFER;
-		psk_id_ref = context->listener->psk_id;
+		psk_id_ref = context->listener->security_options.psk_id;
 	}else{
-		if(!db->psk_id) return MOSQ_ERR_PLUGIN_DEFER;
-		psk_id_ref = db->psk_id;
+		psk_id_ref = db->config->security_options.psk_id;
 	}
 	if(!psk_id_ref) return MOSQ_ERR_PLUGIN_DEFER;
 
