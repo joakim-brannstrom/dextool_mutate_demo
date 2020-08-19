@@ -1,3 +1,6 @@
+Broker:
+- Build warning fixes when building with WITH_BRIDGE=no and WITH_TLS=no.
+
 Clients:
 - All clients exit with an error exit code on CONNACK failure. Closes #1778.
 - Don't busy loop with `mosquitto_pub -l` on a slow connection.

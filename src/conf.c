@@ -760,6 +760,7 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 }
 
 
+#ifdef WITH_BRIDGE
 static int config__create_bridge_remap_topic(const char *prefix, const char *topic, char **remap_topic)
 {
 	int len;
@@ -827,6 +828,7 @@ static int config__create_bridge_prefix(char **prefix, const char *topic, const 
 
 	return MOSQ_ERR_SUCCESS;
 }
+#endif
 
 
 int config__read_file_core(struct mosquitto__config *config, bool reload, struct config_recurse *cr, int level, int *lineno, FILE *fptr, char **buf, int *buflen)
@@ -849,8 +851,10 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 	int lineno_ext = 0;
 	char **files;
 	int file_count;
+#ifdef WITH_TLS
 	char *kpass_sha = NULL, *kpass_sha_bin = NULL;
 	char *keyform ;
+#endif
 
 	*lineno = 0;
 
