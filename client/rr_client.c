@@ -52,6 +52,7 @@ extern struct mosq_config cfg;
 bool process_messages = true;
 int msg_count = 0;
 struct mosquitto *mosq = NULL;
+static int connack_result = 0;
 
 #ifndef WIN32
 void my_signal_handler(int signum)
@@ -117,6 +118,7 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flags, const mosquitto_property *properties)
 {
+	connack_result = result;
 	if(!result){
 		client_state = rr_s_connected;
 		mosquitto_subscribe_v5(mosq, NULL, cfg.response_topic, cfg.qos, 0, cfg.subscribe_props);
@@ -363,7 +365,11 @@ int main(int argc, char *argv[])
 	if(rc){
 		err_printf(&cfg, "Error: %s\n", mosquitto_strerror(rc));
 	}
-	return rc;
+	if(connack_result){
+		return connack_result;
+	}else{
+		return rc;
+	}
 
 cleanup:
 	mosquitto_lib_cleanup();

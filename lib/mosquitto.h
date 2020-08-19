@@ -48,7 +48,7 @@ extern "C" {
 
 #define LIBMOSQUITTO_MAJOR 1
 #define LIBMOSQUITTO_MINOR 6
-#define LIBMOSQUITTO_REVISION 11
+#define LIBMOSQUITTO_REVISION 12
 /* LIBMOSQUITTO_VERSION_NUMBER looks like 1002001 for e.g. version 1.2.1. */
 #define LIBMOSQUITTO_VERSION_NUMBER (LIBMOSQUITTO_MAJOR*1000000+LIBMOSQUITTO_MINOR*1000+LIBMOSQUITTO_REVISION)
 
@@ -1511,6 +1511,39 @@ libmosq_EXPORT int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t 
  */
 libmosq_EXPORT int mosquitto_void_option(struct mosquitto *mosq, enum mosq_opt_t option, void *value);
 
+/*
+ * Function: mosquitto_string_option
+ *
+ * Used to set const char* options for the client.
+ *
+ * Parameters:
+ *	mosq -   a valid mosquitto instance.
+ *	option - the option to set.
+ *	value -  the option specific value.
+ *
+ * Options:
+ *	MOSQ_OPT_TLS_ENGINE
+ *	          Configure the client for TLS Engine support. Pass a TLS Engine ID
+ *	          to be used when creating TLS connections.
+ *	          Must be set before <mosquitto_connect>.
+ *	MOSQ_OPT_TLS_KEYFORM
+ *            Configure the client to treat the keyfile differently depending
+ *            on its type.  Must be set before <mosquitto_connect>.
+ *	          Set as either "pem" or "engine", to determine from where the
+ *	          private key for a TLS connection will be obtained. Defaults to
+ *	          "pem", a normal private key file.
+ *	MOSQ_OPT_TLS_KPASS_SHA1
+ *	          Where the TLS Engine requires the use of a password to be
+ *	          accessed, this option allows a hex encoded SHA1 hash of the
+ *	          private key password to be passed to the engine directly.
+ *	          Must be set before <mosquitto_connect>.
+ *	MOSQ_OPT_TLS_ALPN
+ *	          If the broker being connected to has multiple services available
+ *	          on a single TLS port, such as both MQTT and WebSockets, use this
+ *	          option to configure the ALPN option for the connection.
+ */
+libmosq_EXPORT int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, const char *value);
+
 
 /*
  * Function: mosquitto_reconnect_delay_set
@@ -2062,77 +2095,6 @@ libmosq_EXPORT void mosquitto_unsubscribe_v5_callback_set(struct mosquitto *mosq
  *	str -   the message string.
  */
 libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on_log)(struct mosquitto *, void *, int, const char *));
-
-/*
- * Function: mosquitto_string_option
- *
- * Used to set const char* options for the client.
- *
- * Parameters:
- *	mosq -   a valid mosquitto instance.
- *	option - the option to set.
- *	value -  the option specific value.
- *
- * Options:
- *	MOSQ_OPT_TLS_ENGINE
- *	          Configure the client for TLS Engine support. Pass a TLS Engine ID
- *	          to be used when creating TLS connections.
- *	          Must be set before <mosquitto_connect>.
- *	MOSQ_OPT_TLS_KEYFORM
- *            Configure the client to treat the keyfile differently depending
- *            on its type.  Must be set before <mosquitto_connect>.
- *	          Set as either "pem" or "engine", to determine from where the
- *	          private key for a TLS connection will be obtained. Defaults to
- *	          "pem", a normal private key file.
- *	MOSQ_OPT_TLS_KPASS_SHA1
- *	          Where the TLS Engine requires the use of a password to be
- *	          accessed, this option allows a hex encoded SHA1 hash of the
- *	          private key password to be passed to the engine directly.
- *	          Must be set before <mosquitto_connect>.
- *	MOSQ_OPT_TLS_ALPN
- *	          If the broker being connected to has multiple services available
- *	          on a single TLS port, such as both MQTT and WebSockets, use this
- *	          option to configure the ALPN option for the connection.
- */
-libmosq_EXPORT int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, const char *value);
-
-
-/*
- * Function: mosquitto_reconnect_delay_set
- *
- * Control the behaviour of the client when it has unexpectedly disconnected in
- * <mosquitto_loop_forever> or after <mosquitto_loop_start>. The default
- * behaviour if this function is not used is to repeatedly attempt to reconnect
- * with a delay of 1 second until the connection succeeds.
- *
- * Use reconnect_delay parameter to change the delay between successive
- * reconnection attempts. You may also enable exponential backoff of the time
- * between reconnections by setting reconnect_exponential_backoff to true and
- * set an upper bound on the delay with reconnect_delay_max.
- *
- * Example 1:
- *	delay=2, delay_max=10, exponential_backoff=False
- *	Delays would be: 2, 4, 6, 8, 10, 10, ...
- *
- * Example 2:
- *	delay=3, delay_max=30, exponential_backoff=True
- *	Delays would be: 3, 6, 12, 24, 30, 30, ...
- *
- * Parameters:
- *  mosq -                          a valid mosquitto instance.
- *  reconnect_delay -               the number of seconds to wait between
- *                                  reconnects.
- *  reconnect_delay_max -           the maximum number of seconds to wait
- *                                  between reconnects.
- *  reconnect_exponential_backoff - use exponential backoff between
- *                                  reconnect attempts. Set to true to enable
- *                                  exponential backoff.
- *
- * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- */
-libmosq_EXPORT int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff);
 
 
 /* =============================================================================

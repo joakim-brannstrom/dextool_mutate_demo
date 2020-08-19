@@ -40,6 +40,7 @@ bool process_messages = true;
 int msg_count = 0;
 struct mosquitto *mosq = NULL;
 int last_mid = 0;
+static int connack_result = 0;
 
 #ifndef WIN32
 void my_signal_handler(int signum)
@@ -117,6 +118,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 	UNUSED(flags);
 	UNUSED(properties);
 
+	connack_result = result;
 	if(!result){
 		mosquitto_subscribe_multiple(mosq, NULL, cfg.topic_count, cfg.topics, cfg.qos, cfg.sub_opts, cfg.subscribe_props);
 
@@ -371,7 +373,11 @@ int main(int argc, char *argv[])
 	if(rc){
 		err_printf(&cfg, "Error: %s\n", mosquitto_strerror(rc));
 	}
-	return rc;
+	if(connack_result){
+		return connack_result;
+	}else{
+		return rc;
+	}
 
 cleanup:
 	mosquitto_destroy(mosq);

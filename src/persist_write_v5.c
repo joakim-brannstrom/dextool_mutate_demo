@@ -115,7 +115,10 @@ int persist__chunk_client_msg_write_v6(FILE *db_fptr, struct P_client_msg *chunk
 				return MOSQ_ERR_NOMEM;
 			}
 			rc = property__write_all(&prop_packet, chunk->properties, true);
-			if(rc) return rc;
+			if(rc){
+				mosquitto__free(prop_packet.payload);
+				return rc;
+			}
 
 			write_e(db_fptr, prop_packet.payload, proplen);
 			mosquitto__free(prop_packet.payload);
@@ -179,7 +182,10 @@ int persist__chunk_message_store_write_v6(FILE *db_fptr, struct P_msg_store *chu
 				return MOSQ_ERR_NOMEM;
 			}
 			rc = property__write_all(&prop_packet, chunk->properties, true);
-			if(rc) return rc;
+			if(rc){
+				mosquitto__free(prop_packet.payload);
+				return rc;
+			}
 
 			write_e(db_fptr, prop_packet.payload, proplen);
 			mosquitto__free(prop_packet.payload);
