@@ -846,7 +846,7 @@ mosquitto_sub -t 'bbc/#' -T bbc/bbc1 --remove-retained</programlisting>
 			<title>Connect</title>
 			<itemizedlist>
 				<listitem><para><option>authentication-data</option> (binary data - note treated as a string in mosquitto_sub)</para></listitem>
-				<listitem><para><option>authentication-method</option> (UTF-8 string pair)</para></listitem>
+				<listitem><para><option>authentication-method</option> (UTF-8 string)</para></listitem>
 				<listitem><para><option>maximum-packet-size</option> (32-bit unsigned integer)</para></listitem>
 				<listitem><para><option>receive-maximum</option> (16-bit unsigned integer)</para></listitem>
 				<listitem><para><option>request-problem-information</option> (8-bit unsigned integer)</para></listitem>
