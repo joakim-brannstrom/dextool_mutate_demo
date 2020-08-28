@@ -84,9 +84,30 @@ static int get_time(struct tm **ti, long *ns)
 }
 
 
-static void write_payload(const unsigned char *payload, int payloadlen, int hex)
+static void write_payload(const unsigned char *payload, int payloadlen, int hex, char align, char pad, int field_width, int precision)
 {
 	int i;
+	int padlen;
+
+	if(field_width > 0){
+		if(payloadlen > field_width){
+			payloadlen = field_width;
+		}
+		if(hex > 0){
+			payloadlen /= 2;
+			padlen = field_width - payloadlen*2;
+		}else{
+			padlen = field_width - payloadlen;
+		}
+	}else{
+		padlen = field_width - payloadlen;
+	}
+
+	if(align != '-'){
+		for(i=0; i<padlen; i++){
+			putchar(pad);
+		}
+	}
 
 	if(hex == 0){
 		(void)fwrite(payload, 1, payloadlen, stdout);
@@ -98,6 +119,10 @@ static void write_payload(const unsigned char *payload, int payloadlen, int hex)
 		for(i=0; i<payloadlen; i++){
 			fprintf(stdout, "%02X", payload[i]);
 		}
+	}
+
+	if(align == '-'){
+		printf("%*s", padlen, "");
 	}
 }
 
@@ -325,12 +350,254 @@ static int json_print(const struct mosquitto_message *message, const mosquitto_p
 		fputs("\"}", stdout);
 	}else{
 		fputs("\"payload\":", stdout);
-		write_payload(message->payload, message->payloadlen, 0);
+		write_payload(message->payload, message->payloadlen, 0, 0, 0, 0);
 		fputs("}", stdout);
 	}
 	
 	return MOSQ_ERR_SUCCESS;
 #endif
+}
+
+
+static void formatted_print_blank(char pad, int field_width)
+{
+	int i;
+	for(i=0; i<field_width; i++){
+		putchar(pad);
+	}
+}
+
+
+static void formatted_print_int(int value, char align, char pad, int field_width)
+{
+	if(field_width == 0){
+		printf("%d", value);
+	}else{
+		if(align == '-'){
+			printf("%-*d", field_width, value);
+		}else{
+			if(pad == '0'){
+				printf("%0*d", field_width, value);
+			}else{
+				printf("%*d", field_width, value);
+			}
+		}
+	}
+}
+
+
+static void formatted_print_str(const char *value, char align, int field_width, int precision)
+{
+	if(field_width == 0 && precision == -1){
+		fputs(value, stdout);
+	}else{
+		if(precision == -1){
+			if(align == '-'){
+				printf("%-*s", field_width, value);
+			}else{
+				printf("%*s", field_width, value);
+			}
+		}else if(field_width == 0){
+			if(align == '-'){
+				printf("%-.*s", precision, value);
+			}else{
+				printf("%.*s", precision, value);
+			}
+		}else{
+			if(align == '-'){
+				printf("%-*.*s", field_width, precision, value);
+			}else{
+				printf("%*.*s", field_width, precision, value);
+			}
+		}
+	}
+}
+
+static void formatted_print_percent(const struct mosq_config *lcfg, const struct mosquitto_message *message, const mosquitto_property *properties, char format, char align, char pad, int field_width, int precision)
+{
+	struct tm *ti = NULL;
+	long ns;
+	char buf[100];
+	int rc;
+	uint8_t i8value;
+	uint16_t i16value;
+	uint32_t i32value;
+	char *binvalue, *strname, *strvalue;
+	const mosquitto_property *prop;
+
+
+	switch(format){
+		case '%':
+			fputc('%', stdout);
+			break;
+
+		case 'A':
+			if(mosquitto_property_read_int16(properties, MQTT_PROP_TOPIC_ALIAS, &i16value, false)){
+				formatted_print_int(i16value, align, pad, field_width);
+			}else{
+				formatted_print_blank(pad, field_width);
+			}
+			break;
+
+		case 'C':
+			if(mosquitto_property_read_string(properties, MQTT_PROP_CONTENT_TYPE, &strvalue, false)){
+				formatted_print_str(strvalue, align, field_width, precision);
+				free(strvalue);
+			}else{
+				formatted_print_blank(' ', field_width);
+			}
+			break;
+
+		case 'D':
+			if(mosquitto_property_read_binary(properties, MQTT_PROP_CORRELATION_DATA, (void **)&binvalue, &i16value, false)){
+				fwrite(binvalue, 1, i16value, stdout);
+				free(binvalue);
+			}
+			break;
+
+		case 'E':
+			if(mosquitto_property_read_int32(properties, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL, &i32value, false)){
+				formatted_print_int(i32value, align, pad, field_width);
+			}else{
+				formatted_print_blank(pad, field_width);
+			}
+			break;
+
+		case 'F':
+			if(mosquitto_property_read_byte(properties, MQTT_PROP_PAYLOAD_FORMAT_INDICATOR, &i8value, false)){
+				formatted_print_int(i8value, align, pad, field_width);
+			}else{
+				formatted_print_blank(pad, field_width);
+			}
+			break;
+
+		case 'I':
+			if(!ti){
+				if(get_time(&ti, &ns)){
+					err_printf(lcfg, "Error obtaining system time.\n");
+					return;
+				}
+			}
+			if(strftime(buf, 100, "%FT%T%z", ti) != 0){
+				formatted_print_str(buf, align, field_width, precision);
+			}else{
+				formatted_print_blank(' ', field_width);
+			}
+			break;
+
+		case 'j':
+			if(!ti){
+				if(get_time(&ti, &ns)){
+					err_printf(lcfg, "Error obtaining system time.\n");
+					return;
+				}
+			}
+			if(json_print(message, properties, ti, ns, true, lcfg->pretty) != MOSQ_ERR_SUCCESS){
+				err_printf(lcfg, "Error: Out of memory.\n");
+				return;
+			}
+			break;
+
+		case 'J':
+			if(!ti){
+				if(get_time(&ti, &ns)){
+					err_printf(lcfg, "Error obtaining system time.\n");
+					return;
+				}
+			}
+			rc = json_print(message, properties, ti, ns, false, lcfg->pretty);
+			if(rc == MOSQ_ERR_NOMEM){
+				err_printf(lcfg, "Error: Out of memory.\n");
+				return;
+			}else if(rc == MOSQ_ERR_INVAL){
+				err_printf(lcfg, "Error: Message payload is not valid JSON on topic %s.\n", message->topic);
+				return;
+			}
+			break;
+
+		case 'l':
+			formatted_print_int(message->payloadlen, align, pad, field_width);
+			break;
+
+		case 'm':
+			formatted_print_int(message->mid, align, pad, field_width);
+			break;
+
+		case 'P':
+			strname = NULL;
+			strvalue = NULL;
+			prop = mosquitto_property_read_string_pair(properties, MQTT_PROP_USER_PROPERTY, &strname, &strvalue, false);
+			while(prop){
+				printf("%s:%s", strname, strvalue);
+				free(strname);
+				free(strvalue);
+				strname = NULL;
+				strvalue = NULL;
+
+				prop = mosquitto_property_read_string_pair(prop, MQTT_PROP_USER_PROPERTY, &strname, &strvalue, true);
+				if(prop){
+					fputc(' ', stdout);
+				}
+			}
+			free(strname);
+			free(strvalue);
+			break;
+
+		case 'p':
+			write_payload(message->payload, message->payloadlen, 0, align, pad, field_width, precision);
+			break;
+
+		case 'q':
+			fputc(message->qos + 48, stdout);
+			break;
+
+		case 'R':
+			if(mosquitto_property_read_string(properties, MQTT_PROP_RESPONSE_TOPIC, &strvalue, false)){
+				formatted_print_str(strvalue, align, field_width, precision);
+				free(strvalue);
+			}
+			break;
+
+		case 'r':
+			if(message->retain){
+				fputc('1', stdout);
+			}else{
+				fputc('0', stdout);
+			}
+			break;
+
+		case 'S':
+			if(mosquitto_property_read_varint(properties, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, &i32value, false)){
+				formatted_print_int(i32value, align, pad, field_width);
+			}else{
+				formatted_print_blank(pad, field_width);
+			}
+			break;
+
+		case 't':
+			formatted_print_str(message->topic, align, field_width, precision);
+			break;
+
+		case 'U':
+			if(!ti){
+				if(get_time(&ti, &ns)){
+					err_printf(lcfg, "Error obtaining system time.\n");
+					return;
+				}
+			}
+			if(strftime(buf, 100, "%s", ti) != 0){
+				printf("%s.%09ld", buf, ns);
+			}
+			break;
+
+		case 'x':
+			write_payload(message->payload, message->payloadlen, 1, align, pad, field_width, precision);
+			break;
+
+		case 'X':
+			write_payload(message->payload, message->payloadlen, 2, align, pad, field_width, precision);
+			break;
+	}
 }
 
 
@@ -342,178 +609,56 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 	long ns;
 	char strf[3];
 	char buf[100];
-	int rc;
-	uint8_t i8value;
-	uint16_t i16value;
-	uint32_t i32value;
-	char *binvalue, *strname, *strvalue;
-	const mosquitto_property *prop;
+	char align, pad;
+	int field_width, precision;
 
 	len = strlen(lcfg->format);
 
 	for(i=0; i<len; i++){
 		if(lcfg->format[i] == '%'){
+			align = 0;
+			pad = ' ';
+			field_width = 0;
+			precision = -1;
 			if(i < len-1){
 				i++;
-				switch(lcfg->format[i]){
-					case '%':
-						fputc('%', stdout);
-						break;
-
-					case 'A':
-						if(mosquitto_property_read_int16(properties, MQTT_PROP_TOPIC_ALIAS, &i16value, false)){
-							printf("%d", i16value);
+				/* Optional alignment */
+				if(lcfg->format[i] == '-'){
+					align = lcfg->format[i];
+					if(i < len-1){
+						i++;
+					}
+				}
+				/* "%-040p" is allowed by this combination of checks, but isn't
+				 * a valid format specifier, the '0' will be ignored. */
+				/* Optional zero padding */
+				if(lcfg->format[i] == '0'){
+					pad = '0';
+					if(i < len-1){
+						i++;
+					}
+				}
+				/* Optional field width */
+				while(i < len-1 && lcfg->format[i] >= '0' && lcfg->format[i] <= '9'){
+					field_width *= 10;
+					field_width += lcfg->format[i]-'0';
+					i++;
+				}
+				/* Optional precision */
+				if(lcfg->format[i] == '.'){
+					if(i < len-1){
+						i++;
+						precision = 0;
+						while(i < len-1 && lcfg->format[i] >= '0' && lcfg->format[i] <= '9'){
+							precision *= 10;
+							precision += lcfg->format[i]-'0';
+							i++;
 						}
-						break;
+					}
+				}
 
-					case 'C':
-						if(mosquitto_property_read_string(properties, MQTT_PROP_CONTENT_TYPE, &strvalue, false)){
-							printf("%s", strvalue);
-							free(strvalue);
-						}
-						break;
-
-					case 'D':
-						if(mosquitto_property_read_binary(properties, MQTT_PROP_CORRELATION_DATA, (void **)&binvalue, &i16value, false)){
-							fwrite(binvalue, 1, i16value, stdout);
-							free(binvalue);
-						}
-						break;
-
-					case 'E':
-						if(mosquitto_property_read_int32(properties, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL, &i32value, false)){
-							printf("%d", i32value);
-						}
-						break;
-
-					case 'F':
-						if(mosquitto_property_read_byte(properties, MQTT_PROP_PAYLOAD_FORMAT_INDICATOR, &i8value, false)){
-							printf("%d", i8value);
-						}
-						break;
-
-					case 'I':
-						if(!ti){
-							if(get_time(&ti, &ns)){
-								err_printf(lcfg, "Error obtaining system time.\n");
-								return;
-							}
-						}
-						if(strftime(buf, 100, "%FT%T%z", ti) != 0){
-							fputs(buf, stdout);
-						}
-						break;
-
-					case 'j':
-						if(!ti){
-							if(get_time(&ti, &ns)){
-								err_printf(lcfg, "Error obtaining system time.\n");
-								return;
-							}
-						}
-						if(json_print(message, properties, ti, ns, true, lcfg->pretty) != MOSQ_ERR_SUCCESS){
-							err_printf(lcfg, "Error: Out of memory.\n");
-							return;
-						}
-						break;
-
-					case 'J':
-						if(!ti){
-							if(get_time(&ti, &ns)){
-								err_printf(lcfg, "Error obtaining system time.\n");
-								return;
-							}
-						}
-						rc = json_print(message, properties, ti, ns, false, lcfg->pretty);
-						if(rc == MOSQ_ERR_NOMEM){
-							err_printf(lcfg, "Error: Out of memory.\n");
-							return;
-						}else if(rc == MOSQ_ERR_INVAL){
-							err_printf(lcfg, "Error: Message payload is not valid JSON on topic %s.\n", message->topic);
-							return;
-						}
-						break;
-
-					case 'l':
-						printf("%d", message->payloadlen);
-						break;
-
-					case 'm':
-						printf("%d", message->mid);
-						break;
-
-					case 'P':
-						strname = NULL;
-						strvalue = NULL;
-						prop = mosquitto_property_read_string_pair(properties, MQTT_PROP_USER_PROPERTY, &strname, &strvalue, false);
-						while(prop){
-							printf("%s:%s", strname, strvalue);
-							free(strname);
-							free(strvalue);
-							strname = NULL;
-							strvalue = NULL;
-
-							prop = mosquitto_property_read_string_pair(prop, MQTT_PROP_USER_PROPERTY, &strname, &strvalue, true);
-							if(prop){
-								fputc(' ', stdout);
-							}
-						}
-						free(strname);
-						free(strvalue);
-						break;
-
-					case 'p':
-						write_payload(message->payload, message->payloadlen, 0);
-						break;
-
-					case 'q':
-						fputc(message->qos + 48, stdout);
-						break;
-
-					case 'R':
-						if(mosquitto_property_read_string(properties, MQTT_PROP_RESPONSE_TOPIC, &strvalue, false)){
-							printf("%s", strvalue);
-							free(strvalue);
-						}
-						break;
-
-					case 'r':
-						if(message->retain){
-							fputc('1', stdout);
-						}else{
-							fputc('0', stdout);
-						}
-						break;
-
-					case 'S':
-						if(mosquitto_property_read_varint(properties, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, &i32value, false)){
-							printf("%d", i32value);
-						}
-						break;
-
-					case 't':
-						fputs(message->topic, stdout);
-						break;
-
-					case 'U':
-						if(!ti){
-							if(get_time(&ti, &ns)){
-								err_printf(lcfg, "Error obtaining system time.\n");
-								return;
-							}
-						}
-						if(strftime(buf, 100, "%s", ti) != 0){
-							printf("%s.%09ld", buf, ns);
-						}
-						break;
-
-					case 'x':
-						write_payload(message->payload, message->payloadlen, 1);
-						break;
-
-					case 'X':
-						write_payload(message->payload, message->payloadlen, 2);
-						break;
+				if(i < len){
+					formatted_print_percent(lcfg, message, properties, lcfg->format[i], align, pad, field_width, precision);
 				}
 			}
 		}else if(lcfg->format[i] == '@'){
@@ -616,7 +761,7 @@ void print_message(struct mosq_config *cfg, const struct mosquitto_message *mess
 	}else if(cfg->verbose){
 		if(message->payloadlen){
 			printf("%s ", message->topic);
-			write_payload(message->payload, message->payloadlen, false);
+			write_payload(message->payload, message->payloadlen, false, 0, 0, 0, 0);
 			if(cfg->eol){
 				printf("\n");
 			}
@@ -628,7 +773,7 @@ void print_message(struct mosq_config *cfg, const struct mosquitto_message *mess
 		fflush(stdout);
 	}else{
 		if(message->payloadlen){
-			write_payload(message->payload, message->payloadlen, false);
+			write_payload(message->payload, message->payloadlen, false, 0, 0, 0, 0);
 			if(cfg->eol){
 				printf("\n");
 			}

@@ -790,7 +790,7 @@ mosquitto_sub -t 'bbc/#' -T bbc/bbc1 --remove-retained</programlisting>
 	</refsect1>
 
 	<refsect1 id='outputformat'>
-		<title>Output format</title>
+		<title>Output Format</title>
 		<para>There are three ways of formatting the output from mosquitto_sub.
 			In all cases a new-line character is appended for each message
 			received unless the <option>-N</option> argument is passed to
@@ -823,6 +823,58 @@ mosquitto_sub -t 'bbc/#' -T bbc/bbc1 --remove-retained</programlisting>
 			option varies depending on the platform. The final sequence
 			character is <option>\</option>, which is used to input some
 			characters that would otherwise be difficult to enter.</para>
+
+		<refsect2>
+			<title>Flag characters</title>
+			<para>The parameters %A, %C, %E, %F, %I, %l, %m, %p, %R, %S, %t, %x, and %X can have optional flags immediately after the % character.</para>
+			<variablelist>
+				<varlistentry>
+					<term><option>0</option></term>
+					<listitem><para>The value should be zero padded.
+					This applies to the parameters %A, %E, %F, %l, %m, %S, %X, and %x.
+					It will be ignored for other parameters. If used with the
+				<option>-</option> flag, the <option>0</option> flag will be
+					ignored.</para></listitem>
+				</varlistentry>
+
+				<varlistentry>
+					<term><option>-</option></term>
+					<listitem><para>The value will be left aligned to the field width,
+						padded with blanks. The default is right alignment, with either 0
+						or blank padding.</para></listitem>
+				</varlistentry>
+			</variablelist>
+		</refsect2>
+
+		<refsect2>
+			<title>Field width</title>
+                <para>
+                    Some of the MQTT related parameters can be formatted with an
+                    option to set their field width in a similar way to regular
+                    printf style formats, i.e. this sets the minimum width when
+                    printing this parameter. This applies to the options %A, %C,
+                    %E, %F, %I, %l, %m, %p, %R, %S, %t, %x, %X.
+                </para>
+				<para>
+					For example <option>%10t</option> would set the minimum topic
+					field width to 10 characters.
+				</para>
+		</refsect2>
+
+		<refsect2>
+			<title>Maximum width</title>
+                <para>
+                    Some of the MQTT related parameters can be formatted with an
+                    option to set a maximum field width in a similar way to regular
+                    printf style formats. This applies to the options %C, %I, %R, %t.
+                </para>
+				<para>
+					For example <option>%10.10t</option> would set the minimum topic
+					field width to 10 characters, and the maximum topic width to 
+                    10 characters, i.e. the field will always be exactly 10
+                    characters long.
+				</para>
+		</refsect2>
 
 		<refsect2>
 			<title>MQTT related parameters</title>

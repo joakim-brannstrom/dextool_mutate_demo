@@ -55,6 +55,45 @@ static int check_format(const char *str)
 				fprintf(stderr, "Error: Incomplete format specifier.\n");
 				return 1;
 			}else{
+				if(str[i+1] == '0' || str[i+1] == '-'){
+					/* Flag characters */
+					i++;
+					if(i == len-1){
+						// error
+						fprintf(stderr, "Error: Incomplete format specifier.\n");
+						return 1;
+					}
+				}
+
+				/* Field width */
+				while(str[i+1] >= '0' && str[i+1] <= '9'){
+					i++;
+					if(i == len-1){
+						// error
+						fprintf(stderr, "Error: Incomplete format specifier.\n");
+						return 1;
+					}
+				}
+
+				if(str[i+1] == '.'){
+					/* Precision specifier */
+					i++;
+					if(i == len-1){
+						// error
+						fprintf(stderr, "Error: Incomplete format specifier.\n");
+						return 1;
+					}
+					/* Precision */
+					while(str[i+1] >= '0' && str[i+1] <= '9'){
+						i++;
+						if(i == len-1){
+							// error
+							fprintf(stderr, "Error: Incomplete format specifier.\n");
+							return 1;
+						}
+					}
+				}
+
 				if(str[i+1] == '%'){
 					// Print %, ignore
 				}else if(str[i+1] == 'A'){

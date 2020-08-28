@@ -56,6 +56,8 @@ Clients:
   of received messages to be printed.
 - mosquitto_sub %j and %J timestamps are now in a ISO 8601 compatible format.
 - mosquitto_pub now sends 0 length files without an error when using `-f`.
+- mosquitto_sub now supports extra format specifiers for field width and
+  precision for some parameters.
 
 
 1.6.9 - 20200227
