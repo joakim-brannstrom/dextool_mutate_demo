@@ -274,8 +274,10 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				return -1;
 			}
 
-			db__message_write_queued_out(db, mosq);
-			db__message_write_inflight_out_latest(db, mosq);
+			rc = db__message_write_inflight_out_latest(db, mosq);
+			if(rc) return -1;
+			rc = db__message_write_queued_out(db, mosq);
+			if(rc) return -1;
 
 			if(mosq->out_packet && !mosq->current_out_packet){
 				mosq->current_out_packet = mosq->out_packet;
@@ -285,7 +287,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				}
 			}
 
-			if(mosq->current_out_packet && !lws_send_pipe_choked(mosq->wsi)){
+			while(mosq->current_out_packet && !lws_send_pipe_choked(mosq->wsi)){
 				packet = mosq->current_out_packet;
 
 				if(packet->pos == 0 && packet->to_process == packet->packet_length){
