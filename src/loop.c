@@ -59,38 +59,6 @@ extern bool flag_db_backup;
 extern bool flag_tree_print;
 extern int run;
 
-#ifdef WITH_WEBSOCKETS
-static void temp__expire_websockets_clients(struct mosquitto_db *db)
-{
-	struct mosquitto *context, *ctxt_tmp;
-	static time_t last_check = 0;
-	time_t now = mosquitto_time();
-	char *id;
-
-	if(now - last_check > 60){
-		HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
-			if(context->wsi && context->sock != INVALID_SOCKET){
-				if(context->keepalive && now - context->last_msg_in > (time_t)(context->keepalive)*3/2){
-					if(db->config->connection_messages == true){
-						if(context->id){
-							id = context->id;
-						}else{
-							id = "<unknown>";
-						}
-						if(db->config->connection_messages == true){
-							log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
-						}
-					}
-					/* Client has exceeded keepalive*1.5 */
-					do_disconnect(db, context, MOSQ_ERR_KEEPALIVE);
-				}
-			}
-		}
-		last_check = mosquitto_time();
-	}
-}
-#endif
-
 #if defined(WITH_WEBSOCKETS) && LWS_LIBRARY_VERSION_NUMBER == 3002000
 void lws__sul_callback(struct lws_sorted_usec_list *l)
 {
@@ -285,9 +253,6 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #endif
 
 			}
-		}
-		if(db->config->have_websockets_listener){
-			temp__expire_websockets_clients(db);
 		}
 #endif
 	}
