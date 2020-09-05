@@ -269,6 +269,8 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 	}
 	free(auth_data_out);
 
+	keepalive__add(context);
+
 	mosquitto__set_state(context, mosq_cs_active);
 	rc = send__connack(db, context, connect_ack, CONNACK_ACCEPTED, connack_props);
 	mosquitto_property_free_all(&connack_props);

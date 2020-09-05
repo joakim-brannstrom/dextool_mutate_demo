@@ -750,6 +750,15 @@ int mux__cleanup(struct mosquitto_db *db);
 /* ============================================================
  * Property related functions
  * ============================================================ */
+int keepalive__add(struct mosquitto *context);
+void keepalive__check(struct mosquitto_db *db, time_t now);
+int keepalive__remove(struct mosquitto *context);
+void keepalive__remove_all(void);
+int keepalive__update(struct mosquitto *context);
+
+/* ============================================================
+ * Property related functions
+ * ============================================================ */
 int property__process_connect(struct mosquitto *context, mosquitto_property **props);
 int property__process_will(struct mosquitto *context, struct mosquitto_message_all *msg, mosquitto_property **props);
 int property__process_disconnect(struct mosquitto *context, mosquitto_property **props);

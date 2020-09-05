@@ -30,6 +30,7 @@ OBJS=	mosquitto.o \
 		handle_subscribe.o \
 		handle_unsuback.o \
 		handle_unsubscribe.o \
+		keepalive.o \
 		logging.o \
 		loop.o \
 		memory_mosq.o \
@@ -146,6 +147,9 @@ handle_unsuback.o : ../lib/handle_unsuback.c ../lib/read_handle.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
 handle_unsubscribe.o : handle_unsubscribe.c mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
+
+keepalive.o : keepalive.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
 logging.o : logging.c mosquitto_broker_internal.h

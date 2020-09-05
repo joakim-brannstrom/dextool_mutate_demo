@@ -426,7 +426,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				/* Free data and reset values */
 				packet__cleanup(&mosq->in_packet);
 
-				mosq->last_msg_in = mosquitto_time();
+				keepalive__update(context);
 
 				if(rc && (mosq->out_packet || mosq->current_out_packet)) {
 					if(mosq->state != mosq_cs_disconnecting){

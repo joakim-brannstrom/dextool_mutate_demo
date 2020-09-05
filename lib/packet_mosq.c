@@ -460,9 +460,13 @@ int packet__read(struct mosquitto *mosq)
 					 * This is an arbitrary limit, but with some consideration.
 					 * If a client can't send 1000 bytes in a second it
 					 * probably shouldn't be using a 1 second keep alive. */
+#ifdef WITH_BROKER
+					keepalive__update(mosq);
+#else
 					pthread_mutex_lock(&mosq->msgtime_mutex);
 					mosq->last_msg_in = mosquitto_time();
 					pthread_mutex_unlock(&mosq->msgtime_mutex);
+#endif
 				}
 				return MOSQ_ERR_SUCCESS;
 			}else{

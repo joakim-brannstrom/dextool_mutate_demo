@@ -215,6 +215,7 @@ void context__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 	}else{
 		session_expiry__add(db, context);
 	}
+	keepalive__remove(context);
 	mosquitto__set_state(context, mosq_cs_disconnected);
 }
 
