@@ -165,7 +165,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 	bridge__packet_cleanup(context);
 	db__message_reconnect_reset(db, context);
 
-	db__messages_delete(db, context);
+	db__messages_delete(db, context, false);
 
 	/* Delete all local subscriptions even for clean_start==false. We don't
 	 * remove any messages and the next loop carries out the resubscription
