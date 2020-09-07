@@ -20,6 +20,9 @@ Contributors:
 #include "mosquitto_internal.h"
 #include "mosquitto_broker.h"
 #include "memory_mosq.h"
+#include "mqtt_protocol.h"
+#include "send_mosq.h"
+#include "util_mosq.h"
 #include "utlist.h"
 
 #ifdef WITH_TLS
@@ -230,3 +233,59 @@ int mosquitto_set_username(struct mosquitto *client, const char *username)
 	}
 }
 
+
+static void disconnect_client(struct mosquitto_db *db, struct mosquitto *context, bool with_will)
+{
+	if(context->protocol == mosq_p_mqtt5){
+		send__disconnect(context, MQTT_RC_ADMINISTRATIVE_ACTION, NULL);
+	}
+	if(with_will == false){
+		mosquitto__set_state(context, mosq_cs_disconnecting);
+	}
+	do_disconnect(db, context, MOSQ_ERR_ADMINISTRATIVE_ACTION);
+}
+
+int mosquitto_kick_client_by_clientid(const char *clientid, bool with_will)
+{
+	struct mosquitto_db *db;
+	struct mosquitto *ctxt, *ctxt_tmp;
+
+	db = mosquitto__get_db();
+	if(clientid == NULL){
+		HASH_ITER(hh_sock, db->contexts_by_sock, ctxt, ctxt_tmp){
+			disconnect_client(db, ctxt, with_will);
+		}
+		return MOSQ_ERR_SUCCESS;
+	}else{
+		HASH_FIND(hh_id, db->contexts_by_id, clientid, strlen(clientid), ctxt);
+		if(ctxt){
+			disconnect_client(db, ctxt, with_will);
+			return MOSQ_ERR_SUCCESS;
+		}else{
+			return MOSQ_ERR_NOT_FOUND;
+		}
+	}
+}
+
+int mosquitto_kick_client_by_username(const char *username, bool with_will)
+{
+	struct mosquitto_db *db;
+	struct mosquitto *ctxt, *ctxt_tmp;
+
+	db = mosquitto__get_db();
+
+	if(username == NULL){
+		HASH_ITER(hh_sock, db->contexts_by_sock, ctxt, ctxt_tmp){
+			if(ctxt->username == NULL){
+				disconnect_client(db, ctxt, with_will);
+			}
+		}
+	}else{
+		HASH_ITER(hh_sock, db->contexts_by_sock, ctxt, ctxt_tmp){
+			if(ctxt->username != NULL && !strcmp(ctxt->username, username)){
+				disconnect_client(db, ctxt, with_will);
+			}
+		}
+	}
+	return MOSQ_ERR_SUCCESS;
+}

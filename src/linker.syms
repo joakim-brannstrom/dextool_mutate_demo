@@ -10,6 +10,8 @@
 	mosquitto_client_protocol_version;
 	mosquitto_client_sub_count;
 	mosquitto_client_username;
+	mosquitto_kick_client_by_clientid;
+	mosquitto_kick_client_by_username;
 	mosquitto_log_printf;
 	mosquitto_plugin_publish;
 	mosquitto_property_add_binary;

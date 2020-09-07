@@ -179,6 +179,46 @@ const char *mosquitto_client_username(const struct mosquitto *client);
 int mosquitto_set_username(struct mosquitto *client, const char *username);
 
 
+/* =========================================================================
+ *
+ * Client control
+ *
+ * ========================================================================= */
+
+/* Function: mosquitto_kick_client_by_clientid
+ *
+ * Forcefully disconnect a client from the broker.
+ *
+ * If clientid != NULL, then the client with the matching client id is
+ *   disconnected from the broker.
+ * If clientid == NULL, then all clients are disconnected from the broker.
+ *
+ * If with_will == true, then if the client has a Last Will and Testament
+ *   defined then this will be sent. If false, the LWT will not be sent.
+ */
+int mosquitto_kick_client_by_clientid(const char *clientid, bool with_will);
+
+/* Function: mosquitto_kick_client_by_username
+ *
+ * Forcefully disconnect a client from the broker.
+ *
+ * If username != NULL, then all clients with a matching username are kicked
+ *   from the broker.
+ * If username == NULL, then all clients that do not have a username are
+ *   kicked.
+ *
+ * If with_will == true, then if the client has a Last Will and Testament
+ *   defined then this will be sent. If false, the LWT will not be sent.
+ */
+int mosquitto_kick_client_by_username(const char *username, bool with_will);
+
+
+/* =========================================================================
+ *
+ * Publishing functions
+ *
+ * ========================================================================= */
+
 /* Function: mosquitto_broker_publish
  *
  * Publish a message from within a plugin.
