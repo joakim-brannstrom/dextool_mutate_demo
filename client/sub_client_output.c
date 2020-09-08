@@ -350,7 +350,7 @@ static int json_print(const struct mosquitto_message *message, const mosquitto_p
 		fputs("\"}", stdout);
 	}else{
 		fputs("\"payload\":", stdout);
-		write_payload(message->payload, message->payloadlen, 0, 0, 0, 0);
+		write_payload(message->payload, message->payloadlen, 0, 0, 0, 0, 0);
 		fputs("}", stdout);
 	}
 	
