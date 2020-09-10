@@ -250,9 +250,14 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, msg->qos, msg->retain, msg->source_mid, msg->topic, (long)msg->payloadlen);
 
 	if(!strncmp(msg->topic, "$CONTROL/", 9)){
+#ifdef WITH_CONTROL
 		rc = control__process(db, context, msg);
 		db__msg_store_free(msg);
 		return rc;
+#else
+		db__msg_store_free(msg);
+		return MOSQ_ERR_SUCCESS;
+#endif
 	}
 
 	if(msg->qos > 0){

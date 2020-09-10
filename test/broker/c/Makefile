@@ -13,7 +13,8 @@ PLUGIN_SRC = \
 	auth_plugin_extended_multiple.c \
 	auth_plugin_extended_single.c \
 	auth_plugin_extended_single2.c \
-	auth_plugin_publish.c
+	auth_plugin_publish.c \
+	plugin_control.c
 
 PLUGINS = ${PLUGIN_SRC:.c=.so}
 

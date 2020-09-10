@@ -454,6 +454,13 @@ struct mosquitto_message_v5{
 };
 
 
+struct mosquitto__control_callback{
+	UT_hash_handle hh;
+	char *topic;
+	MOSQ_FUNC_control_callback function;
+	void *data;
+};
+
 struct mosquitto_db{
 	dbid_t last_db_id;
 	struct mosquitto__subhier *subs;
@@ -486,6 +493,7 @@ struct mosquitto_db{
 #ifdef WITH_EPOLL
 	int epollfd;
 #endif
+	struct mosquitto__control_callback *control_callbacks;
 	struct mosquitto_message_v5 *plugin_msgs;
 };
 
@@ -704,7 +712,10 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 /* ============================================================
  * Control functions
  * ============================================================ */
+#ifdef WITH_CONTROL
 int control__process(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_msg_store *stored);
+void control__cleanup(struct mosquitto_db *db);
+#endif
 
 
 /* ============================================================

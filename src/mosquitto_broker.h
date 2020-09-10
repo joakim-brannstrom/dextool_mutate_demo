@@ -181,6 +181,35 @@ int mosquitto_set_username(struct mosquitto *client, const char *username);
 
 /* =========================================================================
  *
+ * Feature control
+ *
+ * ========================================================================= */
+
+typedef int (*MOSQ_FUNC_control_callback)(void *, struct mosquitto *, const char *, int, const void *);
+/*
+ * Function: mosquitto_control_topic_register
+ *
+ * Register a callback function to handle processing of a topic in the $CONTROL
+ * topic hierarchy, in the form $CONTROL/<feature>/<version>, e.g.
+ * $CONTROL/user-management/v1
+ *
+ * Messages sent to a $CONTROL topic are not passed on to clients.
+ *
+ * This allows plugins to provide an API to control behaviour, e.g. implement
+ * adding/removing users in a security plugin.
+ */
+int mosquitto_control_topic_register(const char *topic, MOSQ_FUNC_control_callback callback, void *data);
+
+/*
+ * Function: mosquitto_control_topic_unregister
+ *
+ * Unregister a callback function previously registered with mosquitto_control_topic_register().
+ */
+int mosquitto_control_topic_unregister(const char *topic);
+
+
+/* =========================================================================
+ *
  * Client control
  *
  * ========================================================================= */

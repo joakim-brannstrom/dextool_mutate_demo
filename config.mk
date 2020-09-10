@@ -108,6 +108,9 @@ WITH_UNIX_SOCKETS:=yes
 # Build mosquitto_sub with cJSON support
 WITH_CJSON:=yes
 
+# Build mosquitto with support for the $CONTROL topics.
+WITH_CONTROL:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -279,6 +282,10 @@ endif
 ifeq ($(WITH_ADNS),yes)
 	BROKER_LDADD:=$(BROKER_LDADD) -lanl
 	BROKER_CPPFLAGS:=$(BROKER_CPPFLAGS) -DWITH_ADNS
+endif
+
+ifeq ($(WITH_CONTROL),yes)
+	BROKER_CPPFLAGS:=$(BROKER_CPPFLAGS) -DWITH_CONTROL
 endif
 
 MAKE_ALL:=mosquitto
