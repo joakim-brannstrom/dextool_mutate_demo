@@ -1743,6 +1743,23 @@ libmosq_EXPORT int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs,
 libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity, const char *ciphers);
 
 
+/*
+ * Function: mosquitto_ssl_get
+ *
+ * Retrieve a pointer to the SSL structure used for TLS connections in this
+ * client. This can be used in e.g. the connect callback to carry out
+ * additional verification steps.
+ *
+ * Parameters:
+ *  mosq - a valid mosquitto instance
+ *
+ * Returns:
+ *  A valid pointer to an openssl SSL structure - if the client is using TLS.
+ *  NULL - if the client is not using TLS, or TLS support is not compiled in.
+ */
+libmosq_EXPORT void *mosquitto_ssl_get(struct mosquitto *mosq);
+
+
 /* ======================================================================
  *
  * Section: Callbacks

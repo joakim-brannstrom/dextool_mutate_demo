@@ -138,4 +138,5 @@ MOSQ_1.7 {
 		mosquitto_property_identifier;
 		mosquitto_property_identifier_to_string;
 		mosquitto_property_next;
+		mosquitto_ssl_get;
 } MOSQ_1.6;

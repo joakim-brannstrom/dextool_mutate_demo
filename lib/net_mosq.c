@@ -1174,3 +1174,14 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 #endif
 }
 #endif
+
+#ifndef WITH_BROKER
+void *mosquitto_ssl_get(struct mosquitto *mosq)
+{
+#ifdef WITH_TLS
+	return mosq->ssl;
+#else
+	return NULL;
+#endif
+}
+#endif

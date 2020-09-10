@@ -37,6 +37,8 @@ Client library:
   setting the retain bit.
 - Added MOSQ_OPT_TCP_NODELAY, to allow disabling Nagle's algorithm on client
   sockets. Closes #1526.
+- Add `mosquitto_ssl_get()` to allow clients to access their SSL structure and
+  perform additional verification.
 
 Clients:
 - Add timeout return code (27) for `mosquitto_sub -W <secs>` and
