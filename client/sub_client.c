@@ -175,6 +175,14 @@ void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *s
 	printf("%s\n", str);
 }
 
+void print_version(void)
+{
+	int major, minor, revision;
+
+	mosquitto_lib_version(&major, &minor, &revision);
+	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n", VERSION, major, minor, revision);
+}
+
 void print_usage(void)
 {
 	int major, minor, revision;
@@ -319,6 +327,9 @@ int main(int argc, char *argv[])
 		if(rc == 2){
 			/* --help */
 			print_usage();
+		}else if(rc == 3){
+			/* --version */
+			print_version();
 		}else{
 			fprintf(stderr, "\nUse 'mosquitto_sub --help' to see usage.\n");
 		}

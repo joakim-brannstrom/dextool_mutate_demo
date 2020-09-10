@@ -366,6 +366,14 @@ void pub_shared_cleanup(void)
 }
 
 
+void print_version(void)
+{
+	int major, minor, revision;
+
+	mosquitto_lib_version(&major, &minor, &revision);
+	printf("mosquitto_pub version %s running on libmosquitto %d.%d.%d.\n", VERSION, major, minor, revision);
+}
+
 void print_usage(void)
 {
 	int major, minor, revision;
@@ -496,6 +504,8 @@ int main(int argc, char *argv[])
 		if(rc == 2){
 			/* --help */
 			print_usage();
+		}else if(rc == 3){
+			print_version();
 		}else{
 			fprintf(stderr, "\nUse 'mosquitto_pub --help' to see usage.\n");
 		}

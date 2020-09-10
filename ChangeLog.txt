@@ -61,6 +61,7 @@ Clients:
 - mosquitto_pub now sends 0 length files without an error when using `-f`.
 - mosquitto_sub now supports extra format specifiers for field width and
   precision for some parameters.
+- Add `--version` for all clients.
 
 
 1.6.9 - 20200227
