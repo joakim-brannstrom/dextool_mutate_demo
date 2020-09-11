@@ -1,5 +1,6 @@
 Client library:
 - Fix send quota being incorrecly reset on reconnect. Closes #1822.
+- Don't use logging until log mutex is initialised. Closes #1819.
 
 1.6.12 - 2020-08-19
 ===================

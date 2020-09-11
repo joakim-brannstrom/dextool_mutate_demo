@@ -110,10 +110,6 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_start, void *userdata
 	mosq = (struct mosquitto *)mosquitto__calloc(1, sizeof(struct mosquitto));
 	if(mosq){
 		mosq->sock = INVALID_SOCKET;
-		if(net__socketpair(&mosq->sockpairR, &mosq->sockpairW)){
-			log__printf(mosq, MOSQ_LOG_WARNING,
-					"Warning: Unable to open socket pair, outgoing publish commands may be delayed.");
-		}
 #ifdef WITH_THREADING
 		mosq->thread_id = pthread_self();
 #endif
@@ -126,6 +122,10 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_start, void *userdata
 				errno = ENOMEM;
 			}
 			return NULL;
+		}
+		if(net__socketpair(&mosq->sockpairR, &mosq->sockpairW)){
+			log__printf(mosq, MOSQ_LOG_WARNING,
+					"Warning: Unable to open socket pair, outgoing publish commands may be delayed.");
 		}
 	}else{
 		errno = ENOMEM;
