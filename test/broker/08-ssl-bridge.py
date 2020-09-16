@@ -5,6 +5,7 @@ from mosq_test_helper import *
 def write_config(filename, port1, port2):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port2))
+        f.write("allow_anonymous true\n")
         f.write("\n")
         f.write("connection bridge_test\n")
         f.write("address 127.0.0.1:%d\n" % (port1))

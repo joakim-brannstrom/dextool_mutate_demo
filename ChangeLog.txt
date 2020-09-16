@@ -16,7 +16,12 @@ Breaking changes:
   If the broker is run as `mosquitto -c mosquitto.conf -p 1884`, and a
   listener is defined in the configuration file, then the port defined on the
   command line will be IGNORED, and no listener configured for it.
-
+- All listeners now default to `allow_anonymous false` unless explicitly set
+  to true in the configuration file. This means that when configuring a
+  listener the user must either configure an authentication and access control
+  method, or set `allow_anonymous true`. When the broker is run without a
+  configured listener, and so binds to the loopback interface, anonymous
+  connections are allowed.
 
 Broker:
 - When running as root, if dropping privileges to the "mosquitto" user fails,

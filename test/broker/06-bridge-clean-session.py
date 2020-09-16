@@ -31,6 +31,7 @@ def tprint(*args, **kwargs):
 def write_config_edge(filename, persistence_file, remote_port, listen_port, protocol_version, cs=False, lcs=None):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (listen_port))
+        f.write("allow_anonymous true\n")
         f.write("\n")
         f.write("persistence true\n")
         f.write("persistence_file %s\n" % (persistence_file))
@@ -54,6 +55,7 @@ def write_config_edge(filename, persistence_file, remote_port, listen_port, prot
 def write_config_core(filename, listen_port, persistence_file):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (listen_port))
+        f.write("allow_anonymous true\n")
         f.write("\n")
         f.write("persistence true\n")
         f.write("persistence_file %s\n" % (persistence_file))

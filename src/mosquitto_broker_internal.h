@@ -290,6 +290,7 @@ struct mosquitto__config {
 	struct mosquitto__listener default_listener;
 	struct mosquitto__listener *listeners;
 	int listener_count;
+	bool local_only;
 	int log_dest;
 	int log_facility;
 	unsigned int log_type;
@@ -758,6 +759,11 @@ int mux__delete(struct mosquitto_db *db, struct mosquitto *context);
 int mux__wait(void);
 int mux__handle(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count);
 int mux__cleanup(struct mosquitto_db *db);
+
+/* ============================================================
+ * Listener related functions
+ * ============================================================ */
+void listener__set_defaults(struct mosquitto__listener *listener);
 
 /* ============================================================
  * Property related functions

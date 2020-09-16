@@ -5,7 +5,7 @@ import ptest
 
 tests = [
     #(ports required, 'path'),
-    (1, './01-connect-anon-denied.py'),
+    (1, './01-connect-allow-anonymous.py'),
     (1, './01-connect-bad-packet.py'),
     (1, './01-connect-disconnect-v5.py'),
     (1, './01-connect-duplicate.py'),
@@ -18,9 +18,9 @@ tests = [
     (1, './01-connect-uname-invalid-utf8.py'),
     (1, './01-connect-uname-no-flag.py'),
     (1, './01-connect-uname-no-password-denied.py'),
+    (1, './01-connect-uname-or-anon.py'),
     (1, './01-connect-uname-password-denied-no-will.py'),
     (1, './01-connect-uname-password-denied.py'),
-    (1, './01-connect-uname-password-success.py'),
     (1, './01-connect-uname-pwd-no-flag.py'),
     (2, './01-connect-zero-length-id.py'),
 

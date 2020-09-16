@@ -692,7 +692,6 @@ int mosquitto_unpwd_check(struct mosquitto_db *db, struct mosquitto *context)
 		opts = &db->config->security_options;
 	}
 
-	rc = MOSQ_ERR_SUCCESS;
 	for(i=0; i<opts->auth_plugin_config_count; i++){
 		if(opts->auth_plugin_configs[i].plugin.version == 4 
 				&& opts->auth_plugin_configs[i].plugin.unpwd_check_v4){

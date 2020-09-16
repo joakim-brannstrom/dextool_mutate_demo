@@ -8,6 +8,7 @@ from mosq_test_helper import *
 def write_config(filename, port1, port2, protocol_version):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port2))
+        f.write("allow_anonymous true\n")
         f.write("\n")
         f.write("persistence true\n")
         f.write("persistence_file mosquitto-%d.db" % (port1))

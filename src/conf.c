@@ -137,6 +137,7 @@ static void config__init_reload(struct mosquitto_db *db, struct mosquitto__confi
 		config->listeners[i].security_options.auto_id_prefix_len = 0;
 	}
 
+	config->local_only = true;
 	config->allow_duplicate_messages = false;
 
 	mosquitto__free(config->security_options.acl_file);
@@ -240,12 +241,7 @@ void config__init(struct mosquitto_db *db, struct mosquitto__config *config)
 
 	config->daemon = false;
 	memset(&config->default_listener, 0, sizeof(struct mosquitto__listener));
-	config->default_listener.max_connections = -1;
-	config->default_listener.protocol = mp_mqtt;
-	config->default_listener.security_options.allow_anonymous = -1;
-	config->default_listener.security_options.allow_zero_length_clientid = true;
-	config->default_listener.maximum_qos = 2;
-	config->default_listener.max_topic_alias = 10;
+	listener__set_defaults(&config->default_listener);
 }
 
 void config__cleanup(struct mosquitto__config *config)
@@ -450,7 +446,6 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 			|| config->default_listener.security_options.password_file
 			|| config->default_listener.security_options.psk_file
 			|| config->default_listener.security_options.auth_plugin_config_count
-			|| config->default_listener.security_options.allow_anonymous != -1
 			|| config->default_listener.security_options.allow_zero_length_clientid != true
 			){
 
@@ -602,8 +597,7 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 	int len;
 #endif
 	struct mosquitto__config config_reload;
-	struct mosquitto__auth_plugin *plugin;
-	int i, j;
+	int i;
 
 	if(reload){
 		memset(&config_reload, 0, sizeof(struct mosquitto__config));
@@ -641,68 +635,19 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 	}
 
 	/* If auth/access options are set and allow_anonymous not explicitly set, disallow anon. */
-	if(config->per_listener_settings){
-		for(i=0; i<config->listener_count; i++){
-			if(config->listeners[i].security_options.allow_anonymous == -1){
+	if(config->local_only == true){
+		config->security_options.allow_anonymous = true;
+	}else{
+		if(config->per_listener_settings){
+			for(i=0; i<config->listener_count; i++){
 				/* Default option if no security options set */
-				config->listeners[i].security_options.allow_anonymous = true;
-
-				if(config->listeners[i].security_options.password_file
-					|| config->listeners[i].security_options.psk_file){
-
-					/* allow_anonymous not set explicitly, some other security options
-					* have been set - so disable allow_anonymous
-					*/
+				if(config->listeners[i].security_options.allow_anonymous == -1){
 					config->listeners[i].security_options.allow_anonymous = false;
 				}
-
-				/* Check plugins loaded to see if they have username/password checks enabled */
-				for(j=0; j<config->listeners[i].security_options.auth_plugin_config_count; j++){ 
-					plugin = &config->listeners[i].security_options.auth_plugin_configs[j].plugin;
-
-					if(plugin->version == 3 || plugin->version == 2){
-						/* Version 2 and 3 always have username/password checks */
-						config->listeners[i].security_options.allow_anonymous = false;
-						break;
-					}else{
-						/* Version 4 has optional unpwd checks. */
-						if(plugin->unpwd_check_v4 != NULL){
-							config->listeners[i].security_options.allow_anonymous = false;
-							break;
-						}
-					}
-				}
 			}
-		}
-	}else{
-		if(config->security_options.allow_anonymous == -1){
-			/* Default option if no security options set */
-			config->security_options.allow_anonymous = true;
-
-			if(config->security_options.password_file
-				 || config->security_options.psk_file){
-
-				/* allow_anonymous not set explicitly, some other security options
-				* have been set - so disable allow_anonymous
-				*/
+		}else{
+			if(config->security_options.allow_anonymous == -1){
 				config->security_options.allow_anonymous = false;
-			}
-
-			/* Check plugins loaded to see if they have username/password checks enabled */
-			for(j=0; j<config->security_options.auth_plugin_config_count; j++){ 
-				plugin = &config->security_options.auth_plugin_configs[j].plugin;
-
-				if(plugin->version == 3 || plugin->version == 2){
-					/* Version 2 and 3 always have username/password checks */
-					config->security_options.allow_anonymous = false;
-					break;
-				}else{
-					/* Version 4 has optional unpwd checks. */
-					if(plugin->unpwd_check_v4 != NULL){
-						config->security_options.allow_anonymous = false;
-						break;
-					}
-				}
 			}
 		}
 	}
@@ -949,6 +894,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 				}else if(!strcmp(token, "autosave_on_changes")){
 					if(conf__parse_bool(&token, "autosave_on_changes", &config->autosave_on_changes, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "bind_address")){
+					config->local_only = false;
 					if(reload) continue; // Listener not valid for reloading.
 					if(conf__parse_string(&token, "default listener bind_address", &config->default_listener.host, saveptr)) return MOSQ_ERR_INVAL;
 					if(conf__attempt_resolve(config->default_listener.host, "bind_address", MOSQ_LOG_ERR, "Error")){
@@ -1374,6 +1320,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "listener")){
+					config->local_only = false;
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						tmp_int = atoi(token);
@@ -1436,12 +1383,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 							memset(cur_listener, 0, sizeof(struct mosquitto__listener));
 						}
 
-						cur_listener->security_options.allow_anonymous = -1;
-						cur_listener->security_options.allow_zero_length_clientid = true;
-						cur_listener->protocol = mp_mqtt;
+						listener__set_defaults(cur_listener);
 						cur_listener->port = tmp_int;
-						cur_listener->maximum_qos = 2;
-						cur_listener->max_topic_alias = 10;
 
 						mosquitto__free(cur_listener->host);
 						cur_listener->host = NULL;
@@ -1813,6 +1756,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					if(reload) continue; // pid file not valid for reloading.
 					if(conf__parse_string(&token, "pid_file", &config->pid_file, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "port")){
+					config->local_only = false;
 					if(reload) continue; // Listener not valid for reloading.
 					if(config->default_listener.port){
 						log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Default listener port specified multiple times. Only the latest will be used.");

@@ -20,6 +20,7 @@ def write_config1(filename, port1, port2):
 def write_config2(filename, port2, port3):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port3))
+        f.write("allow_anonymous true\n")
         f.write("\n")
         f.write("connection bridge-psk\n")
         f.write("address localhost:%d\n" % (port2))

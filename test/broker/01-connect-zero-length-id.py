@@ -10,10 +10,12 @@ from mosq_test_helper import *
 def write_config(filename, port1, port2, per_listener, allow_zero):
     with open(filename, 'w') as f:
         f.write("per_listener_settings %s\n" % (per_listener))
-        f.write("port %d\n" % (port2))
+        f.write("listener %d\n" % (port2))
+        f.write("allow_anonymous true\n")
         if allow_zero != "":
             f.write("allow_zero_length_clientid %s\n" % (allow_zero))
         f.write("listener %d\n" % (port1))
+        f.write("allow_anonymous true\n")
         if allow_zero != "":
             f.write("allow_zero_length_clientid %s\n" % (allow_zero))
 

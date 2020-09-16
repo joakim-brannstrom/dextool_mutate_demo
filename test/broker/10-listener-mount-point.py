@@ -5,8 +5,10 @@ from mosq_test_helper import *
 def write_config(filename, port1, port2):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port1))
+        f.write("allow_anonymous true\n")
         f.write("\n")
         f.write("listener %d\n" % (port2))
+        f.write("allow_anonymous true\n")
         f.write("mount_point mount/\n")
         f.write("\n")
         f.write("log_type debug\n")

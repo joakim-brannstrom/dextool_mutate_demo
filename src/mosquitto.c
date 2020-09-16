@@ -206,6 +206,17 @@ void mosquitto__daemonise(void)
 }
 
 
+void listener__set_defaults(struct mosquitto__listener *listener)
+{
+	listener->security_options.allow_anonymous = -1;
+	listener->security_options.allow_zero_length_clientid = true;
+	listener->protocol = mp_mqtt;
+	listener->max_connections = -1;
+	listener->maximum_qos = 2;
+	listener->max_topic_alias = 10;
+}
+
+
 int listeners__start_single_mqtt(struct mosquitto_db *db, mosq_sock_t **listensock, int *listensock_count, int *listensock_index, struct mosquitto__listener *listener)
 {
 	int i;
@@ -244,12 +255,9 @@ int listeners__add_local(struct mosquitto_db *db, mosq_sock_t **listensock, int 
 	db->config->listeners = listeners;
 	memset(&listeners[db->config->listener_count-1], 0, sizeof(struct mosquitto__listener));
 
-	listeners[db->config->listener_count-1].security_options.allow_anonymous = -1;
-	listeners[db->config->listener_count-1].security_options.allow_zero_length_clientid = true;
-	listeners[db->config->listener_count-1].protocol = mp_mqtt;
+	listener__set_defaults(&listeners[db->config->listener_count-1]);
+	listeners[db->config->listener_count-1].security_options.allow_anonymous = true;
 	listeners[db->config->listener_count-1].port = port;
-	listeners[db->config->listener_count-1].maximum_qos = 2;
-	listeners[db->config->listener_count-1].max_topic_alias = 10;
 	listeners[db->config->listener_count-1].host = mosquitto__strdup(host);
 	if(listeners[db->config->listener_count-1].host == NULL){
 		return MOSQ_ERR_NOMEM;

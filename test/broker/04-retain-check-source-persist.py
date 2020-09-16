@@ -10,6 +10,7 @@ def write_config(filename, port, per_listener):
         f.write("per_listener_settings %s\n" % (per_listener))
         f.write("check_retain_source true\n")
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("acl_file %s\n" % (filename.replace('.conf', '.acl')))
         f.write("persistence true\n")
         f.write("persistence_file %s\n" % (filename.replace('.conf', '.db')))

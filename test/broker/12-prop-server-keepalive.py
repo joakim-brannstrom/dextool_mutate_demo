@@ -8,6 +8,7 @@ from mosq_test_helper import *
 def write_config(filename, port):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("\n")
         f.write("max_keepalive 60\n")
 

@@ -7,6 +7,7 @@ from mosq_test_helper import *
 def write_config1(filename, persistence_file, port1, port2):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port2))
+        f.write("allow_anonymous true\n")
         f.write("\n")
         f.write("persistence true\n")
         f.write("persistence_file %s\n" % (persistence_file))
@@ -14,6 +15,7 @@ def write_config1(filename, persistence_file, port1, port2):
 def write_config2(filename, persistence_file, port1, port2, protocol_version):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port2))
+        f.write("allow_anonymous true\n")
         f.write("\n")
         f.write("connection bridge_sample\n")
         f.write("address 127.0.0.1:%d\n" % (port1))

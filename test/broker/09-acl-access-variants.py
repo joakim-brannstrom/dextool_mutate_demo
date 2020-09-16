@@ -8,6 +8,7 @@ def write_config(filename, port, per_listener):
     with open(filename, 'w') as f:
         f.write("per_listener_settings %s\n" % (per_listener))
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("acl_file %s\n" % (filename.replace('.conf', '.acl')))
 
 def write_acl(filename, global_en, user_en, pattern_en):

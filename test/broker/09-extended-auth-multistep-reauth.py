@@ -5,6 +5,7 @@ from mosq_test_helper import *
 def write_config(filename, port):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("auth_plugin c/auth_plugin_extended_multiple.so\n")
 
 port = mosq_test.get_port()

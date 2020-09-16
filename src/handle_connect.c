@@ -771,44 +771,16 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 #ifdef FINAL_WITH_TLS_PSK
 		}
 #endif /* FINAL_WITH_TLS_PSK */
-	}else{
+	}else
 #endif /* WITH_TLS */
+	{
 		/* FIXME - these ensure the mosquitto_client_id() and
 		 * mosquitto_client_username() functions work, but is hacky */
 		context->username = username;
 		context->password = password;
 		username = NULL; /* Avoid free() in error: below. */
 		password = NULL;
-
-		rc = mosquitto_unpwd_check(db, context);
-		if(rc != MOSQ_ERR_SUCCESS){
-			/* We must have context->id == NULL here so we don't later try and
-			 * remove the client from the by_id hash table */
-			mosquitto__free(context->id);
-			context->id = NULL;
-		}
-		switch(rc){
-			case MOSQ_ERR_SUCCESS:
-				break;
-			case MOSQ_ERR_AUTH:
-				if(context->protocol == mosq_p_mqtt5){
-					send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
-				}else{
-					send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
-				}
-				context__disconnect(db, context);
-				rc = 1;
-				goto handle_connect_error;
-				break;
-			default:
-				context__disconnect(db, context);
-				rc = 1;
-				goto handle_connect_error;
-				break;
-		}
-#ifdef WITH_TLS
 	}
-#endif
 
 	if(context->listener->use_username_as_clientid){
 		if(context->username){
@@ -862,6 +834,39 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 	}else{
+#ifdef WITH_TLS
+		if(context->listener->ssl_ctx && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
+			/* Authentication assumed to be cleared */
+		}else
+#endif
+		{
+			rc = mosquitto_unpwd_check(db, context);
+			if(rc != MOSQ_ERR_SUCCESS){
+				/* We must have context->id == NULL here so we don't later try and
+				* remove the client from the by_id hash table */
+				mosquitto__free(context->id);
+				context->id = NULL;
+			}
+			switch(rc){
+				case MOSQ_ERR_SUCCESS:
+					break;
+				case MOSQ_ERR_AUTH:
+					if(context->protocol == mosq_p_mqtt5){
+						send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
+					}else{
+						send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
+					}
+					context__disconnect(db, context);
+					rc = 1;
+					goto handle_connect_error;
+					break;
+				default:
+					context__disconnect(db, context);
+					rc = 1;
+					goto handle_connect_error;
+					break;
+			}
+		}
 		return connect__on_authorised(db, context, NULL, 0);
 	}
 

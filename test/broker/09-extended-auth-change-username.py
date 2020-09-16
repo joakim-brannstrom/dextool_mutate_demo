@@ -8,6 +8,7 @@ def write_config(filename, acl_file, port, per_listener):
     with open(filename, 'w') as f:
         f.write("per_listener_settings %s\n" % (per_listener))
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("acl_file %s\n" % (acl_file))
         f.write("auth_plugin c/auth_plugin_extended_single.so\n")
 

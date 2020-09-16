@@ -896,28 +896,55 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 	int rc;
 #endif
 	bool allow_anonymous;
+	char *password_file;
 
 	if(!db) return MOSQ_ERR_INVAL;
 
+	/*
+	 * If allow_anonymous is true, and there is no password file defined, then
+	 * all users are treated as being anonymous and can connect.
+	 *
+	 * If allow_anonymous is false and there is no password file defined, then
+	 * we defer the decision to other plugins (this is a rejection if no other
+	 * plugins are defined)
+	 *
+	 * If allow_anonymous is true, and there is a password file defined, then
+	 * all users with a username must authenticate. All anonymous users are
+	 * allowed to connect. This is a valid mode, because authenticated users
+	 * can be assigned permissions that anonymous users are not.
+	 *
+	 * If allow_anonymous is false, and there is a password file defined, then
+	 * all users with a username must authenticate. All anonymous users are
+	 * defered to other plugins, (this is a rejection if no other plugins are
+	 * defined).
+	 */
 	if(db->config->per_listener_settings){
 		if(context->bridge) return MOSQ_ERR_SUCCESS;
 		if(!context->listener) return MOSQ_ERR_INVAL;
-		if(context->listener->security_options.password_file == NULL) return MOSQ_ERR_PLUGIN_DEFER;
 		unpwd_ref = context->listener->security_options.unpwd;
+		password_file = context->listener->security_options.password_file;
 		allow_anonymous = context->listener->security_options.allow_anonymous;
 	}else{
-		if(db->config->security_options.password_file == NULL) return MOSQ_ERR_PLUGIN_DEFER;
 		unpwd_ref = db->config->security_options.unpwd;
+		password_file = db->config->security_options.password_file;
 		allow_anonymous = db->config->security_options.allow_anonymous;
 	}
-	if(context->username == NULL){
-		/* Check must be made only after checking unpwd_ref.
-		 * This is DENY here, because in MQTT v5 username can be missing when
-		 * password is present, but we don't support that. */
-		if(allow_anonymous == true){
+	if(context->username){
+		if(password_file != NULL){
+			/* Client must authenticate below */
+		}else{
+			if(allow_anonymous == true){
+				/* No password file, so treated as anonymous */
+				return MOSQ_ERR_SUCCESS;
+			}else{
+				return MOSQ_ERR_PLUGIN_DEFER;
+			}
+		}
+	}else{
+		if(allow_anonymous){
 			return MOSQ_ERR_SUCCESS;
 		}else{
-			return MOSQ_ERR_AUTH;
+			return MOSQ_ERR_PLUGIN_DEFER;
 		}
 	}
 

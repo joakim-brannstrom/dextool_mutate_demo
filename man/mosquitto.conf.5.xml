@@ -171,13 +171,10 @@
 						connect. If set to <replaceable>false</replaceable>
 						then another means of connection should be created to
 						control authenticated client access.</para>
-					<para>Defaults to <replaceable>true</replaceable> if no
-						other security options are set. If <option>password_file</option>
-						or <option>psk_file</option> is set, or if an
-						authentication plugin is loaded which implements
-						username/password or TLS-PSK checks, then
-						<option>allow_anonymous</option> defaults to
-						<replaceable>false</replaceable>.</para>
+					<para>Defaults to <replaceable>false</replaceable>,
+						unless no listeners are defined in the configuration
+						file, in which case it set to <replaceable>true</replaceable>,
+						but connections are only allowed from the local machine.</para>
 
 					<para>If <option>per_listener_settings</option> is
 						<replaceable>true</replaceable>, this option applies to
@@ -185,6 +182,10 @@
 						<option>per_listener_settings</option> is
 						<replaceable>false</replaceable>, this option applies
 						to all listeners.</para>
+
+					<important><para>In version 1.6.x and earlier, this option defaulted
+						to <replaceable>true</replaceable> unless there was another security
+						option set.</para></important>
 
 					<para>Reloaded on reload signal.</para>
 				</listitem>

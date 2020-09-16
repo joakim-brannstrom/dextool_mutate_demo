@@ -10,6 +10,7 @@ rc = 1
 def write_config(filename, port):
     with open(filename, 'w') as f:
         f.write("listener %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("maximum_qos 1\n")
         f.write("retain_available false\n")
 

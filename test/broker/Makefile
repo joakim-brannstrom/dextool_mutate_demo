@@ -20,7 +20,7 @@ ptest : test-compile
 test : test-compile 01 02 03 04 05 06 07 08 09 10 11 12 13 14
 
 01 :
-	./01-connect-anon-denied.py
+	./01-connect-allow-anonymous.py
 	./01-connect-bad-packet.py
 	./01-connect-disconnect-v5.py
 	./01-connect-duplicate.py
@@ -33,14 +33,10 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10 11 12 13 14
 	./01-connect-uname-invalid-utf8.py
 	./01-connect-uname-no-flag.py
 	./01-connect-uname-no-password-denied.py
+	./01-connect-uname-or-anon.py
 	./01-connect-uname-password-denied-no-will.py
 	./01-connect-uname-password-denied.py
 	./01-connect-uname-pwd-no-flag.py
-ifeq ($(WITH_TLS),yes)
-	./01-connect-uname-password-success.py
-else
-	./01-connect-uname-password-success-no-tls.py
-endif
 	./01-connect-zero-length-id.py
 
 
