@@ -206,41 +206,119 @@ void mosquitto__daemonise(void)
 }
 
 
+int listeners__start_single_mqtt(struct mosquitto_db *db, mosq_sock_t **listensock, int *listensock_count, int *listensock_index, struct mosquitto__listener *listener)
+{
+	int i;
+	mosq_sock_t *listensock_new;
+
+	if(net__socket_listen(listener)){
+		return 1;
+	}
+	(*listensock_count) += listener->sock_count;
+	listensock_new = mosquitto__realloc(*listensock, sizeof(mosq_sock_t)*(*listensock_count));
+	if(!listensock_new){
+		return 1;
+	}
+	*listensock = listensock_new;
+
+	for(i=0; i<listener->sock_count; i++){
+		if(listener->socks[i] == INVALID_SOCKET){
+			return 1;
+		}
+		(*listensock)[*listensock_index] = listener->socks[i];
+		(*listensock_index)++;
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int listeners__add_local(struct mosquitto_db *db, mosq_sock_t **listensock, int *listensock_count, int *listensock_index, const char *host, uint16_t port)
+{
+	struct mosquitto__listener *listeners;
+
+	listeners = mosquitto__realloc(db->config->listeners, (db->config->listener_count+1)*sizeof(struct mosquitto__listener));
+	if(listeners == NULL){
+		return MOSQ_ERR_NOMEM;
+	}
+	db->config->listener_count++;
+	db->config->listeners = listeners;
+	memset(&listeners[db->config->listener_count-1], 0, sizeof(struct mosquitto__listener));
+
+	listeners[db->config->listener_count-1].security_options.allow_anonymous = -1;
+	listeners[db->config->listener_count-1].security_options.allow_zero_length_clientid = true;
+	listeners[db->config->listener_count-1].protocol = mp_mqtt;
+	listeners[db->config->listener_count-1].port = port;
+	listeners[db->config->listener_count-1].maximum_qos = 2;
+	listeners[db->config->listener_count-1].max_topic_alias = 10;
+	listeners[db->config->listener_count-1].host = mosquitto__strdup(host);
+	if(listeners[db->config->listener_count-1].host == NULL){
+		return MOSQ_ERR_NOMEM;
+	}
+	if(listeners__start_single_mqtt(db, listensock, listensock_count, listensock_index, &listeners[db->config->listener_count-1])){
+		mosquitto__free(listeners[db->config->listener_count-1].host);
+		listeners[db->config->listener_count-1].host = NULL;
+		db->config->listener_count--;
+		return MOSQ_ERR_UNKNOWN;
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+int listeners__start_local_only(struct mosquitto_db *db, mosq_sock_t **listensock, int *listensock_count)
+{
+	/* Attempt to open listeners bound to 127.0.0.1 and ::1 only */
+	int i;
+	int listensock_index = 0;
+	int rc;
+
+	if(db->config->cmd_port_count == 0){
+		rc = listeners__add_local(db, listensock, listensock_count, &listensock_index, "127.0.0.1", 1883);
+		if(rc == MOSQ_ERR_NOMEM) return MOSQ_ERR_NOMEM;
+		rc = listeners__add_local(db, listensock, listensock_count, &listensock_index, "::1", 1883);
+		if(rc == MOSQ_ERR_NOMEM) return MOSQ_ERR_NOMEM;
+	}else{
+		for(i=0; i<db->config->cmd_port_count; i++){
+			rc = listeners__add_local(db, listensock, listensock_count, &listensock_index, "127.0.0.1", db->config->cmd_port[i]);
+			if(rc == MOSQ_ERR_NOMEM) return MOSQ_ERR_NOMEM;
+			rc = listeners__add_local(db, listensock, listensock_count, &listensock_index, "::1", db->config->cmd_port[i]);
+			if(rc == MOSQ_ERR_NOMEM) return MOSQ_ERR_NOMEM;
+		}
+	}
+
+	if(db->config->listener_count > 0){
+		return MOSQ_ERR_SUCCESS;
+	}else{
+		return MOSQ_ERR_UNKNOWN;
+	}
+}
+
+
 int listeners__start(struct mosquitto_db *db, mosq_sock_t **listensock, int *listensock_count)
 {
-	int i, j;
+	int i;
 	int listensock_index = 0;
 
 	listensock_index = 0;
 	(*listensock_count) = 0;
+
+	if(db->config->listener_count == 0){
+		if(listeners__start_local_only(db, listensock, listensock_count)){
+			db__close(db);
+			if(db->config->pid_file){
+				remove(db->config->pid_file);
+			}
+			return 1;
+		}
+		return MOSQ_ERR_SUCCESS;
+	}
+
 	for(i=0; i<db->config->listener_count; i++){
 		if(db->config->listeners[i].protocol == mp_mqtt){
-			if(net__socket_listen(&db->config->listeners[i])){
+			if(listeners__start_single_mqtt(db, listensock, listensock_count, &listensock_index, &db->config->listeners[i])){
 				db__close(db);
 				if(db->config->pid_file){
 					remove(db->config->pid_file);
 				}
 				return 1;
-			}
-			(*listensock_count) += db->config->listeners[i].sock_count;
-			*listensock = mosquitto__realloc(*listensock, sizeof(mosq_sock_t)*(*listensock_count));
-			if(!(*listensock)){
-				db__close(db);
-				if(db->config->pid_file){
-					remove(db->config->pid_file);
-				}
-				return 1;
-			}
-			for(j=0; j<db->config->listeners[i].sock_count; j++){
-				if(db->config->listeners[i].socks[j] == INVALID_SOCKET){
-					db__close(db);
-					if(db->config->pid_file){
-						remove(db->config->pid_file);
-					}
-					return 1;
-				}
-				(*listensock)[listensock_index] = db->config->listeners[i].socks[j];
-				listensock_index++;
 			}
 		}else if(db->config->listeners[i].protocol == mp_websockets){
 #ifdef WITH_WEBSOCKETS

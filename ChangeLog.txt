@@ -1,3 +1,23 @@
+Breaking changes:
+- When the Mosquitto broker is run without configuring any listeners it will
+  now bind to the loopback interfaces 127.0.0.1 and/or ::1. This means that
+  only connections from the local host will be possible.
+
+  Running the broker as `mosquitto` or `mosquitto -p 1883` will bind to the
+  loopback interface.
+
+  Running the broker with a configuration file with no listeners configured
+  will bind to the loopback interface with port 1883.
+
+  Running the broker with a listener defined will bind by default to `0.0.0.0`
+  / `::` and so will be accessible from any interface. It is still possible to
+  bind to a specific address/interface.
+
+  If the broker is run as `mosquitto -c mosquitto.conf -p 1884`, and a
+  listener is defined in the configuration file, then the port defined on the
+  command line will be IGNORED, and no listener configured for it.
+
+
 Broker:
 - When running as root, if dropping privileges to the "mosquitto" user fails,
   then try "nobody" instead. This reduces the burden on users installing

@@ -401,10 +401,12 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port specified (%d).", port_tmp);
 					return MOSQ_ERR_INVAL;
 				}else{
-					if(config->default_listener.port){
-						log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Default listener port specified multiple times. Only the latest will be used.");
+					if(config->cmd_port_count == CMD_PORT_LIMIT){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Only %d ports can be specified on the command line.", CMD_PORT_LIMIT);
+						return MOSQ_ERR_INVAL;
 					}
-					config->default_listener.port = port_tmp;
+					config->cmd_port[config->cmd_port_count] = port_tmp;
+					config->cmd_port_count++;
 				}
 			}else{
 				log__printf(NULL, MOSQ_LOG_ERR, "Error: -p argument given, but no port specified.");
@@ -420,8 +422,7 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 		}
 	}
 
-	if(config->listener_count == 0
-			|| config->default_listener.bind_interface
+	if(config->default_listener.bind_interface
 #ifdef WITH_TLS
 			|| config->default_listener.cafile
 			|| config->default_listener.capath

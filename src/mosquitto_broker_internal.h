@@ -75,7 +75,7 @@ Contributors:
 
 #define WEBSOCKET_CLIENT -2
 
-
+#define CMD_PORT_LIMIT 10
 #define TOPIC_HIERARCHY_LIMIT 200
 
 /* ========================================
@@ -235,7 +235,6 @@ struct mosquitto__security_options {
 };
 
 struct mosquitto__listener {
-	int fd;
 	uint16_t port;
 	char *host;
 	char *bind_interface;
@@ -285,6 +284,8 @@ struct mosquitto__config {
 	bool check_retain_source;
 	char *clientid_prefixes;
 	bool connection_messages;
+	uint16_t cmd_port[CMD_PORT_LIMIT];
+	int cmd_port_count;
 	bool daemon;
 	struct mosquitto__listener default_listener;
 	struct mosquitto__listener *listeners;

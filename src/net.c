@@ -637,6 +637,7 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 
 		if(net__socket_nonblock(&sock)){
 			freeaddrinfo(ainfo);
+			mosquitto__free(listener->socks);
 			return 1;
 		}
 
@@ -650,6 +651,7 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 				net__print_error(MOSQ_LOG_ERR, "Error: %s");
 				COMPAT_CLOSE(sock);
 				freeaddrinfo(ainfo);
+				mosquitto__free(listener->socks);
 				return 1;
 			}
 		}
@@ -659,6 +661,7 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 			net__print_error(MOSQ_LOG_ERR, "Error: %s");
 			COMPAT_CLOSE(sock);
 			freeaddrinfo(ainfo);
+			mosquitto__free(listener->socks);
 			return 1;
 		}
 
@@ -666,6 +669,7 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 			net__print_error(MOSQ_LOG_ERR, "Error: %s");
 			freeaddrinfo(ainfo);
 			COMPAT_CLOSE(sock);
+			mosquitto__free(listener->socks);
 			return 1;
 		}
 	}
