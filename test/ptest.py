@@ -72,6 +72,7 @@ def run_tests(tests, minport=1888, max_running=20):
     print("Passed: %d\nFailed: %d\nTotal: %d\nTotal time: %0.2f" % (passed, failed, passed+failed, time.time()-start_time))
     if failed > 0:
         print("Failing tests:")
+        failed_tests.sort()
         for f in failed_tests:
             print(f)
         sys.exit(1)
