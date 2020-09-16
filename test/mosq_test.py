@@ -119,7 +119,10 @@ def receive_unordered(sock, recv1_packet, recv2_packet, error_string):
     expected2 = recv2_packet + recv1_packet
     recvd = b''
     while len(recvd) < len(expected1):
-        recvd += sock.recv(1)
+        r = sock.recv(1)
+        if len(r) == 0:
+            raise ValueError(error_string)
+        recvd += r
 
     if recvd == expected1 or recvd == expected2:
         return
