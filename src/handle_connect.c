@@ -268,6 +268,7 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 		}
 	}
 	free(auth_data_out);
+	auth_data_out = NULL;
 
 	keepalive__add(context);
 
@@ -277,7 +278,7 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 	rc = db__message_write_queued_out(db, context);
 	if(rc) return rc;
 	rc = db__message_write_inflight_out_all(db, context);
-	if(rc) return rc;
+	return rc;
 error:
 	free(auth_data_out);
 	mosquitto_property_free_all(&connack_props);
