@@ -275,8 +275,13 @@ void context__free_disused(struct mosquitto_db *db)
 
 void context__remove_from_by_id(struct mosquitto_db *db, struct mosquitto *context)
 {
+	struct mosquitto *context_found;
+
 	if(context->removed_from_by_id == false && context->id){
-		HASH_DELETE(hh_id, db->contexts_by_id, context);
+		HASH_FIND(hh_id, db->contexts_by_id, context->id, strlen(context->id), context_found);
+		if(context_found){
+			HASH_DELETE(hh_id, db->contexts_by_id, context_found);
+		}
 		context->removed_from_by_id = true;
 	}
 }
