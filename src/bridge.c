@@ -576,6 +576,11 @@ void bridge__cleanup(struct mosquitto_db *db, struct mosquitto *context)
 		mosquitto__free(context->bridge->remote_password);
 	}
 	context->bridge->remote_password = NULL;
+#ifdef WITH_TLS
+	if(context->ssl_ctx){
+		SSL_CTX_free(context->ssl_ctx);
+	}
+#endif
 }
 
 
