@@ -50,7 +50,7 @@ OBJS=	mosquitto.o \
 		persist_read_v5.o \
 		persist_write.o \
 		persist_write_v5.o \
-		plugin.o \
+		plugin_public.o \
 		read_handle.o \
 		retain.o \
 		security.o \
@@ -209,7 +209,7 @@ property_broker.o : property_broker.c mosquitto_broker_internal.h
 property_mosq.o : ../lib/property_mosq.c ../lib/property_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
-plugin.o : plugin.c mosquitto_plugin.h mosquitto_broker_internal.h
+plugin_public.o : plugin_public.c mosquitto_plugin.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
 read_handle.o : read_handle.c mosquitto_broker_internal.h

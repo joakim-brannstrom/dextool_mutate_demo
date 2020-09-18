@@ -39,7 +39,7 @@ set (MOSQ_SRCS
 	persist_read_v234.c persist_read_v5.c persist_read.c
 	persist_write_v5.c persist_write.c
 	persist.h
-	plugin.c
+	plugin_public.c
 	property_broker.c
 	../lib/property_mosq.c ../lib/property_mosq.h
 	read_handle.c
