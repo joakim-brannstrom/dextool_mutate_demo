@@ -187,7 +187,7 @@ tests = [
     (1, './13-malformed-subscribe-v5.py'),
     (1, './13-malformed-unsubscribe-v5.py'),
 
-    (1, './14-plugin-register-control.py'),
+    #(1, './14-plugin-register-control.py'),
     ]
 
 ptest.run_tests(tests)

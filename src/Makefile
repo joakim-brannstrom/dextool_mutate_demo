@@ -34,6 +34,7 @@ OBJS=	mosquitto.o \
 		logging.o \
 		loop.o \
 		memory_mosq.o \
+		memory_public.o \
 		misc_mosq.o \
 		mux.o \
 		mux_epoll.o \
@@ -50,6 +51,7 @@ OBJS=	mosquitto.o \
 		persist_read_v5.o \
 		persist_write.o \
 		persist_write_v5.o \
+		plugin.o \
 		plugin_public.o \
 		read_handle.o \
 		retain.o \
@@ -161,6 +163,9 @@ loop.o : loop.c mosquitto_broker_internal.h
 memory_mosq.o : ../lib/memory_mosq.c ../lib/memory_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
+memory_public.o : memory_public.c mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
+
 misc_mosq.o : ../lib/misc_mosq.c ../lib/misc_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
@@ -207,6 +212,9 @@ property_broker.o : property_broker.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
 property_mosq.o : ../lib/property_mosq.c ../lib/property_mosq.h
+	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
+
+plugin.o : plugin.c mosquitto_plugin.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
 plugin_public.o : plugin_public.c mosquitto_plugin.h mosquitto_broker_internal.h

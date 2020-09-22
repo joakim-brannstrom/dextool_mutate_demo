@@ -21,7 +21,8 @@ Contributors:
 extern "C" {
 #endif
 
-#define MOSQ_AUTH_PLUGIN_VERSION 4
+#define MOSQ_AUTH_PLUGIN_VERSION 5
+#define MOSQ_PLUGIN_VERSION 5
 
 #define MOSQ_ACL_NONE 0x00
 #define MOSQ_ACL_READ 0x01
@@ -109,6 +110,7 @@ struct mosquitto_acl_msg {
  * MOSQ_AUTH_PLUGIN_VERSION.
  */
 int mosquitto_auth_plugin_version(void);
+int mosquitto_plugin_version(void);
 
 
 /*
@@ -131,6 +133,7 @@ int mosquitto_auth_plugin_version(void);
  *	Return >0 on failure.
  */
 int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_opt *opts, int opt_count);
+int mosquitto_plugin_init(mosquitto_plugin_id_t *identifier, void **userdata, struct mosquitto_opt *options, int option_count);
 
 
 /*
@@ -153,6 +156,7 @@ int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_opt *opts, int
  *	Return >0 on failure.
  */
 int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_opt *opts, int opt_count);
+int mosquitto_plugin_cleanup(void *userdata, struct mosquitto_opt *options, int option_count);
 
 
 /*

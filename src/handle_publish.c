@@ -260,6 +260,14 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 #endif
 	}
 
+	{
+		rc = plugin__handle_message(db, context, msg);
+		if(rc){
+			db__msg_store_free(msg);
+			return rc;
+		}
+	}
+
 	if(msg->qos > 0){
 		db__message_store_find(context, msg->source_mid, &stored);
 	}

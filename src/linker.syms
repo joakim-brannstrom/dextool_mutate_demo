@@ -1,6 +1,9 @@
 {
 	mosquitto_broker_publish;
 	mosquitto_broker_publish_copy;
+	mosquitto_callback_register;
+	mosquitto_callback_unregister;
+	mosquitto_calloc;
 	mosquitto_client_address;
 	mosquitto_client_certificate;
 	mosquitto_client_clean_session;
@@ -12,9 +15,11 @@
 	mosquitto_client_username;
 	mosquitto_control_topic_register;
 	mosquitto_control_topic_unregister;
+	mosquitto_free;
 	mosquitto_kick_client_by_clientid;
 	mosquitto_kick_client_by_username;
 	mosquitto_log_printf;
+	mosquitto_malloc;
 	mosquitto_plugin_publish;
 	mosquitto_property_add_binary;
 	mosquitto_property_add_byte;
@@ -24,5 +29,7 @@
 	mosquitto_property_add_string_pair;
 	mosquitto_property_add_varint;
 	mosquitto_property_free_all;
+	mosquitto_realloc;
 	mosquitto_set_username;
+	mosquitto_strdup;
 };

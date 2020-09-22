@@ -31,32 +31,48 @@ Contributors:
 
 const char *mosquitto_client_address(const struct mosquitto *client)
 {
-	return client->address;
+	if(client){
+		return client->address;
+	}else{
+		return NULL;
+	}
 }
 
 
 bool mosquitto_client_clean_session(const struct mosquitto *client)
 {
-	return client->clean_start;
+	if(client){
+		return client->clean_start;
+	}else{
+		return true;
+	}
 }
 
 
 const char *mosquitto_client_id(const struct mosquitto *client)
 {
-	return client->id;
+	if(client){
+		return client->id;
+	}else{
+		return NULL;
+	}
 }
 
 
 int mosquitto_client_keepalive(const struct mosquitto *client)
 {
-	return client->keepalive;
+	if(client){
+		return client->keepalive;
+	}else{
+		return -1;
+	}
 }
 
 
 void *mosquitto_client_certificate(const struct mosquitto *client)
 {
 #ifdef WITH_TLS
-	if(client->ssl){
+	if(client && client->ssl){
 		return SSL_get_peer_certificate(client->ssl);
 	}else{
 		return NULL;
@@ -70,7 +86,7 @@ void *mosquitto_client_certificate(const struct mosquitto *client)
 int mosquitto_client_protocol(const struct mosquitto *client)
 {
 #ifdef WITH_WEBSOCKETS
-	if(client->wsi){
+	if(client && client->wsi){
 		return mp_websockets;
 	}else
 #endif
@@ -82,34 +98,46 @@ int mosquitto_client_protocol(const struct mosquitto *client)
 
 int mosquitto_client_protocol_version(const struct mosquitto *client)
 {
-	switch(client->protocol){
-		case mosq_p_mqtt31:
-			return 3;
-		case mosq_p_mqtt311:
-			return 4;
-		case mosq_p_mqtt5:
-			return 5;
-		default:
-			return 0;
+	if(client){
+		switch(client->protocol){
+			case mosq_p_mqtt31:
+				return 3;
+			case mosq_p_mqtt311:
+				return 4;
+			case mosq_p_mqtt5:
+				return 5;
+			default:
+				return 0;
+		}
+	}else{
+		return 0;
 	}
 }
 
 
 int mosquitto_client_sub_count(const struct mosquitto *client)
 {
-	return client->sub_count;
+	if(client){
+		return client->sub_count;
+	}else{
+		return 0;
+	}
 }
 
 
-const char *mosquitto_client_username(const struct mosquitto *context)
+const char *mosquitto_client_username(const struct mosquitto *client)
 {
+	if(client){
 #ifdef WITH_BRIDGE
-	if(context->bridge){
-		return context->bridge->local_username;
-	}else
+		if(client->bridge){
+			return client->bridge->local_username;
+		}else
 #endif
-	{
-		return context->username;
+		{
+			return client->username;
+		}
+	}else{
+		return NULL;
 	}
 }
 

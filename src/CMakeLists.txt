@@ -28,6 +28,7 @@ set (MOSQ_SRCS
 	logging.c
 	loop.c
 	../lib/memory_mosq.c ../lib/memory_mosq.h
+	memory_public.c
 	mosquitto.c
 	mosquitto_broker.h mosquitto_broker_internal.h
 	../lib/misc_mosq.c ../lib/misc_mosq.h
@@ -39,7 +40,7 @@ set (MOSQ_SRCS
 	persist_read_v234.c persist_read_v5.c persist_read.c
 	persist_write_v5.c persist_write.c
 	persist.h
-	plugin_public.c
+	plugin.c plugin_public.c
 	property_broker.c
 	../lib/property_mosq.c ../lib/property_mosq.h
 	read_handle.c

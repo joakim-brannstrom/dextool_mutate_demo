@@ -3,7 +3,9 @@
 CFLAGS=-I../../../lib -I../../../src -Wall -Werror
 
 PLUGIN_SRC = \
-	auth_plugin.c \
+	auth_plugin_v4.c \
+	auth_plugin_v5.c \
+	auth_plugin_v5_handle_message.c \
 	auth_plugin_pwd.c \
 	auth_plugin_acl.c \
 	auth_plugin_acl_sub_denied.c \

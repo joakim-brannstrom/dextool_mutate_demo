@@ -22,6 +22,7 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
+#include <stdint.h>
 
 struct mosquitto;
 typedef struct mqtt5__property mosquitto_property;
@@ -34,11 +35,106 @@ enum mosquitto_protocol {
 
 /* =========================================================================
  *
+ * Register callbacks.
+ *
+ * ========================================================================= */
+
+enum mosquitto_plugin_event {
+	MOSQ_EVT_RELOAD = 1,
+	MOSQ_EVT_ACL_CHECK = 2,
+	MOSQ_EVT_BASIC_AUTH = 3,
+	MOSQ_EVT_EXT_AUTH_START = 4,
+	MOSQ_EVT_EXT_AUTH_CONTINUE = 5,
+	MOSQ_EVT_CONTROL = 6,
+	MOSQ_EVT_MESSAGE = 7,
+	MOSQ_EVT_PSK_KEY = 8,
+};
+
+struct mosquitto_evt_reload {
+	struct mosquitto_opt *options;
+	int option_count;
+};
+
+struct mosquitto_evt_acl_check {
+	struct mosquitto *client;
+	int access;
+	const char *topic;
+	const void *payload;
+	long payloadlen;
+	int qos;
+	bool retain;
+	mosquitto_property *properties;
+};
+
+struct mosquitto_evt_basic_auth {
+	struct mosquitto *client;
+	char *username;
+	char *password;
+};
+
+struct mosquitto_evt_psk_key {
+	struct mosquitto *client;
+	const char *hint;
+	const char *identity;
+	char *key;
+	int max_key_len;
+};
+
+struct mosquitto_evt_extended_auth {
+	struct mosquitto *client;
+	const void *data_in;
+	void *data_out;
+	uint16_t data_in_len;
+	uint16_t data_out_len;
+};
+
+struct mosquitto_evt_control {
+	struct mosquitto *client;
+	const char *topic;
+	const void *payload;
+	long payloadlen;
+	int qos;
+	bool retain;
+	const mosquitto_property *properties;
+};
+
+struct mosquitto_evt_message {
+	struct mosquitto *client;
+	char *topic;
+	void *payload;
+	long payloadlen;
+	int qos;
+	bool retain;
+	mosquitto_property *properties;
+};
+
+typedef int (*MOSQ_FUNC_generic_callback)(int, void *, void *);
+
+typedef struct mosquitto_plugin_id_t mosquitto_plugin_id_t;
+
+int mosquitto_callback_register(mosquitto_plugin_id_t *identifier, int event, MOSQ_FUNC_generic_callback cb_func, const void *data, void *userdata);
+int mosquitto_callback_unregister(mosquitto_plugin_id_t *identifier, int event, MOSQ_FUNC_generic_callback cb_func, const void *data);
+
+
+/* =========================================================================
+ *
+ * Memory allocation.
+ *
+ * Use these functions when allocating or freeing memory that comes from or
+ * goes to the broker.
+ *
+ * ========================================================================= */
+void *mosquitto_calloc(size_t nmemb, size_t size);
+void mosquitto_free(void *mem);
+void *mosquitto_malloc(size_t size);
+void *mosquitto_realloc(void *ptr, size_t size);
+char *mosquitto_strdup(const char *s);
+
+/* =========================================================================
+ *
  * Utility Functions
  *
  * Use these functions from within your plugin.
- *
- * There are also very useful functions in libmosquitto.
  *
  * ========================================================================= */
 
@@ -177,35 +273,6 @@ const char *mosquitto_client_username(const struct mosquitto *client);
  *   MOSQ_ERR_NOMEM - on out of memory
  */
 int mosquitto_set_username(struct mosquitto *client, const char *username);
-
-
-/* =========================================================================
- *
- * Feature control
- *
- * ========================================================================= */
-
-typedef int (*MOSQ_FUNC_control_callback)(void *, struct mosquitto *, const char *, int, const void *);
-/*
- * Function: mosquitto_control_topic_register
- *
- * Register a callback function to handle processing of a topic in the $CONTROL
- * topic hierarchy, in the form $CONTROL/<feature>/<version>, e.g.
- * $CONTROL/user-management/v1
- *
- * Messages sent to a $CONTROL topic are not passed on to clients.
- *
- * This allows plugins to provide an API to control behaviour, e.g. implement
- * adding/removing users in a security plugin.
- */
-int mosquitto_control_topic_register(const char *topic, MOSQ_FUNC_control_callback callback, void *data);
-
-/*
- * Function: mosquitto_control_topic_unregister
- *
- * Unregister a callback function previously registered with mosquitto_control_topic_register().
- */
-int mosquitto_control_topic_unregister(const char *topic);
 
 
 /* =========================================================================

@@ -139,6 +139,9 @@ typedef union {
 
 typedef uint64_t dbid_t;
 
+typedef int (*FUNC_plugin_init_v5)(mosquitto_plugin_id_t *, void **, struct mosquitto_opt *, int);
+typedef int (*FUNC_plugin_cleanup_v5)(void *, struct mosquitto_opt *, int);
+
 typedef int (*FUNC_auth_plugin_init_v4)(void **, struct mosquitto_opt *, int);
 typedef int (*FUNC_auth_plugin_cleanup_v4)(void *, struct mosquitto_opt *, int);
 typedef int (*FUNC_auth_plugin_security_init_v4)(void *, struct mosquitto_opt *, int, bool);
@@ -175,6 +178,9 @@ struct mosquitto__auth_plugin{
 	void *lib;
 	void *user_data;
 	int (*plugin_version)(void);
+
+	FUNC_plugin_init_v5 plugin_init_v5;
+	FUNC_plugin_cleanup_v5 plugin_cleanup_v5;
 
 	FUNC_auth_plugin_init_v4 plugin_init_v4;
 	FUNC_auth_plugin_cleanup_v4 plugin_cleanup_v4;
@@ -214,6 +220,25 @@ struct mosquitto__auth_plugin_config
 	struct mosquitto__auth_plugin plugin;
 };
 
+struct mosquitto__callback{
+	UT_hash_handle hh; /* For callbacks that register for e.g. a specific topic */
+	struct mosquitto__callback *next, *prev; /* For typical callbacks */
+	MOSQ_FUNC_generic_callback cb;
+	void *userdata;
+	char *data; /* e.g. topic for control event */
+};
+
+struct plugin__callbacks{
+	struct mosquitto__callback *reload;
+	struct mosquitto__callback *acl_check;
+	struct mosquitto__callback *basic_auth;
+	struct mosquitto__callback *psk_key;
+	struct mosquitto__callback *ext_auth_start;
+	struct mosquitto__callback *ext_auth_continue;
+	struct mosquitto__callback *control;
+	struct mosquitto__callback *message;
+};
+
 struct mosquitto__security_options {
 	/* Any options that get added here also need considering
 	 * in config__read() with regards whether allow_anonymous
@@ -232,6 +257,7 @@ struct mosquitto__security_options {
 	bool allow_zero_length_clientid;
 	char *auto_id_prefix;
 	int auto_id_prefix_len;
+	struct plugin__callbacks plugin_callbacks;
 };
 
 struct mosquitto__listener {
@@ -276,6 +302,10 @@ struct mosquitto__listener {
 	char *unix_socket_path;
 #endif
 };
+
+typedef struct mosquitto_plugin_id_t{
+	struct mosquitto__listener *listener;
+} mosquitto_plugin_id_t;
 
 struct mosquitto__config {
 	bool allow_duplicate_messages;
@@ -456,13 +486,6 @@ struct mosquitto_message_v5{
 };
 
 
-struct mosquitto__control_callback{
-	UT_hash_handle hh;
-	char *topic;
-	MOSQ_FUNC_control_callback function;
-	void *data;
-};
-
 struct mosquitto_db{
 	dbid_t last_db_id;
 	struct mosquitto__subhier *subs;
@@ -495,7 +518,6 @@ struct mosquitto_db{
 #ifdef WITH_EPOLL
 	int epollfd;
 #endif
-	struct mosquitto__control_callback *control_callbacks;
 	struct mosquitto_message_v5 *plugin_msgs;
 };
 
@@ -718,6 +740,8 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 int control__process(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_msg_store *stored);
 void control__cleanup(struct mosquitto_db *db);
 #endif
+int control__register_callback(struct mosquitto_db *db, struct mosquitto__security_options *opts, MOSQ_FUNC_generic_callback cb_func, const char *topic, void *userdata);
+int control__unregister_callback(struct mosquitto_db *db, struct mosquitto__callback *cb_base, MOSQ_FUNC_generic_callback cb_func, const char *topic);
 
 
 /* ============================================================
@@ -764,6 +788,13 @@ int mux__cleanup(struct mosquitto_db *db);
  * Listener related functions
  * ============================================================ */
 void listener__set_defaults(struct mosquitto__listener *listener);
+
+/* ============================================================
+ * Plugin related functions
+ * ============================================================ */
+int plugin__load_v5(struct mosquitto__listener *listener, struct mosquitto__auth_plugin *plugin, struct mosquitto_opt *auth_options, int auth_option_count, void *lib);
+int plugin__handle_message(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_msg_store *stored);
+void LIB_ERROR(void);
 
 /* ============================================================
  * Property related functions

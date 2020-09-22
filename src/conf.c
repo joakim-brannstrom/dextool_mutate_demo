@@ -733,6 +733,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 	struct mosquitto__listener *cur_listener = &config->default_listener;
 	int i;
 	int lineno_ext = 0;
+	int prefix_len;
 
 	*lineno = 0;
 
@@ -814,18 +815,23 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 				}else if(!strcmp(token, "allow_zero_length_clientid")){
 					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
 					if(conf__parse_bool(&token, "allow_zero_length_clientid", &cur_security_options->allow_zero_length_clientid, saveptr)) return MOSQ_ERR_INVAL;
-				}else if(!strncmp(token, "auth_opt_", 9)){
+				}else if(!strncmp(token, "auth_opt_", strlen("auth_opt_")) || !strncmp(token, "plugin_opt_", strlen("plugin_opt_"))){
 					if(reload) continue; // Auth plugin not currently valid for reloading.
 					if(!cur_auth_plugin_config){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: An auth_opt_ option exists in the config file without an auth_plugin.");
 						return MOSQ_ERR_INVAL;
 					}
-					if(strlen(token) < 12){
+					if(!strncmp(token, "auth_opt_", strlen("auth_opt_"))){
+						prefix_len = strlen("auth_opt_");
+					}else{
+						prefix_len = strlen("plugin_opt_");
+					}
+					if(strlen(token) < prefix_len + 3){
 						/* auth_opt_ == 9, + one digit key == 10, + one space == 11, + one value == 12 */
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid auth_opt_ config option.");
 						return MOSQ_ERR_INVAL;
 					}
-					key = mosquitto__strdup(&token[9]);
+					key = mosquitto__strdup(&token[prefix_len]);
 					if(!key){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 						return MOSQ_ERR_NOMEM;
@@ -834,7 +840,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						mosquitto__free(key);
 						return MOSQ_ERR_INVAL;
 					}
-					token += 9+strlen(key)+1;
+					token += prefix_len+strlen(key)+1;
 					while(token[0] == ' ' || token[0] == '\t'){
 						token++;
 					}
@@ -857,7 +863,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						mosquitto__free(key);
 						return MOSQ_ERR_INVAL;
 					}
-				}else if(!strcmp(token, "auth_plugin")){
+				}else if(!strcmp(token, "auth_plugin") || !strcmp(token, "plugin")){
 					if(reload) continue; // Auth plugin not currently valid for reloading.
 					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
 					cur_security_options->auth_plugin_configs = mosquitto__realloc(cur_security_options->auth_plugin_configs, (cur_security_options->auth_plugin_config_count+1)*sizeof(struct mosquitto__auth_plugin_config));

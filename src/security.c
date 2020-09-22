@@ -19,10 +19,12 @@ Contributors:
 #include <stdio.h>
 #include <string.h>
 
+#include "mosquitto_broker.h"
 #include "mosquitto_broker_internal.h"
 #include "mosquitto_plugin.h"
 #include "memory_mosq.h"
 #include "lib_load.h"
+#include "utlist.h"
 
 typedef int (*FUNC_auth_plugin_version)(void);
 
@@ -282,7 +284,7 @@ int security__load_v4(struct mosquitto__auth_plugin *plugin, struct mosquitto_op
 }
 
 
-static int security__module_init_single(struct mosquitto__security_options *opts)
+static int security__module_init_single(struct mosquitto__listener *listener, struct mosquitto__security_options *opts)
 {
 	void *lib;
 	int (*plugin_version)(void) = NULL;
@@ -309,16 +311,29 @@ static int security__module_init_single(struct mosquitto__security_options *opts
 			}
 
 			opts->auth_plugin_configs[i].plugin.lib = NULL;
-			if(!(plugin_version = (FUNC_auth_plugin_version)LIB_SYM(lib, "mosquitto_auth_plugin_version"))){
-				log__printf(NULL, MOSQ_LOG_ERR,
-						"Error: Unable to load auth plugin function mosquitto_auth_plugin_version().");
-				LIB_ERROR();
-				LIB_CLOSE(lib);
-				return 1;
+			if(!(plugin_version = (FUNC_auth_plugin_version)LIB_SYM(lib, "mosquitto_plugin_version"))){
+				if(!(plugin_version = (FUNC_auth_plugin_version)LIB_SYM(lib, "mosquitto_auth_plugin_version"))){
+					log__printf(NULL, MOSQ_LOG_ERR,
+							"Error: Unable to load auth plugin function mosquitto_auth_plugin_version() or mosquitto_plugin_version().");
+					LIB_ERROR();
+					LIB_CLOSE(lib);
+					return 1;
+				}
 			}
 			version = plugin_version();
 			opts->auth_plugin_configs[i].plugin.version = version;
-			if(version == 4){
+			if(version == 5){
+				rc = plugin__load_v5(
+						listener,
+						&opts->auth_plugin_configs[i].plugin,
+						opts->auth_plugin_configs[i].options,
+						opts->auth_plugin_configs[i].option_count,
+						lib);
+
+				if(rc){
+					return rc;
+				}
+			}else if(version == 4){
 				rc = security__load_v4(
 						&opts->auth_plugin_configs[i].plugin,
 						opts->auth_plugin_configs[i].options,
@@ -370,11 +385,11 @@ int mosquitto_security_module_init(struct mosquitto_db *db)
 
 	if(db->config->per_listener_settings){
 		for(i=0; i<db->config->listener_count; i++){
-			rc = security__module_init_single(&db->config->listeners[i].security_options);
+			rc = security__module_init_single(&db->config->listeners[i], &db->config->listeners[i].security_options);
 			if(rc) return rc;
 		}
 	}else{
-		rc = security__module_init_single(&db->config->security_options);
+		rc = security__module_init_single(NULL, &db->config->security_options);
 	}
 	return rc;
 }
@@ -386,7 +401,13 @@ static void security__module_cleanup_single(struct mosquitto__security_options *
 
 	for(i=0; i<opts->auth_plugin_config_count; i++){
 		/* Run plugin cleanup function */
-		if(opts->auth_plugin_configs[i].plugin.version == 4){
+		if(opts->auth_plugin_configs[i].plugin.version == 5){
+			opts->auth_plugin_configs[i].plugin.plugin_cleanup_v5(
+					opts->auth_plugin_configs[i].plugin.user_data,
+					opts->auth_plugin_configs[i].options,
+					opts->auth_plugin_configs[i].option_count);
+
+		}else if(opts->auth_plugin_configs[i].plugin.version == 4){
 			opts->auth_plugin_configs[i].plugin.plugin_cleanup_v4(
 					opts->auth_plugin_configs[i].plugin.user_data,
 					opts->auth_plugin_configs[i].options,
@@ -433,9 +454,26 @@ static int security__init_single(struct mosquitto__security_options *opts, bool 
 {
 	int i;
 	int rc;
+	struct mosquitto_evt_reload event_data;
+	struct mosquitto__callback *cb_base;
+
+	if(reload){
+		DL_FOREACH(opts->plugin_callbacks.reload, cb_base){
+			memset(&event_data, 0, sizeof(event_data));
+
+			event_data.options = NULL;
+			event_data.option_count = 0;
+			rc = cb_base->cb(MOSQ_EVT_RELOAD, &event_data, cb_base->userdata);
+			if(rc != MOSQ_ERR_PLUGIN_DEFER){
+				return rc;
+			}
+		}
+	}
 
 	for(i=0; i<opts->auth_plugin_config_count; i++){
-		if(opts->auth_plugin_configs[i].plugin.version == 4){
+		if(opts->auth_plugin_configs[i].plugin.version == 5){
+			continue;
+		}else if(opts->auth_plugin_configs[i].plugin.version == 4){
 			rc = opts->auth_plugin_configs[i].plugin.security_init_v4(
 					opts->auth_plugin_configs[i].plugin.user_data,
 					opts->auth_plugin_configs[i].options,
@@ -628,6 +666,8 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	int i;
 	struct mosquitto__security_options *opts;
 	struct mosquitto_acl_msg msg;
+	struct mosquitto__callback *cb_base;
+	struct mosquitto_evt_acl_check event_data;
 
 	if(!context->id){
 		return MOSQ_ERR_ACL_DENIED;
@@ -658,10 +698,30 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	msg.qos = qos;
 	msg.retain = retain;
 
-	for(i=0; i<opts->auth_plugin_config_count; i++){
-		rc = acl__check_single(&opts->auth_plugin_configs[i], context, &msg, access);
+	DL_FOREACH(opts->plugin_callbacks.acl_check, cb_base){
+		/* FIXME - username deny special chars */
+
+		memset(&event_data, 0, sizeof(event_data));
+		event_data.client = context;
+		event_data.access = access;
+		event_data.topic = topic;
+		event_data.payloadlen = payloadlen;
+		event_data.payload = payload;
+		event_data.qos = qos;
+		event_data.retain = retain;
+		event_data.properties = NULL;
+		rc = cb_base->cb(MOSQ_EVT_ACL_CHECK, &event_data, cb_base->userdata);
 		if(rc != MOSQ_ERR_PLUGIN_DEFER){
 			return rc;
+		}
+	}
+
+	for(i=0; i<opts->auth_plugin_config_count; i++){
+		if(opts->auth_plugin_configs[i].plugin.version < 5){
+			rc = acl__check_single(&opts->auth_plugin_configs[i], context, &msg, access);
+			if(rc != MOSQ_ERR_PLUGIN_DEFER){
+				return rc;
+			}
 		}
 	}
 
@@ -678,6 +738,8 @@ int mosquitto_unpwd_check(struct mosquitto_db *db, struct mosquitto *context)
 	int rc;
 	int i;
 	struct mosquitto__security_options *opts;
+	struct mosquitto_evt_basic_auth event_data;
+	struct mosquitto__callback *cb_base;
 
 	rc = mosquitto_unpwd_check_default(db, context);
 	if(rc != MOSQ_ERR_PLUGIN_DEFER){
@@ -690,6 +752,17 @@ int mosquitto_unpwd_check(struct mosquitto_db *db, struct mosquitto *context)
 		opts = &context->listener->security_options;
 	}else{
 		opts = &db->config->security_options;
+	}
+
+	DL_FOREACH(opts->plugin_callbacks.basic_auth, cb_base){
+		memset(&event_data, 0, sizeof(event_data));
+		event_data.client = context;
+		event_data.username = context->username;
+		event_data.password = context->password;
+		rc = cb_base->cb(MOSQ_EVT_BASIC_AUTH, &event_data, cb_base->userdata);
+		if(rc != MOSQ_ERR_PLUGIN_DEFER){
+			return rc;
+		}
 	}
 
 	for(i=0; i<opts->auth_plugin_config_count; i++){
@@ -738,6 +811,8 @@ int mosquitto_psk_key_get(struct mosquitto_db *db, struct mosquitto *context, co
 	int rc;
 	int i;
 	struct mosquitto__security_options *opts;
+	struct mosquitto_evt_psk_key event_data;
+	struct mosquitto__callback *cb_base;
 
 	rc = mosquitto_psk_key_get_default(db, context, hint, identity, key, max_key_len);
 	if(rc != MOSQ_ERR_PLUGIN_DEFER){
@@ -752,6 +827,19 @@ int mosquitto_psk_key_get(struct mosquitto_db *db, struct mosquitto *context, co
 		opts = &context->listener->security_options;
 	}else{
 		opts = &db->config->security_options;
+	}
+
+	DL_FOREACH(opts->plugin_callbacks.psk_key, cb_base){
+		memset(&event_data, 0, sizeof(event_data));
+		event_data.client = context;
+		event_data.hint = hint;
+		event_data.identity = identity;
+		event_data.key = key;
+		event_data.max_key_len = max_key_len;
+		rc = cb_base->cb(MOSQ_EVT_PSK_KEY, &event_data, cb_base->userdata);
+		if(rc != MOSQ_ERR_PLUGIN_DEFER){
+			return rc;
+		}
 	}
 
 	for(i=0; i<opts->auth_plugin_config_count; i++){
@@ -804,6 +892,8 @@ int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *con
 	int rc = MOSQ_ERR_PLUGIN_DEFER;
 	int i;
 	struct mosquitto__security_options *opts;
+	struct mosquitto_evt_extended_auth event_data;
+	struct mosquitto__callback *cb_base;
 
 	if(!context || !context->listener || !context->auth_method) return MOSQ_ERR_INVAL;
 	if(!data_out || !data_out_len) return MOSQ_ERR_INVAL;
@@ -812,6 +902,21 @@ int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *con
 		opts = &context->listener->security_options;
 	}else{
 		opts = &db->config->security_options;
+	}
+
+	DL_FOREACH(opts->plugin_callbacks.ext_auth_start, cb_base){
+		memset(&event_data, 0, sizeof(event_data));
+		event_data.client = context;
+		event_data.data_in = data_in;
+		event_data.data_out = NULL;
+		event_data.data_in_len = data_in_len;
+		event_data.data_out_len = 0;
+		rc = cb_base->cb(MOSQ_EVT_EXT_AUTH_START, &event_data, cb_base->userdata);
+		if(rc != MOSQ_ERR_PLUGIN_DEFER){
+			*data_out = event_data.data_out;
+			*data_out_len = event_data.data_out_len;
+			return rc;
+		}
 	}
 
 	for(i=0; i<opts->auth_plugin_config_count; i++){
@@ -846,6 +951,8 @@ int mosquitto_security_auth_continue(struct mosquitto_db *db, struct mosquitto *
 	int rc = MOSQ_ERR_PLUGIN_DEFER;
 	int i;
 	struct mosquitto__security_options *opts;
+	struct mosquitto_evt_extended_auth event_data;
+	struct mosquitto__callback *cb_base;
 
 	if(!context || !context->listener || !context->auth_method) return MOSQ_ERR_INVAL;
 	if(!data_out || !data_out_len) return MOSQ_ERR_INVAL;
@@ -856,8 +963,23 @@ int mosquitto_security_auth_continue(struct mosquitto_db *db, struct mosquitto *
 		opts = &db->config->security_options;
 	}
 
+	DL_FOREACH(opts->plugin_callbacks.ext_auth_continue, cb_base){
+		memset(&event_data, 0, sizeof(event_data));
+		event_data.client = context;
+		event_data.data_in = data_in;
+		event_data.data_out = NULL;
+		event_data.data_in_len = data_in_len;
+		event_data.data_out_len = 0;
+		rc = cb_base->cb(MOSQ_EVT_EXT_AUTH_CONTINUE, &event_data, cb_base->userdata);
+		if(rc != MOSQ_ERR_PLUGIN_DEFER){
+			*data_out = event_data.data_out;
+			*data_out_len = event_data.data_out_len;
+			return rc;
+		}
+	}
+
 	for(i=0; i<opts->auth_plugin_config_count; i++){
-		if(opts->auth_plugin_configs[i].plugin.auth_start_v4){
+		if(opts->auth_plugin_configs[i].plugin.auth_continue_v4){
 			*data_out = NULL;
 			*data_out_len = 0;
 

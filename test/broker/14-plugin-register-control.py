@@ -32,7 +32,7 @@ publish_packet_recv = mosq_test.gen_publish(topic="$CONTROL/user-management/v1",
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
 try:
-    sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20, port=port)
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=5, port=port)
     mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
     sock.send(publish_packet)
     mosq_test.receive_unordered(sock, puback_packet, publish_packet_recv, "puback/publish_receive")

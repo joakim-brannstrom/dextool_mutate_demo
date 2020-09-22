@@ -324,7 +324,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 		security_opts = &db->config->security_options;
 	}
 	if(!security_opts->acl_file && !security_opts->acl_list && !security_opts->acl_patterns){
-			return MOSQ_ERR_PLUGIN_DEFER;
+		return MOSQ_ERR_PLUGIN_DEFER;
 	}
 
 	if(access == MOSQ_ACL_SUBSCRIBE) return MOSQ_ERR_SUCCESS; /* FIXME - implement ACL subscription strings. */

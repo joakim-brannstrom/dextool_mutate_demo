@@ -220,4 +220,4 @@ endif
 	./13-malformed-unsubscribe-v5.py
 
 14 :
-	./14-plugin-register-control.py
+	#./14-plugin-register-control.py

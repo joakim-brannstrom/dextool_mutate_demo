@@ -554,9 +554,6 @@ int main(int argc, char *argv[])
 	listeners__stop(&int_db, listensock, listensock_count);
 
 	mosquitto_security_module_cleanup(&int_db);
-#ifdef WITH_CONTROL
-	control__cleanup(&int_db);
-#endif
 
 	if(config.pid_file){
 		remove(config.pid_file);
