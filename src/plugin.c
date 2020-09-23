@@ -245,8 +245,7 @@ int mosquitto_callback_unregister(mosquitto_plugin_id_t *identifier, int event, 
 			cb_base = &security_options->plugin_callbacks.ext_auth_continue;
 			break;
 		case MOSQ_EVT_CONTROL:
-			cb_base = &security_options->plugin_callbacks.control;
-			return control__unregister_callback(db, *cb_base, cb_func, data);
+			return control__unregister_callback(db, security_options, cb_func, data);
 			break;
 		case MOSQ_EVT_MESSAGE:
 			cb_base = &security_options->plugin_callbacks.message;

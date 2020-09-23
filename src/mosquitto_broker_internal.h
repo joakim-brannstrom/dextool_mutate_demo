@@ -742,7 +742,7 @@ int control__process(struct mosquitto_db *db, struct mosquitto *context, struct 
 void control__cleanup(struct mosquitto_db *db);
 #endif
 int control__register_callback(struct mosquitto_db *db, struct mosquitto__security_options *opts, MOSQ_FUNC_generic_callback cb_func, const char *topic, void *userdata);
-int control__unregister_callback(struct mosquitto_db *db, struct mosquitto__callback *cb_base, MOSQ_FUNC_generic_callback cb_func, const char *topic);
+int control__unregister_callback(struct mosquitto_db *db, struct mosquitto__security_options *opts, MOSQ_FUNC_generic_callback cb_func, const char *topic);
 
 
 /* ============================================================

@@ -110,7 +110,7 @@ int control__register_callback(struct mosquitto_db *db, struct mosquitto__securi
 #endif
 }
 
-int control__unregister_callback(struct mosquitto_db *db, struct mosquitto__callback *cb_base, MOSQ_FUNC_generic_callback cb_func, const char *topic)
+int control__unregister_callback(struct mosquitto_db *db, struct mosquitto__security_options *opts, MOSQ_FUNC_generic_callback cb_func, const char *topic)
 {
 #ifdef WITH_CONTROL
 	struct mosquitto__callback *cb_found;
@@ -121,9 +121,9 @@ int control__unregister_callback(struct mosquitto_db *db, struct mosquitto__call
 	if(topic_len == 0 || topic_len > 65535) return MOSQ_ERR_INVAL;
 	if(strncmp(topic, "$CONTROL/", strlen("$CONTROL/"))) return MOSQ_ERR_INVAL;
 
-	HASH_FIND(hh, cb_base, topic, topic_len, cb_found);
+	HASH_FIND(hh, opts->plugin_callbacks.control, topic, topic_len, cb_found);
 	if(cb_found){
-		HASH_DELETE(hh, cb_base, cb_found);
+		HASH_DELETE(hh, opts->plugin_callbacks.control, cb_found);
 		mosquitto__free(cb_found->data);
 		mosquitto__free(cb_found);
 
