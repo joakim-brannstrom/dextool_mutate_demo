@@ -31,6 +31,7 @@ int control__process(struct mosquitto_db *db, struct mosquitto *context, struct 
 	struct mosquitto__callback *cb_found;
 	struct mosquitto_evt_control event_data;
 	struct mosquitto__security_options *opts;
+	mosquitto_property *properties = NULL;
 	int rc = MOSQ_ERR_SUCCESS;
 
 	if(db->config->per_listener_settings){
@@ -48,15 +49,25 @@ int control__process(struct mosquitto_db *db, struct mosquitto *context, struct 
 		event_data.qos = stored->qos;
 		event_data.retain = stored->retain;
 		event_data.properties = stored->properties;
+		event_data.reason_code = MQTT_RC_SUCCESS;
+		event_data.reason_string = NULL;
 
 		rc = cb_found->cb(MOSQ_EVT_CONTROL, &event_data, cb_found->userdata);
+		if(rc){
+			if(context->protocol == mosq_p_mqtt5 && event_data.reason_string){
+				mosquitto_property_add_string(&properties, MQTT_PROP_REASON_STRING, event_data.reason_string);
+			}
+		}
+		free(event_data.reason_string);
+		event_data.reason_string = NULL;
 	}
 
 	if(stored->qos == 1){
-		if(send__puback(context, stored->source_mid, 0, NULL)) rc = 1;
+		if(send__puback(context, stored->source_mid, event_data.reason_code, properties)) rc = 1;
 	}else if(stored->qos == 2){
-		if(send__pubrec(context, stored->source_mid, 0, NULL)) rc = 1;
+		if(send__pubrec(context, stored->source_mid, event_data.reason_code, properties)) rc = 1;
 	}
+	mosquitto_property_free_all(&properties);
 
 	return rc;
 }

@@ -92,20 +92,24 @@ struct mosquitto_evt_control {
 	struct mosquitto *client;
 	const char *topic;
 	const void *payload;
+	const mosquitto_property *properties;
+	char *reason_string;
 	long payloadlen;
 	int qos;
+	uint8_t reason_code;
 	bool retain;
-	const mosquitto_property *properties;
 };
 
 struct mosquitto_evt_message {
 	struct mosquitto *client;
 	char *topic;
 	void *payload;
+	mosquitto_property *properties;
+	char *reason_string;
 	long payloadlen;
 	int qos;
+	uint8_t reason_code;
 	bool retain;
-	mosquitto_property *properties;
 };
 
 typedef int (*MOSQ_FUNC_generic_callback)(int, void *, void *);
