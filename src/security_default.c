@@ -33,7 +33,7 @@ static int acl__cleanup(struct mosquitto_db *db, bool reload);
 static int unpwd__cleanup(struct mosquitto__unpwd **unpwd, bool reload);
 static int psk__file_parse(struct mosquitto_db *db, struct mosquitto__unpwd **psk_id, const char *psk_file);
 #ifdef WITH_TLS
-static int pw__digest(const char *password, const unsigned char *salt, unsigned int salt_len, unsigned char *hash, unsigned int *hash_len);
+static int pw__digest(const char *password, const unsigned char *salt, unsigned int salt_len, unsigned char *hash, unsigned int *hash_len, enum mosquitto_pwhash_type hashtype);
 static int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len);
 static int mosquitto__memcmp_const(const void *ptr1, const void *b, size_t len);
 #endif
@@ -773,12 +773,22 @@ static int unpwd__decode_passwords(struct mosquitto__unpwd **unpwd)
 	unsigned char *password;
 	unsigned int password_len;
 	int rc;
+	int hashtype;
 
 	HASH_ITER(hh, *unpwd, u, tmp){
 		/* Need to decode password into hashed data + salt. */
 		if(u->password){
 			token = strtok(u->password, "$");
-			if(token && !strcmp(token, "6")){
+			if(token){
+				if(!strcmp(token, "6")){
+					hashtype = pw_sha512;
+				}else if(!strcmp(token, "7")){
+					hashtype = pw_sha512_pbkdf2;
+				}else{
+					log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash type for user %s, removing entry.", u->username);
+					unpwd__free_item(unpwd, u);
+					continue;
+				}
 				token = strtok(NULL, "$");
 				if(token){
 					rc = base64__decode(token, &salt, &salt_len);
@@ -792,6 +802,7 @@ static int unpwd__decode_passwords(struct mosquitto__unpwd **unpwd)
 								mosquitto__free(u->password);
 								u->password = (char *)password;
 								u->password_len = password_len;
+								u->hashtype = hashtype;
 							}else{
 								log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password for user %s, removing entry.", u->username);
 								unpwd__free_item(unpwd, u);
@@ -953,7 +964,7 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 		if(u->password){
 			if(context->password){
 #ifdef WITH_TLS
-				rc = pw__digest(context->password, u->salt, u->salt_len, hash, &hash_len);
+				rc = pw__digest(context->password, u->salt, u->salt_len, hash, &hash_len, u->hashtype);
 				if(rc == MOSQ_ERR_SUCCESS){
 					if(hash_len == u->password_len && !mosquitto__memcmp_const(u->password, hash, hash_len)){
 						return MOSQ_ERR_SUCCESS;
@@ -1250,27 +1261,14 @@ int mosquitto_psk_key_get_default(struct mosquitto_db *db, struct mosquitto *con
 }
 
 #ifdef WITH_TLS
-int pw__digest(const char *password, const unsigned char *salt, unsigned int salt_len, unsigned char *hash, unsigned int *hash_len)
+int pw__digest(const char *password, const unsigned char *salt, unsigned int salt_len, unsigned char *hash, unsigned int *hash_len, enum mosquitto_pwhash_type hashtype)
 {
 	const EVP_MD *digest;
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 	EVP_MD_CTX context;
-
-	digest = EVP_get_digestbyname("sha512");
-	if(!digest){
-		// FIXME fprintf(stderr, "Error: Unable to create openssl digest.\n");
-		return 1;
-	}
-
-	EVP_MD_CTX_init(&context);
-	EVP_DigestInit_ex(&context, digest, NULL);
-	EVP_DigestUpdate(&context, password, strlen(password));
-	EVP_DigestUpdate(&context, salt, salt_len);
-	/* hash is assumed to be EVP_MAX_MD_SIZE bytes long. */
-	EVP_DigestFinal_ex(&context, hash, hash_len);
-	EVP_MD_CTX_cleanup(&context);
 #else
 	EVP_MD_CTX *context;
+#endif
 
 	digest = EVP_get_digestbyname("sha512");
 	if(!digest){
@@ -1278,14 +1276,30 @@ int pw__digest(const char *password, const unsigned char *salt, unsigned int sal
 		return 1;
 	}
 
-	context = EVP_MD_CTX_new();
-	EVP_DigestInit_ex(context, digest, NULL);
-	EVP_DigestUpdate(context, password, strlen(password));
-	EVP_DigestUpdate(context, salt, salt_len);
-	/* hash is assumed to be EVP_MAX_MD_SIZE bytes long. */
-	EVP_DigestFinal_ex(context, hash, hash_len);
-	EVP_MD_CTX_free(context);
+	if(hashtype == pw_sha512){
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+		EVP_MD_CTX_init(&context);
+		EVP_DigestInit_ex(&context, digest, NULL);
+		EVP_DigestUpdate(&context, password, strlen(password));
+		EVP_DigestUpdate(&context, salt, salt_len);
+		/* hash is assumed to be EVP_MAX_MD_SIZE bytes long. */
+		EVP_DigestFinal_ex(&context, hash, hash_len);
+		EVP_MD_CTX_cleanup(&context);
+#else
+		context = EVP_MD_CTX_new();
+		EVP_DigestInit_ex(context, digest, NULL);
+		EVP_DigestUpdate(context, password, strlen(password));
+		EVP_DigestUpdate(context, salt, salt_len);
+		/* hash is assumed to be EVP_MAX_MD_SIZE bytes long. */
+		EVP_DigestFinal_ex(context, hash, hash_len);
+		EVP_MD_CTX_free(context);
 #endif
+	}else{
+		*hash_len = EVP_MAX_MD_SIZE;
+		PKCS5_PBKDF2_HMAC(password, strlen(password),
+			salt, salt_len, 20000,
+			digest, *hash_len, hash);
+	}
 
 	return MOSQ_ERR_SUCCESS;
 }

@@ -18,6 +18,9 @@
 		<cmdsynopsis>
 			<command>mosquitto_passwd</command>
 			<group>
+				<arg choice='plain'><option>-H</option> <replaceable>hash</replaceable></arg>
+			</group>
+			<group>
 				<arg choice='plain'><option>-c</option></arg>
 				<arg choice='plain'><option>-D</option></arg>
 			</group>
@@ -26,6 +29,9 @@
 		</cmdsynopsis>
 		<cmdsynopsis>
 			<command>mosquitto_passwd</command>
+			<group>
+				<arg choice='plain'><option>-H</option> <replaceable>hash</replaceable></arg>
+			</group>
 			<arg choice='plain'><option>-b</option></arg>
 			<arg choice='plain'><replaceable>passwordfile</replaceable></arg>
 			<arg choice='plain'><replaceable>username</replaceable></arg>
@@ -72,6 +78,18 @@
 				<listitem>
 					<para>Delete the specified user from the password
 						file.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-H</option></term>
+				<listitem>
+					<para>Choose the hash to use. Can be one of
+						<replaceable>sha512-pbkdf2</replaceable> or
+						<replaceable>sha512</replaceable>. Defaults to
+						<replaceable>sha512-pbkdf2</replaceable>. The
+						<replaceable>sha512</replaceable> option is provided for
+						creating password files for use with Mosquitto 1.6
+						and earlier.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

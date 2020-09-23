@@ -54,6 +54,11 @@ Contributors:
 
 #include "misc_mosq.h"
 
+enum pwhash{
+	pw_sha512 = 6,
+	pw_sha512_pbkdf2 = 7,
+};
+
 struct cb_helper {
 	const char *line;
 	const char *username;
@@ -69,6 +74,7 @@ static FILE *mpw_tmpfile(void)
 #else
 
 static char alphanum[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+static enum pwhash hashtype = pw_sha512_pbkdf2;
 
 static unsigned char tmpfile_path[36];
 static FILE *mpw_tmpfile(void)
@@ -132,12 +138,14 @@ int base64_encode(unsigned char *in, unsigned int in_len, char **encoded)
 void print_usage(void)
 {
 	printf("mosquitto_passwd is a tool for managing password files for mosquitto.\n\n");
-	printf("Usage: mosquitto_passwd [-c | -D] passwordfile username\n");
-	printf("       mosquitto_passwd -b passwordfile username password\n");
+	printf("Usage: mosquitto_passwd [-H sha512 | -H sha512-pbkdf2] [-c | -D] passwordfile username\n");
+	printf("       mosquitto_passwd [-H sha512 | -H sha512-pbkdf2] -b passwordfile username password\n");
 	printf("       mosquitto_passwd -U passwordfile\n");
 	printf(" -b : run in batch mode to allow passing passwords on the command line.\n");
 	printf(" -c : create a new password file. This will overwrite existing files.\n");
 	printf(" -D : delete the username rather than adding/updating its password.\n");
+	printf(" -H : specify the hashing algorithm. Defaults to sha512-pbkdf2, which is recommended.\n");
+	printf("      Mosquitto 1.6 and earlier defaulted to sha512.\n");
 	printf(" -U : update a plain text password file to use hashed passwords.\n");
 	printf("\nSee https://mosquitto.org/ for more information.\n\n");
 }
@@ -177,21 +185,28 @@ int output_new_password(FILE *fptr, const char *username, const char *password)
 		return 1;
 	}
 
+	if(hashtype == pw_sha512){
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-	EVP_MD_CTX_init(&context);
-	EVP_DigestInit_ex(&context, digest, NULL);
-	EVP_DigestUpdate(&context, password, strlen(password));
-	EVP_DigestUpdate(&context, salt, SALT_LEN);
-	EVP_DigestFinal_ex(&context, hash, &hash_len);
-	EVP_MD_CTX_cleanup(&context);
+		EVP_MD_CTX_init(&context);
+		EVP_DigestInit_ex(&context, digest, NULL);
+		EVP_DigestUpdate(&context, password, strlen(password));
+		EVP_DigestUpdate(&context, salt, SALT_LEN);
+		EVP_DigestFinal_ex(&context, hash, &hash_len);
+		EVP_MD_CTX_cleanup(&context);
 #else
-	context = EVP_MD_CTX_new();
-	EVP_DigestInit_ex(context, digest, NULL);
-	EVP_DigestUpdate(context, password, strlen(password));
-	EVP_DigestUpdate(context, salt, SALT_LEN);
-	EVP_DigestFinal_ex(context, hash, &hash_len);
-	EVP_MD_CTX_free(context);
+		context = EVP_MD_CTX_new();
+		EVP_DigestInit_ex(context, digest, NULL);
+		EVP_DigestUpdate(context, password, strlen(password));
+		EVP_DigestUpdate(context, salt, SALT_LEN);
+		EVP_DigestFinal_ex(context, hash, &hash_len);
+		EVP_MD_CTX_free(context);
 #endif
+	}else{
+		hash_len = sizeof(hash);
+		PKCS5_PBKDF2_HMAC(password, strlen(password),
+			salt, SALT_LEN, 20000,
+			digest, hash_len, hash);
+	}
 
 	rc = base64_encode(hash, hash_len, &hash64);
 	if(rc){
@@ -201,7 +216,7 @@ int output_new_password(FILE *fptr, const char *username, const char *password)
 		return 1;
 	}
 
-	fprintf(fptr, "%s:$6$%s$%s\n", username, salt64, hash64);
+	fprintf(fptr, "%s:$%d$%s$%s\n", username, hashtype, salt64, hash64);
 	free(salt64);
 	free(hash64);
 
@@ -331,10 +346,8 @@ static int update_pwuser_cb(FILE *fptr, FILE *ftmp, const char *username, const 
 {
 	int rc = 0;
 
-	printf("%s\n", username);
 	if(strcmp(username, helper->username)){
 		/* If this isn't the matching user, then writing out the exiting line */
-		printf("%s\n", line);
 		fprintf(ftmp, "%s", line);
 	}else{
 		/* Write out a new line for our matching username */
@@ -520,6 +533,7 @@ int main(int argc, char *argv[])
 	int rc;
 	bool do_update_file = false;
 	char *backup_file;
+	int idx;
 
 	signal(SIGINT, handle_sigint);
 	signal(SIGTERM, handle_sigint);
@@ -537,45 +551,63 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(!strcmp(argv[1], "-c")){
+	idx = 1;
+	if(!strcmp(argv[1], "-H")){
+		if(argc < 5){
+			fprintf(stderr, "Error: -H argument given but not enough other arguments.\n");
+			return 1;
+		}
+		if(!strcmp(argv[2], "sha512")){
+			hashtype = pw_sha512;
+		}else if(!strcmp(argv[2], "sha512-pbkdf2")){
+			hashtype = pw_sha512_pbkdf2;
+		}else{
+			fprintf(stderr, "Error: Unknown hash type '%s'\n", argv[2]);
+			return 1;
+		}
+		idx += 2;
+		argc -= 2;
+	}
+
+	if(!strcmp(argv[idx], "-c")){
 		create_new = true;
 		if(argc != 4){
 			fprintf(stderr, "Error: -c argument given but password file or username missing.\n");
 			return 1;
 		}else{
-			password_file_tmp = argv[2];
-			username = argv[3];
+			password_file_tmp = argv[idx+1];
+			username = argv[idx+2];
 		}
-	}else if(!strcmp(argv[1], "-D")){
+	}else if(!strcmp(argv[idx], "-D")){
 		delete_user = true;
 		if(argc != 4){
 			fprintf(stderr, "Error: -D argument given but password file or username missing.\n");
 			return 1;
 		}else{
-			password_file_tmp = argv[2];
-			username = argv[3];
+			password_file_tmp = argv[idx+1];
+			username = argv[idx+2];
 		}
-	}else if(!strcmp(argv[1], "-b")){
+	}else if(!strcmp(argv[idx], "-b")){
 		batch_mode = true;
 		if(argc != 5){
 			fprintf(stderr, "Error: -b argument given but password file, username or password missing.\n");
 			return 1;
 		}else{
-			password_file_tmp = argv[2];
-			username = argv[3];
-			password_cmd = argv[4];
+			password_file_tmp = argv[idx+1];
+			username = argv[idx+2];
+			password_cmd = argv[idx+3];
 		}
-	}else if(!strcmp(argv[1], "-U")){
+	}else if(!strcmp(argv[idx], "-U")){
 		if(argc != 3){
 			fprintf(stderr, "Error: -U argument given but password file missing.\n");
 			return 1;
 		}else{
 			do_update_file = true;
-			password_file_tmp = argv[2];
+			password_file_tmp = argv[idx+1];
 		}
 	}else if(argc == 3){
-		password_file_tmp = argv[1];
-		username = argv[2];
+		password_file_tmp = argv[idx];
+		username = argv[idx+1];
 	}else{
 		print_usage();
 		return 1;

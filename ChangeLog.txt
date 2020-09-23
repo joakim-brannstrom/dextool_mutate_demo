@@ -46,6 +46,7 @@ Broker:
 - Add `mosquitto_kick_client_by_clientid()` and `mosquitto_kick_client_by_username()`
   functions, which can be used by plugins to disconnect clients.
 - Add support for handling $CONTROL/ topics in plugins.
+- Add support for PBKDF2-SHA512 password hashing.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are

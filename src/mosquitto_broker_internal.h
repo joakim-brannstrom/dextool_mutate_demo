@@ -174,6 +174,11 @@ enum mosquitto_msg_origin{
 	mosq_mo_broker = 1
 };
 
+enum mosquitto_pwhash_type{
+	pw_sha512 = 6,
+	pw_sha512_pbkdf2 = 7
+};
+
 struct mosquitto__auth_plugin{
 	void *lib;
 	void *user_data;
@@ -449,14 +454,15 @@ struct mosquitto_client_msg{
 };
 
 struct mosquitto__unpwd{
+	UT_hash_handle hh;
 	char *username;
 	char *password;
 #ifdef WITH_TLS
+	unsigned char *salt;
 	unsigned int password_len;
 	unsigned int salt_len;
-	unsigned char *salt;
 #endif
-	UT_hash_handle hh;
+	enum mosquitto_pwhash_type hashtype;
 };
 
 struct mosquitto__acl{
