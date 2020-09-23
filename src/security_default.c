@@ -1051,7 +1051,7 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 #ifdef WITH_TLS
 	for(i=0; i<db->config->listener_count; i++){
 		listener = &db->config->listeners[i];
-		if(listener && listener->ssl_ctx && (listener->cafile || listener->capath) && listener->crlfile && listener->require_certificate){
+		if(listener && listener->ssl_ctx && listener->certfile && listener->keyfile && listener->crlfile && listener->require_certificate){
 			if(net__tls_server_ctx(listener)){
 				return 1;
 			}

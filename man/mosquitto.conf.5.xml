@@ -46,7 +46,7 @@
 		<para>The simplest option is to have no authentication at all. This is
 			the default if no other options are given. Unauthenticated
 			encrypted support is provided by using the certificate based
-			SSL/TLS based options cafile/capath, certfile and keyfile.</para>
+			SSL/TLS based options certfile and keyfile.</para>
 		<para>MQTT provides username/password authentication as part of the
 			protocol. Use the password_file option to define the valid
 			usernames and passwords. Be sure to use network encryption if you
@@ -674,7 +674,7 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 			<varlistentry>
 				<term><option>memory_limit</option> <replaceable>limit</replaceable></term>
 				<listitem>
-                    <para>
+					<para>
 						This option sets the maximum number of heap memory bytes that the broker
 						will allocate, and hence sets a hard limit on memory use by the broker.
 						Memory requests that exceed this value will be denied. The effect will
@@ -1228,7 +1228,7 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 				<varlistentry>
 					<term><option>websockets_headers_size</option> <replaceable>size</replaceable></term>
 					<listitem>
-                        <para>Change the websockets headers size. This is a
+						<para>Change the websockets headers size. This is a
 							global option, it is not possible to set per
 							listener. This option sets the size of the buffer
 							used in the libwebsockets library when reading HTTP
@@ -1249,33 +1249,35 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 				<varlistentry>
 					<term><option>cafile</option> <replaceable>file path</replaceable></term>
 					<listitem>
-						<para>At least one of <option>cafile</option> or
-							<option>capath</option> must be provided to enable
-							SSL support.</para>
 						<para><option>cafile</option> is used to define the
 							path to a file containing the PEM encoded CA
-							certificates that are trusted.</para>
+							certificates that are trusted when checking incoming
+							client certificates.
+						</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>
 					<term><option>capath</option> <replaceable>directory path</replaceable></term>
 					<listitem>
-						<para>At least one of <option>cafile</option> or
-							<option>capath</option> must be provided to enable
-							SSL support.</para>
 						<para><option>capath</option> is used to define a
 							directory that contains PEM encoded CA certificates
-							that are trusted. For <option>capath</option> to
+							that are trusted when checking incoming client
+							certificates. For <option>capath</option> to
 							work correctly, the certificates files must have
 							".pem" as the file ending and you must run
-							"openssl rehash &lt;path to capath&gt;" each time you
-							add/remove a certificate.</para>
+							"openssl rehash &lt;path to capath&gt;" each time
+							you add/remove a certificate.
+						</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>
 					<term><option>certfile</option> <replaceable>file path</replaceable></term>
 					<listitem>
-						<para>Path to the PEM encoded server certificate.</para>
+						<para>
+							Path to the PEM encoded server certificate. This
+							option and <option>keyfile</option> must be present
+							to enable certificate based TLS encryption.
+						</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>
@@ -1312,7 +1314,11 @@ openssl dhparam -out dhparam.pem 2048</programlisting>
 				<varlistentry>
 					<term><option>keyfile</option> <replaceable>file path</replaceable></term>
 					<listitem>
-						<para>Path to the PEM encoded keyfile.</para>
+						<para>
+							Path to the PEM encoded server key. This
+							option and <option>certfile</option> must be present
+							to enable certificate based TLS encryption.
+						</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>

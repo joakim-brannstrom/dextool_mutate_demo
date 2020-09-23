@@ -24,6 +24,7 @@ TEST_OBJS = test.o \
 			utf8.o
 
 LIB_OBJS = memory_mosq.o \
+		   memory_public.o \
 		   misc_mosq.o \
 		   packet_datatypes.o \
 		   property_mosq.o \
@@ -38,6 +39,7 @@ BRIDGE_TOPIC_TEST_OBJS = \
 BRIDGE_TOPIC_OBJS = \
 		bridge_topic.o \
 		memory_mosq.o \
+		memory_public.o \
 		util_topic.o \
 
 PERSIST_READ_TEST_OBJS = \
@@ -46,6 +48,7 @@ PERSIST_READ_TEST_OBJS = \
 
 PERSIST_READ_OBJS = \
 		memory_mosq.o \
+		memory_public.o \
 		misc_mosq.o \
 		packet_datatypes.o \
 		persist_read.o \
@@ -64,6 +67,7 @@ PERSIST_WRITE_TEST_OBJS = \
 PERSIST_WRITE_OBJS = \
 		database.o \
 		memory_mosq.o \
+		memory_public.o \
 		misc_mosq.o \
 		packet_datatypes.o \
 		persist_read.o \
@@ -85,6 +89,7 @@ SUBS_TEST_OBJS = \
 SUBS_OBJS = \
 		database.o \
 		memory_mosq.o \
+		memory_public.o \
 		subs.o \
 		topic_tok.o
 
@@ -115,6 +120,9 @@ database.o : ../../src/database.c
 	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 memory_mosq.o : ../../lib/memory_mosq.c
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
+
+memory_public.o : ../../src/memory_public.c
 	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
 
 misc_mosq.o : ../../lib/misc_mosq.c

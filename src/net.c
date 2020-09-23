@@ -454,17 +454,19 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 	ENGINE *engine = NULL;
 	int rc;
 
-	rc = SSL_CTX_load_verify_locations(listener->ssl_ctx, listener->cafile, listener->capath);
-	if(rc == 0){
-		if(listener->cafile && listener->capath){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\" and capath \"%s\".", listener->cafile, listener->capath);
-		}else if(listener->cafile){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\".", listener->cafile);
-		}else{
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
+	if(listener->cafile || listener->capath){
+		rc = SSL_CTX_load_verify_locations(listener->ssl_ctx, listener->cafile, listener->capath);
+		if(rc == 0){
+			if(listener->cafile && listener->capath){
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\" and capath \"%s\".", listener->cafile, listener->capath);
+			}else if(listener->cafile){
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\".", listener->cafile);
+			}else{
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
+			}
+			net__print_ssl_error(NULL);
+			return 1;
 		}
-		net__print_ssl_error(NULL);
-		return 1;
 	}
 	if(listener->tls_engine){
 #if !defined(OPENSSL_NO_ENGINE)
@@ -761,7 +763,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 	/* We need to have at least one working socket. */
 	if(listener->sock_count > 0){
 #ifdef WITH_TLS
-		if((listener->cafile || listener->capath) && listener->certfile && listener->keyfile){
+		if(listener->certfile && listener->keyfile){
 			if(net__tls_server_ctx(listener)){
 				return 1;
 			}
