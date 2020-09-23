@@ -2,6 +2,11 @@
 
 This directory contains plugins for use with Mosquitto.
 
+## Dynamic security
+This is a fully functioning plugin that implements authentication and access
+control, with configuration via a $CONTROL topic. See the readme in
+dynamic-security for more information.
+
 ## Message timestamp
 This is an **example** plugin to demonstrate how it is possible to attach MQTT v5 properties to messages after they have been received, and before they are sent on to subscribers.
 

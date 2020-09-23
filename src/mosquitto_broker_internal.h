@@ -447,10 +447,12 @@ struct mosquitto_client_msg{
 	bool dup;
 };
 
+
 struct mosquitto__unpwd{
 	UT_hash_handle hh;
 	char *username;
 	char *password;
+	char *clientid;
 #ifdef WITH_TLS
 	unsigned char *salt;
 	unsigned int password_len;
@@ -845,6 +847,8 @@ int mosquitto_psk_key_get_default(struct mosquitto_db *db, struct mosquitto *con
 
 int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *context, bool reauth, const void *data_in, uint16_t data_in_len, void **data_out, uint16_t *data_out_len);
 int mosquitto_security_auth_continue(struct mosquitto_db *db, struct mosquitto *context, const void *data_in, uint16_t data_len, void **data_out, uint16_t *data_out_len);
+
+void unpwd__free_item(struct mosquitto__unpwd **unpwd, struct mosquitto__unpwd *item);
 
 /* ============================================================
  * Session expiry

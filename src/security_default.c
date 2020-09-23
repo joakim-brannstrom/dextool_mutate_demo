@@ -816,9 +816,7 @@ static int pwfile__parse(const char *file, struct mosquitto__unpwd **root)
 }
 
 
-#ifdef WITH_TLS
-
-static void unpwd__free_item(struct mosquitto__unpwd **unpwd, struct mosquitto__unpwd *item)
+void unpwd__free_item(struct mosquitto__unpwd **unpwd, struct mosquitto__unpwd *item)
 {
 	mosquitto__free(item->username);
 	mosquitto__free(item->password);
@@ -828,6 +826,7 @@ static void unpwd__free_item(struct mosquitto__unpwd **unpwd, struct mosquitto__
 }
 
 
+#ifdef WITH_TLS
 static int unpwd__decode_passwords(struct mosquitto__unpwd **unpwd)
 {
 	struct mosquitto__unpwd *u, *tmp;

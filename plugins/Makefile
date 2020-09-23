@@ -1,4 +1,5 @@
 DIRS= \
+		dynamic-security \
 		message-timestamp \
 		payload-modification
 
