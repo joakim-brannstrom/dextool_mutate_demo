@@ -406,6 +406,8 @@ static void security__module_cleanup_single(struct mosquitto__security_options *
 					opts->auth_plugin_configs[i].plugin.user_data,
 					opts->auth_plugin_configs[i].options,
 					opts->auth_plugin_configs[i].option_count);
+			mosquitto__free(opts->auth_plugin_configs[i].plugin.identifier);
+			opts->auth_plugin_configs[i].plugin.identifier = NULL;
 
 		}else if(opts->auth_plugin_configs[i].plugin.version == 4){
 			opts->auth_plugin_configs[i].plugin.plugin_cleanup_v4(

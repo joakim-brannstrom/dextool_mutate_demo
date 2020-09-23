@@ -178,6 +178,7 @@ struct mosquitto__auth_plugin{
 	void *lib;
 	void *user_data;
 	int (*plugin_version)(void);
+	struct mosquitto_plugin_id_t *identifier;
 
 	FUNC_plugin_init_v5 plugin_init_v5;
 	FUNC_plugin_cleanup_v5 plugin_cleanup_v5;

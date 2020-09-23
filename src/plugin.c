@@ -86,6 +86,7 @@ int plugin__load_v5(struct mosquitto__listener *listener, struct mosquitto__auth
 
 	plugin->lib = lib;
 	plugin->user_data = NULL;
+	plugin->identifier = pid;
 
 	if(plugin->plugin_init_v5){
 		rc = plugin->plugin_init_v5(pid, &plugin->user_data, options, option_count);
