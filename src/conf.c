@@ -818,6 +818,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
 					if(conf__parse_bool(&token, "allow_anonymous", (bool *)&cur_security_options->allow_anonymous, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "allow_duplicate_messages")){
+					log__printf(NULL, MOSQ_LOG_NOTICE, "The 'allow_duplicate_messages' option is now deprecated and will be removed in a future version. The behaviour will default to true.");
 					if(conf__parse_bool(&token, "allow_duplicate_messages", &config->allow_duplicate_messages, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "allow_zero_length_clientid")){
 					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
@@ -907,6 +908,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 				}else if(!strcmp(token, "autosave_on_changes")){
 					if(conf__parse_bool(&token, "autosave_on_changes", &config->autosave_on_changes, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "bind_address")){
+					log__printf(NULL, MOSQ_LOG_NOTICE, "The 'bind_address' option is now deprecated and will be removed in a future version. The behaviour will default to true.");
 					config->local_only = false;
 					if(reload) continue; /* Listeners not valid for reloading. */
 					if(conf__parse_string(&token, "default listener bind_address", &config->default_listener.host, saveptr)) return MOSQ_ERR_INVAL;
@@ -1187,6 +1189,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "clientid_prefixes")){
+					log__printf(NULL, MOSQ_LOG_NOTICE, "The 'clientid_prefixes' option is now deprecated and will be removed in a future version.");
 					if(reload){
 						mosquitto__free(config->clientid_prefixes);
 						config->clientid_prefixes = NULL;
@@ -1767,6 +1770,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					if(reload) continue; /* pid file not valid for reloading. */
 					if(conf__parse_string(&token, "pid_file", &config->pid_file, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "port")){
+					log__printf(NULL, MOSQ_LOG_NOTICE, "The 'port' option is now deprecated and will be removed in a future version. Please use 'listener' instead.");
 					config->local_only = false;
 					if(reload) continue; /* Listeners not valid for reloading. */
 					if(config->default_listener.port){
@@ -1920,8 +1924,6 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty socket_domain value in configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-				}else if(!strcmp(token, "store_clean_interval")){
-					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: store_clean_interval is no longer needed.");
 				}else if(!strcmp(token, "sys_interval")){
 					if(conf__parse_int(&token, "sys_interval", &config->sys_interval, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->sys_interval < 0 || config->sys_interval > 65535){
@@ -2121,11 +2123,6 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Websockets support not available.");
 #endif
-				}else if(!strcmp(token, "trace_level")
-						|| !strcmp(token, "ffdc_output")
-						|| !strcmp(token, "max_log_entries")
-						|| !strcmp(token, "trace_output")){
-					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Unsupported rsmb configuration option \"%s\".", token);
 				}else{
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unknown configuration variable \"%s\".", token);
 					return MOSQ_ERR_INVAL;

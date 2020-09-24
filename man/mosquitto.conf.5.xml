@@ -193,6 +193,9 @@
 			<varlistentry>
 				<term><option>allow_duplicate_messages</option> [ true | false ]</term>
 				<listitem>
+                    <para>This option is deprecated and will be removed in a
+                        future version. The behaviour will default to true.
+                    </para>
 					<para>If a client is subscribed to multiple subscriptions
 						that overlap, e.g. foo/# and foo/+/baz , then MQTT
 						expects that when the broker receives a message on a
@@ -364,6 +367,8 @@
 			<varlistentry>
 				<term><option>clientid_prefixes</option> <replaceable>prefix</replaceable></term>
 				<listitem>
+                    <para>This option is deprecated and will be removed in a
+                        future version.</para>
 					<para>If defined, only clients that have a clientid with a
 						prefix that matches clientid_prefixes will be allowed
 						to connect to the broker. For example, setting
@@ -921,14 +926,6 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>retained_persistence</option> [ true | false ]</term>
-				<listitem>
-					<para>This is a synonym of the <option>persistence</option>
-						option.</para>
-					<para>Reloaded on reload signal.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
 				<term><option>set_tcp_nodelay</option> [ true | false ]</term>
 				<listitem>
 					<para>If set to true, the TCP_NODELAY option will be set on
@@ -1009,6 +1006,9 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 				<varlistentry>
 					<term><option>bind_address</option> <replaceable>address</replaceable></term>
 					<listitem>
+                    <para>This option is deprecated and will be removed in a
+						future version. Use the <option>listener</option> instead.
+                    </para>
 						<para>Listen for incoming network connections on the
 							specified IP address/hostname only. This is useful
 							to restrict access to certain network interfaces.
@@ -1146,6 +1146,9 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 				<varlistentry>
 					<term><option>port</option> <replaceable>port number</replaceable></term>
 					<listitem>
+                    <para>This option is deprecated and will be removed in a
+						future version. Use the <option>listener</option> instead.
+                    </para>
 						<para>Set the network port for the default listener to
 							listen on. Defaults to 1883.</para>
 						<para>Not reloaded on reload signal.</para>
