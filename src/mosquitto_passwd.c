@@ -139,7 +139,7 @@ void print_usage(void)
 {
 	printf("mosquitto_passwd is a tool for managing password files for mosquitto.\n\n");
 	printf("Usage: mosquitto_passwd [-H sha512 | -H sha512-pbkdf2] [-c | -D] passwordfile username\n");
-	printf("       mosquitto_passwd [-H sha512 | -H sha512-pbkdf2] -b passwordfile username password\n");
+	printf("       mosquitto_passwd [-H sha512 | -H sha512-pbkdf2] [-c] -b passwordfile username password\n");
 	printf("       mosquitto_passwd -U passwordfile\n");
 	printf(" -b : run in batch mode to allow passing passwords on the command line.\n");
 	printf(" -c : create a new password file. This will overwrite existing files.\n");
@@ -352,7 +352,7 @@ static int update_pwuser_cb(FILE *fptr, FILE *ftmp, const char *username, const 
 	}else{
 		/* Write out a new line for our matching username */
 		helper->found = true;
-		rc = output_new_password(ftmp, username, password);
+		rc = output_new_password(ftmp, username, helper->password);
 	}
 	return rc;
 }
@@ -364,6 +364,7 @@ int update_pwuser(FILE *fptr, FILE *ftmp, const char *username, const char *pass
 
 	memset(&helper, 0, sizeof(helper));
 	helper.username = username;
+	helper.password = password;
 	rc = pwfile_iterate(fptr, ftmp, update_pwuser_cb, &helper);
 
 	if(helper.found){
@@ -552,66 +553,97 @@ int main(int argc, char *argv[])
 	}
 
 	idx = 1;
-	if(!strcmp(argv[1], "-H")){
-		if(argc < 5){
-			fprintf(stderr, "Error: -H argument given but not enough other arguments.\n");
-			return 1;
-		}
-		if(!strcmp(argv[2], "sha512")){
-			hashtype = pw_sha512;
-		}else if(!strcmp(argv[2], "sha512-pbkdf2")){
-			hashtype = pw_sha512_pbkdf2;
+	for(idx = 1; idx < argc; idx++){
+		if(!strcmp(argv[idx], "-H")){
+			if(idx+1 == argc){
+				fprintf(stderr, "Error: -H argument given but not enough other arguments.\n");
+				return 1;
+			}
+			if(!strcmp(argv[idx+1], "sha512")){
+				hashtype = pw_sha512;
+			}else if(!strcmp(argv[idx+1], "sha512-pbkdf2")){
+				hashtype = pw_sha512_pbkdf2;
+			}else{
+				fprintf(stderr, "Error: Unknown hash type '%s'\n", argv[idx+1]);
+				return 1;
+			}
+			idx++;
+		}else if(!strcmp(argv[idx], "-b")){
+			batch_mode = true;
+		}else if(!strcmp(argv[idx], "-c")){
+			create_new = true;
+		}else if(!strcmp(argv[idx], "-D")){
+			delete_user = true;
+		}else if(!strcmp(argv[idx], "-U")){
+			do_update_file = true;
 		}else{
-			fprintf(stderr, "Error: Unknown hash type '%s'\n", argv[2]);
-			return 1;
+			break;
 		}
-		idx += 2;
-		argc -= 2;
 	}
 
-	if(!strcmp(argv[idx], "-c")){
-		create_new = true;
-		if(argc != 4){
-			fprintf(stderr, "Error: -c argument given but password file or username missing.\n");
-			return 1;
+	if(create_new && delete_user){
+		fprintf(stderr, "Error: -c and -D cannot be used together.\n");
+		return 1;
+	}
+	if(create_new && do_update_file){
+		fprintf(stderr, "Error: -c and -U cannot be used together.\n");
+		return 1;
+	}
+	if(delete_user && do_update_file){
+		fprintf(stderr, "Error: -D and -U cannot be used together.\n");
+		return 1;
+	}
+	if(delete_user && batch_mode){
+		fprintf(stderr, "Error: -b and -D cannot be used together.\n");
+		return 1;
+	}
+
+	if(create_new){
+		if(batch_mode){
+			if(idx+2 >= argc){
+				fprintf(stderr, "Error: -c argument given but password file, username, or password missing.\n");
+				return 1;
+			}else{
+				password_file_tmp = argv[idx];
+				username = argv[idx+1];
+				password_cmd = argv[idx+2];
+			}
 		}else{
-			password_file_tmp = argv[idx+1];
-			username = argv[idx+2];
+			if(idx+1 >= argc){
+				fprintf(stderr, "Error: -c argument given but password file or username missing.\n");
+				return 1;
+			}else{
+				password_file_tmp = argv[idx];
+				username = argv[idx+1];
+			}
 		}
-	}else if(!strcmp(argv[idx], "-D")){
-		delete_user = true;
-		if(argc != 4){
+	}else if(delete_user){
+		if(idx+1 >= argc){
 			fprintf(stderr, "Error: -D argument given but password file or username missing.\n");
 			return 1;
 		}else{
-			password_file_tmp = argv[idx+1];
-			username = argv[idx+2];
+			password_file_tmp = argv[idx];
+			username = argv[idx+1];
 		}
-	}else if(!strcmp(argv[idx], "-b")){
-		batch_mode = true;
-		if(argc != 5){
-			fprintf(stderr, "Error: -b argument given but password file, username or password missing.\n");
-			return 1;
-		}else{
-			password_file_tmp = argv[idx+1];
-			username = argv[idx+2];
-			password_cmd = argv[idx+3];
-		}
-	}else if(!strcmp(argv[idx], "-U")){
-		if(argc != 3){
+	}else if(do_update_file){
+		if(idx+1 != argc){
 			fprintf(stderr, "Error: -U argument given but password file missing.\n");
 			return 1;
 		}else{
-			do_update_file = true;
-			password_file_tmp = argv[idx+1];
+			password_file_tmp = argv[idx];
 		}
-	}else if(argc == 3){
+	}else if(batch_mode == true && idx+3 == argc){
+		password_file_tmp = argv[idx];
+		username = argv[idx+1];
+		password_cmd = argv[idx+1];
+	}else if(batch_mode == false && idx+2 == argc){
 		password_file_tmp = argv[idx];
 		username = argv[idx+1];
 	}else{
 		print_usage();
 		return 1;
 	}
+
 	if(username && strlen(username) > 65535){
 		fprintf(stderr, "Error: Username must be less than 65536 characters long.\n");
 		return 1;
@@ -644,10 +676,13 @@ int main(int argc, char *argv[])
 #endif
 
 	if(create_new){
-		rc = get_password(password, MAX_BUFFER_LEN);
-		if(rc){
-			free(password_file);
-			return rc;
+		if(batch_mode == false){
+			rc = get_password(password, MAX_BUFFER_LEN);
+			if(rc){
+				free(password_file);
+				return rc;
+			}
+			password_cmd = password;
 		}
 		fptr = fopen(password_file, "wt");
 		if(!fptr){
@@ -656,7 +691,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 		free(password_file);
-		rc = output_new_password(fptr, username, password);
+		rc = output_new_password(fptr, username, password_cmd);
 		fclose(fptr);
 		return rc;
 	}else{

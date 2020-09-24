@@ -67,6 +67,9 @@ Client library:
   sockets. Closes #1526.
 - Add `mosquitto_ssl_get()` to allow clients to access their SSL structure and
   perform additional verification.
+- Fix send quota being incorrecly reset on reconnect. Closes #1822.
+- Don't use logging until log mutex is initialised. Closes #1819.
+- Fix missing mach/mach_time.h header on OS X. Closes #1831.
 
 Clients:
 - Add timeout return code (27) for `mosquitto_sub -W <secs>` and
@@ -92,6 +95,105 @@ Clients:
 - mosquitto_sub now supports extra format specifiers for field width and
   precision for some parameters.
 - Add `--version` for all clients.
+
+
+1.6.12 - 2020-08-19
+===================
+
+Security:
+- In some circumstances, Mosquitto could leak memory when handling PUBLISH
+  messages. This is limited to incoming QoS 2 messages, and is related
+  to the combination of the broker having persistence enabled, a clean
+  session=false client, which was connected prior to the broker restarting,
+  then has reconnected and has now sent messages at a sufficiently high rate
+  that the incoming queue at the broker has filled up and hence messages are
+  being dropped. This is more likely to have an effect where
+  max_queued_messages is a small value. This has now been fixed. Closes #1793.
+
+Broker:
+- Build warning fixes when building with WITH_BRIDGE=no and WITH_TLS=no.
+
+Clients:
+- All clients exit with an error exit code on CONNACK failure. Closes #1778.
+- Don't busy loop with `mosquitto_pub -l` on a slow connection.
+
+
+1.6.11 - 2020-08-11
+===================
+
+Security:
+- On Windows the Mosquitto service was being installed without appropriate
+  path quoting, this has been fixed.
+
+Broker:
+- Fix usage message only mentioning v3.1.1. Closes #1713.
+- Fix broker refusing to start if only websockets listeners were defined.
+  Closes #1740.
+- Change systemd unit files to create /var/log/mosquitto before starting.
+  Closes #821.
+- Don't quit with an error if opening the log file isn't possible.
+  Closes #821.
+- Fix bridge topic remapping when using "" as the topic. Closes #1749.
+- Fix messages being queued for disconnected bridges when clean start was
+  set to true. Closes #1729.
+- Fix `autosave_interval` not being triggered by messages being delivered.
+  Closes #1726.
+- Fix websockets clients sometimes not being disconnected promptly.
+  Closes #1718.
+- Fix "slow" file based logging by switching to line based buffering.
+  Closes #1689. Closes #1741.
+- Log protocol error message where appropriate from a bad UNSUBSCRIBE, rather
+  than the generic "socket error".
+- Don't try to start DLT logging if DLT unavailable, to avoid a long delay
+  when shutting down the broker. Closes #1735.
+- Fix potential memory leaks. Closes #1773. Closes #1774.
+- Fix clients not receiving messages after a previous client with the same
+  client ID and positive will delay interval quit. Closes #1752.
+- Fix overly broad HAVE_PTHREAD_CANCEL compile guard. Closes #1547.
+
+Client library:
+- Improved documentation around connect callback return codes. Close #1730.
+- Fix `mosquitto_publish*()` no longer returning `MOSQ_ERR_NO_CONN` when not
+  connected. Closes #1725.
+- `mosquitto_loop_start()` now sets a thread name on Linux, FreeBSD, NetBSD,
+  and OpenBSD. Closes #1777.
+- Fix `mosquitto_loop_stop()` not stopping on Windows. Closes #1748. Closes #117.
+
+
+1.6.10 - 2020-05-25
+===================
+
+Broker:
+- Report invalid bridge prefix+pattern combinations at config parsing time
+  rather than letting the bridge fail later. Issue #1635.
+- Fix `mosquitto_passwd -b` not updating passwords for existing users
+  correctly. Creating a new user with `-b` worked without problem.
+  Closes #1664.
+- Fix memory leak when connecting clients rejected.
+- Don't disconnect clients that are already disconnected. This prevents the
+  session expiry being extended on SIGHUP. Closes #1521.
+- Fix support for openssl 3.0.
+- Fix check when loading persistence file of a different version than the
+  native version. Closes #1684.
+- Fix possible assert crash associated with bridge reconnecting when compiled
+  without epoll support. Closes #1700.
+ 
+Client library:
+- Don't treat an unexpected PUBACK, PUBREL, or PUBCOMP as a fatal error.
+  Issue #1629.
+- Fix support for openssl 3.0.
+- Fix memory leaks from multiple calls to
+  `mosquitto_lib_init()`/`mosquitto_lib_cleanup()`. Closes #1691.
+- Fix documentation on return code of `mosquitto_lib_init()` for Windows.
+  Closes #1690.
+
+Clients:
+- Fix mosquitto_sub %j or %J not working on Windows. Closes #1674.
+
+Build:
+- Various fixes for building with <C99 support. Closes #1622.
+- Fix use of sed on BSD. Closes #1614.
+>>>>>>> fixes
 
 
 1.6.9 - 20200227

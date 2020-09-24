@@ -1,4 +1,4 @@
-FROM alpine:3.8
+FROM alpine:3.12
 
 LABEL maintainer="Roger Light <roger@atchoo.org>" \
     description="Eclipse Mosquitto MQTT Broker"
@@ -62,7 +62,7 @@ RUN set -x && \
         WITH_SHARED_LIBRARIES=yes \
         WITH_SRV=no \
         WITH_STRIP=yes \
-        WITH_TLS_PSK=no \
+		WITH_TLS_PSK=no \
         WITH_WEBSOCKETS=yes \
         prefix=/usr \
         binary && \
@@ -78,7 +78,9 @@ RUN set -x && \
     install -m644 /build/mosq/mosquitto.conf /mosquitto/config/mosquitto.conf && \
     chown -R mosquitto:mosquitto /mosquitto && \
     apk --no-cache add \
-        ca-certificates libuuid && \
+        ca-certificates \
+		libressl \
+		libuuid && \
     apk del build-deps && \
     rm -rf /build
 

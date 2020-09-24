@@ -87,6 +87,7 @@ NAVIGATION_LINKS = {
         #("/sponsoring/", "Sponsoring"),
         (
             (
+                ("/documentation/", "All"),
                 ("/roadmap/", "Roadmap"),
                 ("/api/", "API"),
                 ("/man/libmosquitto-3.html", "libmosquitto"),
@@ -156,6 +157,7 @@ PAGES = (
     ("pages/*.txt", "", "story.tmpl"),
     ("pages/*.html", "", "story.tmpl"),
     ("pages/*.md", "", "story.tmpl"),
+    ("pages/documentation/*.md", "", "story.tmpl"),
     ("man/*.xml", "man", "story.tmpl"),
 )
 

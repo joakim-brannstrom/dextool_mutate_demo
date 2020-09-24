@@ -21,6 +21,78 @@ Contributors:
 #include "memory_mosq.h"
 
 #ifdef WITH_BRIDGE
+static int bridge__create_remap_topic(const char *prefix, const char *topic, char **remap_topic)
+{
+	int len;
+
+	if(prefix){
+		if(topic){
+			len = strlen(topic) + strlen(prefix)+1;
+			*remap_topic = mosquitto__malloc(len+1);
+			if(!(*remap_topic)){
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+				return MOSQ_ERR_NOMEM;
+			}
+			snprintf(*remap_topic, len+1, "%s%s", prefix, topic);
+			(*remap_topic)[len] = '\0';
+		}else{
+			*remap_topic = mosquitto__strdup(prefix);
+			if(!(*remap_topic)){
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+				return MOSQ_ERR_NOMEM;
+			}
+		}
+	}else{
+		*remap_topic = mosquitto__strdup(topic);
+		if(!(*remap_topic)){
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			return MOSQ_ERR_NOMEM;
+		}
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+static int bridge__create_prefix(char **full_prefix, const char *topic, const char *prefix, const char *direction)
+{
+	int len;
+
+	if(mosquitto_pub_topic_check(prefix) != MOSQ_ERR_SUCCESS){
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic local prefix '%s'.", prefix);
+		return MOSQ_ERR_INVAL;
+	}
+
+	if(topic){
+		len = strlen(topic) + strlen(prefix) + 1;
+	}else{
+		len = strlen(prefix) + 1;
+	}
+	*full_prefix = mosquitto__malloc(len);
+	if(*full_prefix == NULL){
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		return MOSQ_ERR_NOMEM;
+	}
+
+	if(topic){
+		/* Print full_prefix+pattern to check for validity */
+		snprintf(*full_prefix, len, "%s%s", prefix, topic);
+	}else{
+		snprintf(*full_prefix, len, "%s", prefix);
+	}
+
+	if(mosquitto_sub_topic_check(*full_prefix) != MOSQ_ERR_SUCCESS){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Invalid bridge topic %s prefix and pattern combination '%s'.",
+				direction, *full_prefix);
+
+		return MOSQ_ERR_INVAL;
+	}
+
+	/* Print just the prefix for storage */
+	snprintf(*full_prefix, len, "%s", prefix);
+
+	return MOSQ_ERR_SUCCESS;
+}
 
 
 /* topic <topic> [[[out | in | both] qos-level] local-prefix remote-prefix] */
@@ -28,7 +100,6 @@ int bridge__add_topic(struct mosquitto__bridge *bridge, const char *topic, enum 
 {
 	struct mosquitto__bridge_topic *topics;
 	struct mosquitto__bridge_topic *cur_topic;
-	int len;
 
 
 	if(bridge == NULL) return MOSQ_ERR_INVAL;
@@ -83,69 +154,29 @@ int bridge__add_topic(struct mosquitto__bridge *bridge, const char *topic, enum 
 	if(local_prefix || remote_prefix){
 		bridge->topic_remapping = true;
 		if(local_prefix){
-			cur_topic->local_prefix = mosquitto__strdup(local_prefix);
-			if(cur_topic->local_prefix == NULL){
+			if(bridge__create_prefix(&cur_topic->local_prefix, cur_topic->topic, local_prefix, "local")){
 				log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 				return MOSQ_ERR_NOMEM;
 			}
 		}
 		if(remote_prefix){
-			cur_topic->remote_prefix = mosquitto__strdup(remote_prefix);
-			if(cur_topic->remote_prefix == NULL){
+			if(bridge__create_prefix(&cur_topic->remote_prefix, cur_topic->topic, remote_prefix, "local")){
 				log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 				return MOSQ_ERR_NOMEM;
 			}
 		}
 	}
 
-	if(cur_topic->local_prefix){
-		if(cur_topic->topic){
-			len = strlen(cur_topic->topic) + strlen(cur_topic->local_prefix)+1;
-			cur_topic->local_topic = mosquitto__malloc(len+1);
-			if(!cur_topic->local_topic){
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-				return MOSQ_ERR_NOMEM;
-			}
-			snprintf(cur_topic->local_topic, len+1, "%s%s", cur_topic->local_prefix, cur_topic->topic);
-			cur_topic->local_topic[len] = '\0';
-		}else{
-			cur_topic->local_topic = mosquitto__strdup(cur_topic->local_prefix);
-			if(!cur_topic->local_topic){
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-				return MOSQ_ERR_NOMEM;
-			}
-		}
-	}else{
-		cur_topic->local_topic = mosquitto__strdup(cur_topic->topic);
-		if(!cur_topic->local_topic){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
-		}
+	if(bridge__create_remap_topic(cur_topic->local_prefix,
+			cur_topic->topic, &cur_topic->local_topic)){
+
+		return MOSQ_ERR_INVAL;
 	}
 
-	if(cur_topic->remote_prefix){
-		if(cur_topic->topic){
-			len = strlen(cur_topic->topic) + strlen(cur_topic->remote_prefix)+1;
-			cur_topic->remote_topic = mosquitto__malloc(len+1);
-			if(!cur_topic->remote_topic){
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-				return MOSQ_ERR_NOMEM;
-			}
-			snprintf(cur_topic->remote_topic, len, "%s%s", cur_topic->remote_prefix, cur_topic->topic);
-			cur_topic->remote_topic[len] = '\0';
-		}else{
-			cur_topic->remote_topic = mosquitto__strdup(cur_topic->remote_prefix);
-			if(!cur_topic->remote_topic){
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-				return MOSQ_ERR_NOMEM;
-			}
-		}
-	}else{
-		cur_topic->remote_topic = mosquitto__strdup(cur_topic->topic);
-		if(!cur_topic->remote_topic){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
-		}
+	if(bridge__create_remap_topic(cur_topic->remote_prefix,
+			cur_topic->topic, &cur_topic->remote_topic)){
+
+		return MOSQ_ERR_INVAL;
 	}
 
 	return MOSQ_ERR_SUCCESS;

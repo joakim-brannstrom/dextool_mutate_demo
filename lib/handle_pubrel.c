@@ -101,9 +101,7 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	}
 
 	rc = message__remove(mosq, mid, mosq_md_in, &message, 2);
-	if(rc){
-		return rc;
-	}else{
+	if(rc == MOSQ_ERR_SUCCESS){
 		/* Only pass the message on if we have removed it from the queue - this
 		 * prevents multiple callbacks for the same message. */
 		pthread_mutex_lock(&mosq->callback_mutex);
@@ -120,6 +118,10 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 		pthread_mutex_unlock(&mosq->callback_mutex);
 		mosquitto_property_free_all(&properties);
 		message__cleanup(&message);
+	}else if(rc == MOSQ_ERR_NOT_FOUND){
+		return MOSQ_ERR_SUCCESS;
+	}else{
+		return rc;
 	}
 #endif
 

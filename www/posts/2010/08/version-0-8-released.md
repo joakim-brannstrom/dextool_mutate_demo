@@ -26,7 +26,7 @@ The documentation of the library is currently ongoing... There is an overview
 of most of the function calls and an example in the [libmosquitto.3] man page,
 but complete coverage can be found in the mosquitto.h man page. This, combined
 with the class details in mosquittopp.h can be used to help use the C++
-library. The python module isn't documented due to it's extremely changeable
+library. The python module isn't documented due to its extremely changeable
 state, but there is an example in the python directory.
 
 Other changes:

@@ -1,13 +1,15 @@
 [Unit]
-Description=Mosquitto MQTT v3.1/v3.1.1 Broker
+Description=Mosquitto MQTT Broker
 Documentation=man:mosquitto.conf(5) man:mosquitto(8)
-After=network-online.target
-Wants=network-online.target
+After=network.target
+Wants=network.target
 
 [Service]
 ExecStart=/usr/sbin/mosquitto -c /etc/mosquitto/mosquitto.conf
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
+ExecStartPre=/bin/mkdir -m 740 -p /var/log/mosquitto
+ExecStartPre=/bin/chown mosquitto: /var/log/mosquitto
 
 [Install]
 WantedBy=multi-user.target

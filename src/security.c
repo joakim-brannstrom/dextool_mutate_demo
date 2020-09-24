@@ -35,7 +35,7 @@ void LIB_ERROR(void)
 #ifdef WIN32
 	char *buf;
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_STRING,
-			NULL, GetLastError(), LANG_NEUTRAL, &buf, 0, NULL);
+			NULL, GetLastError(), LANG_NEUTRAL, (LPTSTR)&buf, 0, NULL);
 	log__printf(NULL, MOSQ_LOG_ERR, "Load error: %s", buf);
 	LocalFree(buf);
 #else
@@ -589,7 +589,7 @@ int mosquitto_security_cleanup(struct mosquitto_db *db, bool reload)
 }
 
 
-//int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
+/* int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access) */
 static int acl__check_single(struct mosquitto__auth_plugin_config *auth_plugin, struct mosquitto *context, struct mosquitto_acl_msg *msg, int access)
 {
 	const char *username;
@@ -650,7 +650,7 @@ static int acl__check_dollar(const char *topic, int access)
 	}else if(!strncmp(topic, "$share", 6)){
 		/* Only allow sub/unsub to shared subscriptions */
 		if(access == MOSQ_ACL_SUBSCRIBE){
-		//FIXME if(access == MOSQ_ACL_SUBSCRIBE || access == MOSQ_ACL_UNSUBSCRIBE){
+		/* FIXME if(access == MOSQ_ACL_SUBSCRIBE || access == MOSQ_ACL_UNSUBSCRIBE){ */
 			return MOSQ_ERR_SUCCESS;
 		}else{
 			return MOSQ_ERR_ACL_DENIED;

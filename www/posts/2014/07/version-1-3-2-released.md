@@ -34,7 +34,7 @@ authentication plugins in mosquitto.
  * When a durable client reconnects, its queued messages are now checked
    against ACLs in case of a change in username/ACL state since it last
    connected.
- * Anonymous clients are no longer accidently disconnected from the broker
+ * Anonymous clients are no longer accidentally disconnected from the broker
    after a SIGHUP.
  * Fix bug [#1324411], which could have had unexpected consequences for delayed
    messages in rare circumstances.

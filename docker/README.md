@@ -2,11 +2,14 @@
 
 This directory contains Docker files for Mosquitto.
 
-The `1.5` directory contains the latest version of Mosquitto for
-that series, and provide the basis of the official image.
+The `1.6` directory contains the latest version of Mosquitto for
+that series, and provide the basis of the official image. It uses libressl. The
+`1.6-openssl` directory is identical except that it uses openssl instead of
+libressl, and enables TLS-PSK support.
 
-`1.4.12` is the version using Alpine packaged Mosquitto, which will be removed
-at the next minor release.
+The `1.5` directory contains the version of Mosquitto based on the 1.5 branch.
+It uses libressl. The `1.5-openssl` directory is identical except that it uses
+openssl instead of libressl, and enables TLS-PSK support.
 
 The `generic` directory contains a generic Dockerfile that can be used to build
 arbitrary versions of Mosquitto based on the released tarballs as follows:

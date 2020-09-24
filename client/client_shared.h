@@ -53,7 +53,7 @@ struct mosq_config {
 	int pub_mode; /* pub, rr */
 	char *file_input; /* pub, rr */
 	char *message; /* pub, rr */
-	long msglen; /* pub, rr */
+	int msglen; /* pub, rr */
 	char *topic; /* pub, rr */
 	char *bind_address;
 	int repeat_count; /* pub */
@@ -68,7 +68,7 @@ struct mosq_config {
 	char *password;
 	char *will_topic;
 	char *will_payload;
-	long will_payloadlen;
+	int will_payloadlen;
 	int will_qos;
 	bool will_retain;
 #ifdef WITH_TLS
@@ -104,7 +104,7 @@ struct mosq_config {
 	int msg_count; /* sub */
 	char *format; /* sub, rr */
 	bool pretty; /* sub, rr */
-	int timeout; /* sub */
+	unsigned int timeout; /* sub */
 	int sub_opts; /* sub */
 	long session_expiry_interval;
 	int random_filter; /* sub */

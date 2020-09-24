@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
 	}
 	delete mosq;
 
+	delete mosq;
 	mosqpp::lib_cleanup();
 
 	return run;

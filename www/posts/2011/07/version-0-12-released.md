@@ -9,7 +9,7 @@
 .. type: text
 -->
 
-This is an update with some features and and bug fixes. The most significant
+This is an update with some features and bug fixes. The most significant
 change is configuration reloading support. This will be improved to include
 bridge reloading in the future.
 

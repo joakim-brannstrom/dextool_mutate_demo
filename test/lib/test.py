@@ -22,7 +22,10 @@ tests = [
     (1, ['./02-unsubscribe.py', 'c/02-unsubscribe.test']),
 
     (1, ['./03-publish-b2c-qos1.py', 'c/03-publish-b2c-qos1.test']),
+    (1, ['./03-publish-b2c-qos1-unexpected-puback.py', 'c/03-publish-b2c-qos1-unexpected-puback.test']),
     (1, ['./03-publish-b2c-qos2-len.py', 'c/03-publish-b2c-qos2-len.test']),
+    (1, ['./03-publish-b2c-qos2-unexpected-pubrel.py', 'c/03-publish-b2c-qos2-unexpected-pubrel.test']),
+    (1, ['./03-publish-b2c-qos2-unexpected-pubcomp.py', 'c/03-publish-b2c-qos2-unexpected-pubcomp.test']),
     (1, ['./03-publish-b2c-qos2.py', 'c/03-publish-b2c-qos2.test']),
     (1, ['./03-publish-c2b-qos1-disconnect.py', 'c/03-publish-c2b-qos1-disconnect.test']),
     (1, ['./03-publish-c2b-qos1-len.py', 'c/03-publish-c2b-qos1-len.test']),

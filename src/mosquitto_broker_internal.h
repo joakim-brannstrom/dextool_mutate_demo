@@ -706,6 +706,8 @@ void db__msg_store_clean(struct mosquitto_db *db);
 void db__msg_store_compact(struct mosquitto_db *db);
 void db__msg_store_free(struct mosquitto_msg_store *store);
 int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *context);
+bool db__ready_for_flight(struct mosquitto_msg_data *msgs, int qos);
+bool db__ready_for_queue(struct mosquitto *context, int qos, struct mosquitto_msg_data *msg_data);
 void sys_tree__init(struct mosquitto_db *db);
 void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time);
 int db__message_write_inflight_out_all(struct mosquitto_db *db, struct mosquitto *context);

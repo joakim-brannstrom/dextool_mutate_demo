@@ -191,14 +191,63 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 }
 
 
+static int interruptible_sleep(struct mosquitto *mosq, unsigned long reconnect_delay)
+{
+#ifdef HAVE_PSELECT
+	struct timespec local_timeout;
+#else
+	struct timeval local_timeout;
+#endif
+	fd_set readfds;
+	int fdcount;
+	char pairbuf;
+	int maxfd = 0;
+
+	local_timeout.tv_sec = reconnect_delay;
+#ifdef HAVE_PSELECT
+	local_timeout.tv_nsec = 0;
+#else
+	local_timeout.tv_usec = 0;
+#endif
+	FD_ZERO(&readfds);
+	maxfd = 0;
+	if(mosq->sockpairR != INVALID_SOCKET){
+		/* sockpairR is used to break out of select() before the
+		 * timeout, when mosquitto_loop_stop() is called */
+		FD_SET(mosq->sockpairR, &readfds);
+		maxfd = mosq->sockpairR;
+	}
+#ifdef HAVE_PSELECT
+	fdcount = pselect(maxfd+1, &readfds, NULL, NULL, &local_timeout, NULL);
+#else
+	fdcount = select(maxfd+1, &readfds, NULL, NULL, &local_timeout);
+#endif
+	if(fdcount == -1){
+#ifdef WIN32
+		errno = WSAGetLastError();
+#endif
+		if(errno == EINTR){
+			return MOSQ_ERR_SUCCESS;
+		}else{
+			return MOSQ_ERR_ERRNO;
+		}
+	}else if(mosq->sockpairR != INVALID_SOCKET && FD_ISSET(mosq->sockpairR, &readfds)){
+#ifndef WIN32
+		if(read(mosq->sockpairR, &pairbuf, 1) == 0){
+		}
+#else
+		recv(mosq->sockpairR, &pairbuf, 1, 0);
+#endif
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 {
 	int run = 1;
 	int rc;
 	unsigned long reconnect_delay;
-#ifndef WIN32
-	struct timespec req, rem;
-#endif
 	int state;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
@@ -207,6 +256,9 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 
 	while(run){
 		do{
+#ifdef HAVE_PTHREAD_CANCEL
+			pthread_testcancel();
+#endif
 			rc = mosquitto_loop(mosq, timeout, max_packets);
 		}while(run && rc == MOSQ_ERR_SUCCESS);
 		/* Quit after fatal errors. */
@@ -231,6 +283,9 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 			return rc;
 		}
 		do{
+#ifdef HAVE_PTHREAD_CANCEL
+			pthread_testcancel();
+#endif
 			rc = MOSQ_ERR_SUCCESS;
 			state = mosquitto__get_state(mosq);
 			if(state == mosq_cs_disconnecting || state == mosq_cs_disconnected){
@@ -252,15 +307,8 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 					mosq->reconnects++;
 				}
 
-#ifdef WIN32
-				Sleep(reconnect_delay*1000);
-#else
-				req.tv_sec = reconnect_delay;
-				req.tv_nsec = 0;
-				while(nanosleep(&req, &rem) == -1 && errno == EINTR){
-					req = rem;
-				}
-#endif
+				rc = interruptible_sleep(mosq, reconnect_delay);
+				if(rc) return rc;
 
 				state = mosquitto__get_state(mosq);
 				if(state == mosq_cs_disconnecting || state == mosq_cs_disconnected){

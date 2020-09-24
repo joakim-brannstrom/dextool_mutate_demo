@@ -30,7 +30,7 @@ to use non-default ports, the docker run command will need to be updated
 to expose the ports that have been configured, for example:
 
 ```
-docker run -it -p 1883:1883 -p 9001:9001 -v <absolute-path-to-configuration-file>:/mosquitto/config/mosquitto.conf eclipse-mosquitto:<version>
+docker run -it -p 1883:1883 -p 8080:8080 -v <absolute-path-to-configuration-file>:/mosquitto/config/mosquitto.conf eclipse-mosquitto:<version>
 ```
 
 Configuration can be changed to:

@@ -94,7 +94,7 @@ static void net__print_error(int log, const char *format_str)
 
 #ifdef WIN32
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-			NULL, WSAGetLastError(), LANG_NEUTRAL, &buf, 0, NULL);
+			NULL, WSAGetLastError(), LANG_NEUTRAL, (LPTSTR)&buf, 0, NULL);
 
 	log__printf(NULL, log, format_str, buf);
 	LocalFree(buf);
@@ -173,7 +173,11 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 
 	if(db->config->set_tcp_nodelay){
 		int flag = 1;
+#ifdef WIN32
+			if (setsockopt(new_sock, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int)) != 0) {
+#else
 		if(setsockopt(new_sock, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0){
+#endif
 			log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Unable to set TCP_NODELAY.");
 		}
 	}
@@ -207,43 +211,37 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 
 #ifdef WITH_TLS
 	/* TLS init */
-	for(i=0; i<db->config->listener_count; i++){
-		for(j=0; j<db->config->listeners[i].sock_count; j++){
-			if(db->config->listeners[i].socks[j] == listensock){
-				if(db->config->listeners[i].ssl_ctx){
-					new_context->ssl = SSL_new(db->config->listeners[i].ssl_ctx);
-					if(!new_context->ssl){
-						context__cleanup(db, new_context, true);
-						return -1;
-					}
-					SSL_set_ex_data(new_context->ssl, tls_ex_index_context, new_context);
-					SSL_set_ex_data(new_context->ssl, tls_ex_index_listener, &db->config->listeners[i]);
-					new_context->want_write = true;
-					bio = BIO_new_socket(new_sock, BIO_NOCLOSE);
-					SSL_set_bio(new_context->ssl, bio, bio);
-					ERR_clear_error();
-					rc = SSL_accept(new_context->ssl);
-					if(rc != 1){
-						rc = SSL_get_error(new_context->ssl, rc);
-						if(rc == SSL_ERROR_WANT_READ){
-							/* We always want to read. */
-						}else if(rc == SSL_ERROR_WANT_WRITE){
-							new_context->want_write = true;
-						}else{
-							if(db->config->connection_messages == true){
-								e = ERR_get_error();
-								while(e){
-									log__printf(NULL, MOSQ_LOG_NOTICE,
-											"Client connection from %s failed: %s.",
-											new_context->address, ERR_error_string(e, ebuf));
-									e = ERR_get_error();
-								}
-							}
-							context__cleanup(db, new_context, true);
-							return -1;
-						}
+	if(new_context->listener->ssl_ctx){
+		new_context->ssl = SSL_new(new_context->listener->ssl_ctx);
+		if(!new_context->ssl){
+			context__cleanup(db, new_context, true);
+			return -1;
+		}
+		SSL_set_ex_data(new_context->ssl, tls_ex_index_context, new_context);
+		SSL_set_ex_data(new_context->ssl, tls_ex_index_listener, new_context->listener);
+		new_context->want_write = true;
+		bio = BIO_new_socket(new_sock, BIO_NOCLOSE);
+		SSL_set_bio(new_context->ssl, bio, bio);
+		ERR_clear_error();
+		rc = SSL_accept(new_context->ssl);
+		if(rc != 1){
+			rc = SSL_get_error(new_context->ssl, rc);
+			if(rc == SSL_ERROR_WANT_READ){
+				/* We always want to read. */
+			}else if(rc == SSL_ERROR_WANT_WRITE){
+				new_context->want_write = true;
+			}else{
+				if(db->config->connection_messages == true){
+					e = ERR_get_error();
+					while(e){
+						log__printf(NULL, MOSQ_LOG_NOTICE,
+								"Client connection from %s failed: %s.",
+								new_context->address, ERR_error_string(e, ebuf));
+						e = ERR_get_error();
 					}
 				}
+				context__cleanup(db, new_context, true);
+				return -1;
 			}
 		}
 	}
@@ -452,8 +450,13 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 {
 #ifdef WITH_TLS
 	ENGINE *engine = NULL;
+#  if !defined(OPENSSL_NO_ENGINE)
+	UI_METHOD *ui_method;
+	EVP_PKEY *pkey;
+#  endif
 	int rc;
 
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 	if(listener->cafile || listener->capath){
 		rc = SSL_CTX_load_verify_locations(listener->ssl_ctx, listener->cafile, listener->capath);
 		if(rc == 0){
@@ -464,10 +467,27 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 			}else{
 				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
 			}
-			net__print_ssl_error(NULL);
-			return 1;
 		}
 	}
+#else
+	if(listener->cafile){
+		rc = SSL_CTX_load_verify_file(listener->ssl_ctx, listener->cafile);
+		if(rc == 0){
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\".", listener->cafile);
+			net__print_ssl_error(NULL);
+			return MOSQ_ERR_TLS;
+		}
+	}
+	if(listener->capath){
+		rc = SSL_CTX_load_verify_dir(listener->ssl_ctx, listener->capath);
+		if(rc == 0){
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
+			net__print_ssl_error(NULL);
+			return MOSQ_ERR_TLS;
+		}
+	}
+#endif
+
 	if(listener->tls_engine){
 #if !defined(OPENSSL_NO_ENGINE)
 		engine = ENGINE_by_id(listener->tls_engine);
@@ -503,7 +523,7 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 	}
 	if(listener->tls_engine && listener->tls_keyform == mosq_k_engine){
 #if !defined(OPENSSL_NO_ENGINE)
-		UI_METHOD *ui_method = net__get_ui_method();
+		ui_method = net__get_ui_method();
 		if(listener->tls_engine_kpass_sha1){
 			if(!ENGINE_ctrl_cmd(engine, ENGINE_SECRET_MODE, ENGINE_SECRET_MODE_SHA, NULL, NULL, 0)){
 				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set engine secret mode sha");
@@ -519,7 +539,7 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 			}
 			ui_method = NULL;
 		}
-		EVP_PKEY *pkey = ENGINE_load_private_key(engine, listener->keyfile, ui_method, NULL);
+		pkey = ENGINE_load_private_key(engine, listener->keyfile, ui_method, NULL);
 		if(!pkey){
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load engine private key file \"%s\".", listener->keyfile);
 			net__print_ssl_error(NULL);
@@ -537,6 +557,7 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 		rc = SSL_CTX_use_PrivateKey_file(listener->ssl_ctx, listener->keyfile, SSL_FILETYPE_PEM);
 		if(rc != 1){
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server key file \"%s\". Check keyfile.", listener->keyfile);
+			net__print_ssl_error(NULL);
 #if !defined(OPENSSL_NO_ENGINE)
 			ENGINE_FINISH(engine);
 #endif
@@ -575,11 +596,7 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 	struct addrinfo *ainfo, *rp;
 	char service[10];
 	int rc;
-#ifndef WIN32
 	int ss_opt = 1;
-#else
-	char ss_opt = 1;
-#endif
 #ifdef SO_BINDTODEVICE
 	struct ifreq ifr;
 #endif

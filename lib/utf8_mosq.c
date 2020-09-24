@@ -45,11 +45,11 @@ int mosquitto_validate_utf8(const char *str, int len)
 			codelen = 2;
 			codepoint = (ustr[i] & 0x1F);
 		}else if((ustr[i] & 0xF0) == 0xE0){
-			// 1110xxxx - 3 byte sequence
+			/* 1110xxxx - 3 byte sequence */
 			codelen = 3;
 			codepoint = (ustr[i] & 0x0F);
 		}else if((ustr[i] & 0xF8) == 0xF0){
-			// 11110xxx - 4 byte sequence
+			/* 11110xxx - 4 byte sequence */
 			if(ustr[i] > 0xF4){
 				/* Invalid, this would produce values > 0x10FFFF. */
 				return MOSQ_ERR_MALFORMED_UTF8;

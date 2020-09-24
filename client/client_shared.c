@@ -45,7 +45,7 @@ static int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int 
 static int check_format(const char *str)
 {
 	int i;
-	int len;
+	size_t len;
 
 	len = strlen(str);
 	for(i=0; i<len; i++){
@@ -268,7 +268,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	char line[1024];
 	int count;
 	char *loc = NULL;
-	int len;
+	size_t len;
 	char *args[3];
 
 #ifndef WIN32
@@ -418,7 +418,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 				fprintf(stderr, "Error: You must provide a client id if you are using an infinite session expiry interval.\n");
 				return 1;
 			}
-			rc = mosquitto_property_add_int32(&cfg->connect_props, MQTT_PROP_SESSION_EXPIRY_INTERVAL, cfg->session_expiry_interval);
+			rc = mosquitto_property_add_int32(&cfg->connect_props, MQTT_PROP_SESSION_EXPIRY_INTERVAL, (uint32_t )cfg->session_expiry_interval);
 			if(rc){
 				fprintf(stderr, "Error adding property session-expiry-interval\n");
 			}
@@ -481,7 +481,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 
 int cfg_add_topic(struct mosq_config *cfg, int type, char *topic, const char *arg)
 {
-	if(mosquitto_validate_utf8(topic, strlen(topic))){
+	if(mosquitto_validate_utf8(topic, (int )strlen(topic))){
 		fprintf(stderr, "Error: Malformed UTF-8 in %s argument.\n\n", arg);
 		return 1;
 	}
@@ -503,7 +503,7 @@ int cfg_add_topic(struct mosq_config *cfg, int type, char *topic, const char *ar
 			return 1;
 		}
 		cfg->topic_count++;
-		cfg->topics = realloc(cfg->topics, cfg->topic_count*sizeof(char *));
+		cfg->topics = realloc(cfg->topics, (size_t )cfg->topic_count*sizeof(char *));
 		if(!cfg->topics){
 			err_printf(cfg, "Error: Out of memory.\n");
 			return 1;
@@ -517,7 +517,9 @@ int cfg_add_topic(struct mosq_config *cfg, int type, char *topic, const char *ar
 int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])
 {
 	int i;
+	int tmpi;
 	float f;
+	size_t szt;
 
 	for(i=1; i<argc; i++){
 		if(!strcmp(argv[i], "-A")){
@@ -784,7 +786,16 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}else{
 				cfg->message = strdup(argv[i+1]);
-				cfg->msglen = strlen(cfg->message);
+				if(cfg->message == NULL){
+					fprintf(stderr, "Error: Out of memory.\n\n");
+					return 1;
+				}
+				szt = strlen(cfg->message);
+				if(szt > MQTT_MAX_PAYLOAD){
+					fprintf(stderr, "Error: Message length must be less than %u bytes.\n\n", MQTT_MAX_PAYLOAD);
+					return 1;
+				}
+				cfg->msglen = (int )szt;
 				cfg->pub_mode = MSGMODE_CMD;
 			}
 			i++;
@@ -793,7 +804,12 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: -M argument given but max_inflight not specified.\n\n");
 				return 1;
 			}else{
-				cfg->max_inflight = atoi(argv[i+1]);
+				tmpi = atoi(argv[i+1]);
+				if(tmpi < 1){
+					fprintf(stderr, "Error: Maximum inflight messages must be greater than 0.\n\n");
+					return 1;
+				}
+				cfg->max_inflight = (unsigned int )tmpi;
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--nodelay")){
@@ -936,13 +952,13 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: --repeat-delay argument given but no time specified.\n\n");
 				return 1;
 			}else{
-				f = atof(argv[i+1]);
+				f = (float )atof(argv[i+1]);
 				if(f < 0.0f){
 					fprintf(stderr, "Error: --repeat-delay argument must be >=0.0.\n\n");
 					return 1;
 				}
-				f *= 1.0e6;
-				cfg->repeat_delay.tv_sec = (int)f/1e6;
+				f *= 1.0e6f;
+				cfg->repeat_delay.tv_sec = (int)f/1000000;
 				cfg->repeat_delay.tv_usec = (int)f%1000000;
 			}
 			i++;
@@ -987,7 +1003,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: -T argument given but no topic filter specified.\n\n");
 				return 1;
 			}else{
-				if(mosquitto_validate_utf8(argv[i+1], strlen(argv[i+1]))){
+				if(mosquitto_validate_utf8(argv[i+1], (int )strlen(argv[i+1]))){
 					fprintf(stderr, "Error: Malformed UTF-8 in -T argument.\n\n");
 					return 1;
 				}
@@ -996,7 +1012,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 					return 1;
 				}
 				cfg->filter_out_count++;
-				cfg->filter_outs = realloc(cfg->filter_outs, cfg->filter_out_count*sizeof(char *));
+				cfg->filter_outs = realloc(cfg->filter_outs, (size_t )cfg->filter_out_count*sizeof(char *));
 				if(!cfg->filter_outs){
 					fprintf(stderr, "Error: Out of memory.\n");
 					return 1;
@@ -1046,7 +1062,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: -U argument given but no unsubscribe topic specified.\n\n");
 				return 1;
 			}else{
-				if(mosquitto_validate_utf8(argv[i+1], strlen(argv[i+1]))){
+				if(mosquitto_validate_utf8(argv[i+1], (int )strlen(argv[i+1]))){
 					fprintf(stderr, "Error: Malformed UTF-8 in -U argument.\n\n");
 					return 1;
 				}
@@ -1055,7 +1071,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 					return 1;
 				}
 				cfg->unsub_topic_count++;
-				cfg->unsub_topics = realloc(cfg->unsub_topics, cfg->unsub_topic_count*sizeof(char *));
+				cfg->unsub_topics = realloc(cfg->unsub_topics, (size_t )cfg->unsub_topic_count*sizeof(char *));
 				if(!cfg->unsub_topics){
 					fprintf(stderr, "Error: Out of memory.\n");
 					return 1;
@@ -1112,11 +1128,12 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 					fprintf(stderr, "Error: -W argument given but no timeout specified.\n\n");
 					return 1;
 				}else{
-					cfg->timeout = atoi(argv[i+1]);
-					if(cfg->timeout < 1){
-						fprintf(stderr, "Error: Invalid timeout \"%d\".\n\n", cfg->msg_count);
+					tmpi = atoi(argv[i+1]);
+					if(tmpi < 1){
+						fprintf(stderr, "Error: Invalid timeout \"%d\".\n\n", tmpi);
 						return 1;
 					}
+					cfg->timeout = (unsigned int )tmpi;
 				}
 				i++;
 			}
@@ -1126,7 +1143,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}else{
 				cfg->will_payload = strdup(argv[i+1]);
-				cfg->will_payloadlen = strlen(cfg->will_payload);
+				cfg->will_payloadlen = (int )strlen(cfg->will_payload);
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--will-qos")){
@@ -1148,7 +1165,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: --will-topic argument given but no will topic specified.\n\n");
 				return 1;
 			}else{
-				if(mosquitto_validate_utf8(argv[i+1], strlen(argv[i+1]))){
+				if(mosquitto_validate_utf8(argv[i+1], (int )strlen(argv[i+1]))){
 					fprintf(stderr, "Error: Malformed UTF-8 in --will-topic argument.\n\n");
 					return 1;
 				}
@@ -1359,7 +1376,7 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 static int mosquitto__urldecode(char *str)
 {
 	int i, j;
-	int len;
+	size_t len;
 	if(!str) return 0;
 
 	if(!strchr(str, '%')) return 0;

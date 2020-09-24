@@ -174,14 +174,14 @@ static int persist__client_msg_restore(struct mosquitto_db *db, struct P_client_
 
 static int persist__client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 {
-	int rc = 0;
+	int i, rc = 0;
 	struct mosquitto *context;
 	struct P_client chunk;
 
 	memset(&chunk, 0, sizeof(struct P_client));
 
-	if(db_version == 5){
-		rc = persist__chunk_client_read_v5(db_fptr, &chunk);
+	if(db_version == 6 || db_version == 5){
+		rc = persist__chunk_client_read_v56(db_fptr, &chunk, db_version);
 	}else{
 		rc = persist__chunk_client_read_v234(db_fptr, &chunk, db_version);
 	}
@@ -198,13 +198,29 @@ static int persist__client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	if(context){
 		context->session_expiry_time = chunk.F.session_expiry_time;
 		context->session_expiry_interval = chunk.F.session_expiry_interval;
+		if(chunk.username && !context->username){
+			/* username is not freed here, it is now owned by context */
+			context->username = chunk.username;
+			chunk.username = NULL;
+			/* in per_listener_settings mode, try to find the listener by persisted port */
+			if(db->config->per_listener_settings && !context->listener && chunk.F.listener_port > 0){
+				for(i=0; i < db->config->listener_count; i++){
+					if(db->config->listeners[i].port == chunk.F.listener_port){
+						context->listener = &db->config->listeners[i];
+						break;
+					}
+				}
+			}
+		}
 		/* FIXME - we should expire clients here if they have exceeded their time */
 	}else{
 		rc = 1;
 	}
 
 	mosquitto__free(chunk.client_id);
-
+	if(chunk.username){
+		mosquitto__free(chunk.username);
+	}
 	return rc;
 }
 
@@ -216,8 +232,8 @@ static int persist__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_f
 
 	memset(&chunk, 0, sizeof(struct P_client_msg));
 
-	if(db_version == 5){
-		rc = persist__chunk_client_msg_read_v5(db_fptr, &chunk, length);
+	if(db_version == 6 || db_version == 5){
+		rc = persist__chunk_client_msg_read_v56(db_fptr, &chunk, length);
 	}else{
 		rc = persist__chunk_client_msg_read_v234(db_fptr, &chunk);
 	}
@@ -245,8 +261,8 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 
 	memset(&chunk, 0, sizeof(struct P_msg_store));
 
-	if(db_version == 5){
-		rc = persist__chunk_msg_store_read_v5(db_fptr, &chunk, length);
+	if(db_version == 6 || db_version == 5){
+		rc = persist__chunk_msg_store_read_v56(db_fptr, &chunk, length);
 	}else{
 		rc = persist__chunk_msg_store_read_v234(db_fptr, &chunk, db_version);
 	}
@@ -342,8 +358,8 @@ static int persist__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 	memset(&chunk, 0, sizeof(struct P_retain));
 
-	if(db_version == 5){
-		rc = persist__chunk_retain_read_v5(db_fptr, &chunk);
+	if(db_version == 6 || db_version == 5){
+		rc = persist__chunk_retain_read_v56(db_fptr, &chunk);
 	}else{
 		rc = persist__chunk_retain_read_v234(db_fptr, &chunk);
 	}
@@ -371,8 +387,8 @@ static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 	memset(&chunk, 0, sizeof(struct P_sub));
 
-	if(db_version == 5){
-		rc = persist__chunk_sub_read_v5(db_fptr, &chunk);
+	if(db_version == 6 || db_version == 5){
+		rc = persist__chunk_sub_read_v56(db_fptr, &chunk);
 	}else{
 		rc = persist__chunk_sub_read_v234(db_fptr, &chunk);
 	}
@@ -392,8 +408,8 @@ static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 int persist__chunk_header_read(FILE *db_fptr, int *chunk, int *length)
 {
-	if(db_version == 5){
-		return persist__chunk_header_read_v5(db_fptr, chunk, length);
+	if(db_version == 6 || db_version == 5){
+		return persist__chunk_header_read_v56(db_fptr, chunk, length);
 	}else{
 		return persist__chunk_header_read_v234(db_fptr, chunk, length);
 	}
@@ -433,15 +449,17 @@ int persist__restore(struct mosquitto_db *db)
 		goto error;
 	}
 	if(!memcmp(header, magic, 15)){
-		// Restore DB as normal
+		/* Restore DB as normal */
 		read_e(fptr, &crc, sizeof(uint32_t));
 		read_e(fptr, &i32temp, sizeof(uint32_t));
 		db_version = ntohl(i32temp);
 		/* IMPORTANT - this is where compatibility checks are made.
 		 * Is your DB change still compatible with previous versions?
 		 */
-		if(db_version > MOSQ_DB_VERSION && db_version != 0){
-			if(db_version == 4){
+		if(db_version != MOSQ_DB_VERSION){
+			if(db_version == 5){
+				/* Addition of username and listener_port to client chunk in v6 */
+			}else if(db_version == 4){
 			}else if(db_version == 3){
 				/* Addition of source_username and source_port to msg_store chunk in v4, v1.5.6 */
 			}else if(db_version == 2){
@@ -456,8 +474,8 @@ int persist__restore(struct mosquitto_db *db)
 		while(persist__chunk_header_read(fptr, &chunk, &length) == MOSQ_ERR_SUCCESS){
 			switch(chunk){
 				case DB_CHUNK_CFG:
-					if(db_version == 5){
-						if(persist__chunk_cfg_read_v5(fptr, &cfg_chunk)){
+					if(db_version == 6 || db_version == 5){
+						if(persist__chunk_cfg_read_v56(fptr, &cfg_chunk)){
 							fclose(fptr);
 							return 1;
 						}

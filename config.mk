@@ -118,7 +118,7 @@ WITH_CONTROL:=yes
 
 # Also bump lib/mosquitto.h, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto64.nsi
-VERSION=1.6.9
+VERSION=1.6.12
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
 SOVERSION=1
@@ -167,8 +167,10 @@ PASSWD_LDADD:=
 
 ifneq ($(or $(findstring $(UNAME),FreeBSD), $(findstring $(UNAME),OpenBSD), $(findstring $(UNAME),NetBSD)),)
 	BROKER_LDADD:=$(BROKER_LDADD) -lm
+	SEDINPLACE:=-i ""
 else
 	BROKER_LDADD:=$(BROKER_LDADD) -ldl -lm
+	SEDINPLACE:=-i
 endif
 
 ifeq ($(UNAME),Linux)

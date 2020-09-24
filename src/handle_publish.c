@@ -272,9 +272,18 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		db__message_store_find(context, msg->source_mid, &stored);
 	}
 	if(!stored){
-		dup = 0;
-		if(db__message_store(db, context, msg, message_expiry_interval, 0, mosq_mo_client)){
-			return 1;
+		if(msg->qos == 0
+				|| db__ready_for_flight(&context->msgs_in, msg->qos)
+				|| db__ready_for_queue(context, msg->qos, &context->msgs_in)){
+
+			dup = 0;
+			if(db__message_store(db, context, msg, message_expiry_interval, 0, mosq_mo_client)){
+				return 1;
+			}
+		}else{
+			/* Client isn't allowed any more incoming messages, so fail early */
+			reason_code = MQTT_RC_QUOTA_EXCEEDED;
+			goto process_bad_message;
 		}
 		stored = msg;
 		msg = NULL;
@@ -309,6 +318,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			/* db__message_insert() returns 2 to indicate dropped message
 			 * due to queue. This isn't an error so don't disconnect them. */
+			/* FIXME - this is no longer necessary due to failing early above */
 			if(!res){
 				if(send__pubrec(context, stored->source_mid, 0, NULL)) rc = 1;
 			}else if(res == 1){

@@ -46,6 +46,7 @@ static bool disconnect_sent = false;
 static int publish_count = 0;
 static bool ready_for_repeat = false;
 static volatile int status = STATUS_CONNECTING;
+static int connack_result = 0;
 
 #ifdef WIN32
 static uint64_t next_publish_tv;
@@ -76,7 +77,7 @@ static void set_repeat_time(void)
 	next_publish_tv.tv_sec += cfg.repeat_delay.tv_sec;
 	next_publish_tv.tv_usec += cfg.repeat_delay.tv_usec;
 
-	next_publish_tv.tv_sec += next_publish_tv.tv_usec/1e6;
+	next_publish_tv.tv_sec += next_publish_tv.tv_usec/1000000;
 	next_publish_tv.tv_usec = next_publish_tv.tv_usec%1000000;
 }
 
@@ -128,6 +129,8 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 	UNUSED(obj);
 	UNUSED(flags);
 	UNUSED(properties);
+
+	connack_result = result;
 
 	if(!result){
 		switch(cfg.pub_mode){
@@ -217,7 +220,7 @@ void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_
 
 int pub_shared_init(void)
 {
-	line_buf = malloc(line_buf_len);
+	line_buf = malloc((size_t )line_buf_len);
 	if(!line_buf){
 		err_printf(&cfg, "Error: Out of memory.\n");
 		return 1;
@@ -238,11 +241,22 @@ int pub_stdin_line_loop(struct mosquitto *mosq)
 	mosquitto_loop_start(mosq);
 	stdin_finished = false;
 	do{
+		if(status == STATUS_CONNECTING){
+#ifdef WIN32
+			Sleep(100);
+#else
+			struct timespec ts;
+			ts.tv_sec = 0;
+			ts.tv_nsec = 100000000;
+			nanosleep(&ts, NULL);
+#endif
+		}
+
 		if(status == STATUS_CONNACK_RECVD){
 			pos = 0;
 			read_len = line_buf_len;
 			while(status == STATUS_CONNACK_RECVD && fgets(&line_buf[pos], read_len, stdin)){
-				buf_len_actual = strlen(line_buf);
+				buf_len_actual = (int )strlen(line_buf);
 				if(line_buf[buf_len_actual-1] == '\n'){
 					line_buf[buf_len_actual-1] = '\0';
 					rc = my_publish(mosq, &mid_sent, cfg.topic, buf_len_actual-1, line_buf, cfg.qos, cfg.retain);
@@ -256,7 +270,7 @@ int pub_stdin_line_loop(struct mosquitto *mosq)
 					line_buf_len += 1024;
 					pos += 1023;
 					read_len = 1024;
-					buf2 = realloc(line_buf, line_buf_len);
+					buf2 = realloc(line_buf, (size_t )line_buf_len);
 					if(!buf2){
 						err_printf(&cfg, "Error: Out of memory.\n");
 						return MOSQ_ERR_NOMEM;
@@ -319,7 +333,7 @@ int pub_other_loop(struct mosquitto *mosq)
 	int loop_delay = 1000;
 
 	if(cfg.repeat_count > 1 && (cfg.repeat_delay.tv_sec == 0 || cfg.repeat_delay.tv_usec != 0)){
-		loop_delay = cfg.repeat_delay.tv_usec / 2000;
+		loop_delay = (int )cfg.repeat_delay.tv_usec / 2000;
 	}
 
 	do{
@@ -584,7 +598,11 @@ int main(int argc, char *argv[])
 	if(rc){
 		err_printf(&cfg, "Error: %s\n", mosquitto_strerror(rc));
 	}
-	return rc;
+	if(connack_result){
+		return connack_result;
+	}else{
+		return rc;
+	}
 
 cleanup:
 	mosquitto_lib_cleanup();

@@ -1,10 +1,10 @@
-FROM alpine:3.8
+FROM alpine:3.12
 
 LABEL maintainer="Roger Light <roger@atchoo.org>" \
     description="Eclipse Mosquitto MQTT Broker"
 
-ENV VERSION=1.6.8 \
-    DOWNLOAD_SHA256=7df23c81ca37f0e070574fe74414403cf25183016433d07add6134366fb45df6 \
+ENV VERSION=1.6.11 \
+    DOWNLOAD_SHA256=b02d8f1368c40d5779ee125c37daf9003608eb47d7fbb04c5b938c76c1230a1f \
     GPG_KEYS=A0D6EEA1DCAE49A635A3B2F0779B22DFB3E717B7 \
     LWS_VERSION=2.4.2
 
@@ -79,7 +79,8 @@ RUN set -x && \
     install -m644 /build/mosq/mosquitto.conf /mosquitto/config/mosquitto.conf && \
     chown -R mosquitto:mosquitto /mosquitto && \
     apk --no-cache add \
-        ca-certificates && \
+        ca-certificates \
+        libressl && \
     apk del build-deps && \
     rm -rf /build
 

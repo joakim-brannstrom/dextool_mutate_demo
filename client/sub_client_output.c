@@ -110,7 +110,7 @@ static void write_payload(const unsigned char *payload, int payloadlen, int hex,
 	}
 
 	if(hex == 0){
-		(void)fwrite(payload, 1, payloadlen, stdout);
+		(void)fwrite(payload, 1, (size_t )payloadlen, stdout);
 	}else if(hex == 1){
 		for(i=0; i<payloadlen; i++){
 			fprintf(stdout, "%02x", payload[i]);
