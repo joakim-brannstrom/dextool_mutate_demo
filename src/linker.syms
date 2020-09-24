@@ -20,7 +20,6 @@
 	mosquitto_kick_client_by_username;
 	mosquitto_log_printf;
 	mosquitto_malloc;
-	mosquitto_plugin_publish;
 	mosquitto_property_add_binary;
 	mosquitto_property_add_byte;
 	mosquitto_property_add_int16;
