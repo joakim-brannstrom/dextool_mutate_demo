@@ -124,8 +124,8 @@ int mosquitto_callback_unregister(mosquitto_plugin_id_t *identifier, int event, 
  *
  * Memory allocation.
  *
- * Use these functions when allocating or freeing memory that comes from or
- * goes to the broker.
+ * Use these functions when allocating or freeing memory to have your memory
+ * included in the memory tracking on the broker.
  *
  * ========================================================================= */
 void *mosquitto_calloc(size_t nmemb, size_t size);

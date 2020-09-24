@@ -96,7 +96,82 @@ struct mosquitto_acl_msg {
 
 /* =========================================================================
  *
- * Plugin Functions
+ * Plugin Functions v5
+ *
+ * This is the plugin version 5 interface, which covers authentication, access
+ * control, the $CONTROL topic space handling, and message inspection and
+ * modification.
+ *
+ * This interface is available from v2.0 onwards.
+ *
+ * There are just three functions to implement in your plugin. You should
+ * register callbacks to handle different events in your
+ * mosquitto_plugin_init() function. See mosquitto_broker.h for the events and
+ * callback registering functions.
+ *
+ * ========================================================================= */
+
+/*
+ * Function: mosquitto_auth_plugin_version
+ *
+ * The broker will call this function immediately after loading the plugin to
+ * check it is a supported plugin version. Your code must simply return
+ * the plugin interface version you support, i.e. 5.
+ */
+int mosquitto_plugin_version(void);
+
+/*
+ * Function: mosquitto_auth_plugin_init
+ *
+ * Called after the plugin has been loaded and <mosquitto_plugin_version>
+ * has been called. This will only ever be called once and can be used to
+ * initialise the plugin.
+ *
+ * Parameters:
+ *
+ *  identifier :     This is a pointer to an opaque structure which you must
+ *                   save and use when registering/unregistering callbacks.
+ *	user_data :      The pointer set here will be passed to the other plugin
+ *	                 functions. Use to hold connection information for example.
+ *	opts :           Pointer to an array of struct mosquitto_opt, which
+ *	                 provides the plugin options defined in the configuration file.
+ *	opt_count :      The number of elements in the opts array.
+ *
+ * Return value:
+ *	Return 0 on success
+ *	Return >0 on failure.
+ */
+int mosquitto_plugin_init(mosquitto_plugin_id_t *identifier, void **userdata, struct mosquitto_opt *options, int option_count);
+
+
+/*
+ * Function: mosquitto_plugin_cleanup
+ *
+ * Called when the broker is shutting down. This will only ever be called once
+ * per plugin.
+ *
+ * Parameters:
+ *
+ *	user_data :      The pointer provided in <mosquitto_auth_plugin_init>.
+ *	opts :           Pointer to an array of struct mosquitto_opt, which
+ *	                 provides the plugin options defined in the configuration file.
+ *	opt_count :      The number of elements in the opts array.
+ *
+ * Return value:
+ *	Return 0 on success
+ *	Return >0 on failure.
+ */
+int mosquitto_plugin_cleanup(void *userdata, struct mosquitto_opt *options, int option_count);
+
+
+
+/* =========================================================================
+ *
+ * Plugin Functions v4
+ *
+ * This is the plugin version 4 interface, which is exclusively for
+ * authentication and access control, and which is still supported for existing
+ * plugins. If you are developing a new plugin, please use the v5 interface.
  *
  * You must implement these functions in your plugin.
  *
@@ -107,10 +182,9 @@ struct mosquitto_acl_msg {
  *
  * The broker will call this function immediately after loading the plugin to
  * check it is a supported plugin version. Your code must simply return
- * MOSQ_AUTH_PLUGIN_VERSION.
+ * the version of the plugin interface you support, i.e. 4.
  */
 int mosquitto_auth_plugin_version(void);
-int mosquitto_plugin_version(void);
 
 
 /*
@@ -133,7 +207,6 @@ int mosquitto_plugin_version(void);
  *	Return >0 on failure.
  */
 int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_opt *opts, int opt_count);
-int mosquitto_plugin_init(mosquitto_plugin_id_t *identifier, void **userdata, struct mosquitto_opt *options, int option_count);
 
 
 /*
@@ -156,7 +229,6 @@ int mosquitto_plugin_init(mosquitto_plugin_id_t *identifier, void **userdata, st
  *	Return >0 on failure.
  */
 int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_opt *opts, int opt_count);
-int mosquitto_plugin_cleanup(void *userdata, struct mosquitto_opt *options, int option_count);
 
 
 /*
