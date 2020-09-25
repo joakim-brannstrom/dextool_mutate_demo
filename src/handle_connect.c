@@ -807,6 +807,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	context->clean_start = clean_start;
 	context->will = will_struct;
+	will_struct = NULL;
 
 	if(context->auth_method){
 		rc = mosquitto_security_auth_start(db, context, false, auth_data, auth_data_len, &auth_data_out, &auth_data_out_len);
