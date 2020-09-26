@@ -1,3 +1,6 @@
+Broker:
+- mosquitto_password now forbids the : character. Closes #1833.
+
 Client library:
 - Fix send quota being incorrecly reset on reconnect. Closes #1822.
 - Don't use logging until log mutex is initialised. Closes #1819.

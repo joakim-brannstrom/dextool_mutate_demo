@@ -598,6 +598,10 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	if(strchr(username, ':')){
+		fprintf(stderr, "Error: Username must not contain the ':' character.\n");
+		return 1;
+	}
 #ifdef WIN32
 	password_file = _fullpath(NULL, password_file_tmp, 0);
 	if(!password_file){
