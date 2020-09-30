@@ -45,7 +45,7 @@ void print_col(struct mosquitto *client)
 int mosquitto_auth_plugin_version(void)
 {
 	printf(ANSI_BLUE "PLUGIN ::: mosquitto_auth_plugin_version()" ANSI_RESET "\n");
-	return MOSQ_AUTH_PLUGIN_VERSION;
+	return 4;
 }
 
 int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_opt *auth_opts, int auth_opt_count)
