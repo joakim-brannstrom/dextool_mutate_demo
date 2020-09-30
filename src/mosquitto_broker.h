@@ -21,6 +21,12 @@ Contributors:
 extern "C" {
 #endif
 
+#if defined(WIN32) && defined(mosquitto_EXPORTS)
+#	define mosq_EXPORT  __declspec(dllexport)
+#else
+#	define mosq_EXPORT
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -112,12 +118,30 @@ struct mosquitto_evt_message {
 	bool retain;
 };
 
+
+/* Callback definition */
 typedef int (*MOSQ_FUNC_generic_callback)(int, void *, void *);
 
 typedef struct mosquitto_plugin_id_t mosquitto_plugin_id_t;
 
-int mosquitto_callback_register(mosquitto_plugin_id_t *identifier, int event, MOSQ_FUNC_generic_callback cb_func, const void *data, void *userdata);
-int mosquitto_callback_unregister(mosquitto_plugin_id_t *identifier, int event, MOSQ_FUNC_generic_callback cb_func, const void *data);
+/*
+ * Function: mosquitto_callback_register
+ */
+mosq_EXPORT int mosquitto_callback_register(
+		mosquitto_plugin_id_t *identifier,
+		int event,
+		MOSQ_FUNC_generic_callback cb_func,
+		const void *event_data,
+		void *userdata);
+
+/*
+ * Function: mosquitto_callback_unregister
+ */
+mosq_EXPORT int mosquitto_callback_unregister(
+		mosquitto_plugin_id_t *identifier,
+		int event,
+		MOSQ_FUNC_generic_callback cb_func,
+		const void *event_data);
 
 
 /* =========================================================================
@@ -128,11 +152,11 @@ int mosquitto_callback_unregister(mosquitto_plugin_id_t *identifier, int event, 
  * included in the memory tracking on the broker.
  *
  * ========================================================================= */
-void *mosquitto_calloc(size_t nmemb, size_t size);
-void mosquitto_free(void *mem);
-void *mosquitto_malloc(size_t size);
-void *mosquitto_realloc(void *ptr, size_t size);
-char *mosquitto_strdup(const char *s);
+mosq_EXPORT void *mosquitto_calloc(size_t nmemb, size_t size);
+mosq_EXPORT void mosquitto_free(void *mem);
+mosq_EXPORT void *mosquitto_malloc(size_t size);
+mosq_EXPORT void *mosquitto_realloc(void *ptr, size_t size);
+mosq_EXPORT char *mosquitto_strdup(const char *s);
 
 /* =========================================================================
  *
@@ -163,7 +187,7 @@ char *mosquitto_strdup(const char *s);
  *
  *	fmt, ... - printf style format and arguments.
  */
-void mosquitto_log_printf(int level, const char *fmt, ...);
+mosq_EXPORT void mosquitto_log_printf(int level, const char *fmt, ...);
 
 
 /* =========================================================================
@@ -179,7 +203,7 @@ void mosquitto_log_printf(int level, const char *fmt, ...);
  *
  * Retrieve the IP address of the client as a string.
  */
-const char *mosquitto_client_address(const struct mosquitto *client);
+mosq_EXPORT const char *mosquitto_client_address(const struct mosquitto *client);
 
 
 /*
@@ -187,7 +211,7 @@ const char *mosquitto_client_address(const struct mosquitto *client);
  *
  * Retrieve the clean session flag value for a client.
  */
-bool mosquitto_client_clean_session(const struct mosquitto *client);
+mosq_EXPORT bool mosquitto_client_clean_session(const struct mosquitto *client);
 
 
 /*
@@ -195,7 +219,7 @@ bool mosquitto_client_clean_session(const struct mosquitto *client);
  *
  * Retrieve the client id associated with a client.
  */
-const char *mosquitto_client_id(const struct mosquitto *client);
+mosq_EXPORT const char *mosquitto_client_id(const struct mosquitto *client);
 
 
 /*
@@ -203,7 +227,7 @@ const char *mosquitto_client_id(const struct mosquitto *client);
  *
  * Retrieve the keepalive value for a client.
  */
-int mosquitto_client_keepalive(const struct mosquitto *client);
+mosq_EXPORT int mosquitto_client_keepalive(const struct mosquitto *client);
 
 
 /*
@@ -216,7 +240,7 @@ int mosquitto_client_keepalive(const struct mosquitto *client);
  *
  * If TLS is not supported, this function will always return NULL.
  */
-void *mosquitto_client_certificate(const struct mosquitto *client);
+mosq_EXPORT void *mosquitto_client_certificate(const struct mosquitto *client);
 
 
 /*
@@ -228,7 +252,7 @@ void *mosquitto_client_certificate(const struct mosquitto *client);
  * mp_mqttsn (MQTT-SN)
  * mp_websockets (MQTT over Websockets)
  */
-int mosquitto_client_protocol(const struct mosquitto *client);
+mosq_EXPORT int mosquitto_client_protocol(const struct mosquitto *client);
 
 
 /*
@@ -240,7 +264,7 @@ int mosquitto_client_protocol(const struct mosquitto *client);
  * 4 - for MQTT v3.1.1
  * 5 - for MQTT v5
  */
-int mosquitto_client_protocol_version(const struct mosquitto *client);
+mosq_EXPORT int mosquitto_client_protocol_version(const struct mosquitto *client);
 
 
 /*
@@ -248,7 +272,7 @@ int mosquitto_client_protocol_version(const struct mosquitto *client);
  *
  * Retrieve the number of subscriptions that have been made by a client.
  */
-int mosquitto_client_sub_count(const struct mosquitto *client);
+mosq_EXPORT int mosquitto_client_sub_count(const struct mosquitto *client);
 
 
 /*
@@ -256,7 +280,7 @@ int mosquitto_client_sub_count(const struct mosquitto *client);
  *
  * Retrieve the username associated with a client.
  */
-const char *mosquitto_client_username(const struct mosquitto *client);
+mosq_EXPORT const char *mosquitto_client_username(const struct mosquitto *client);
 
 
 /* Function: mosquitto_set_username
@@ -276,7 +300,7 @@ const char *mosquitto_client_username(const struct mosquitto *client);
  *   MOSQ_ERR_INVAL - if client is NULL, or if username is zero length
  *   MOSQ_ERR_NOMEM - on out of memory
  */
-int mosquitto_set_username(struct mosquitto *client, const char *username);
+mosq_EXPORT int mosquitto_set_username(struct mosquitto *client, const char *username);
 
 
 /* =========================================================================
@@ -310,7 +334,7 @@ int mosquitto_kick_client_by_clientid(const char *clientid, bool with_will);
  * If with_will == true, then if the client has a Last Will and Testament
  *   defined then this will be sent. If false, the LWT will not be sent.
  */
-int mosquitto_kick_client_by_username(const char *username, bool with_will);
+mosq_EXPORT int mosquitto_kick_client_by_username(const char *username, bool with_will);
 
 
 /* =========================================================================
@@ -356,7 +380,7 @@ int mosquitto_kick_client_by_username(const char *username, bool with_will);
  *                    and payload is NULL, if qos is not 0, 1, or 2.
  *   MOSQ_ERR_NOMEM - on out of memory
  */
-int mosquitto_broker_publish(
+mosq_EXPORT int mosquitto_broker_publish(
 		const char *clientid,
 		const char *topic,
 		int payloadlen,
@@ -395,7 +419,7 @@ int mosquitto_broker_publish(
  *                    and payload is NULL, if qos is not 0, 1, or 2.
  *   MOSQ_ERR_NOMEM - on out of memory
  */
-int mosquitto_broker_publish_copy(
+mosq_EXPORT int mosquitto_broker_publish_copy(
 		const char *clientid,
 		const char *topic,
 		int payloadlen,

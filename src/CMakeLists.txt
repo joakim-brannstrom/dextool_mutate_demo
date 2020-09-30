@@ -190,6 +190,9 @@ endif (WITH_WEBSOCKETS)
 
 add_executable(mosquitto ${MOSQ_SRCS})
 target_link_libraries(mosquitto ${MOSQ_LIBS})
+if (WIN32)
+	set_target_properties(mosquitto PROPERTIES ENABLE_EXPORTS 1)
+endif (WIN32)
 
 if (UNIX)
 	if (APPLE)
