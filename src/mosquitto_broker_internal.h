@@ -44,10 +44,6 @@ Contributors:
 #  endif
 #endif
 
-#ifdef WITH_BRIDGE
-#include <poll.h>
-#endif
-
 #include "mosquitto_internal.h"
 #include "mosquitto_broker.h"
 #include "mosquitto_plugin.h"

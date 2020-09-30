@@ -59,7 +59,9 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 
 static struct pollfd *pollfds = NULL;
 static int pollfd_max;
+#ifndef WIN32
 static sigset_t my_sigblock;
+#endif
 
 int mux_poll__init(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count)
 {
@@ -173,7 +175,9 @@ int mux_poll__handle(struct mosquitto_db *db, mosq_sock_t *listensock, int liste
 	mosq_sock_t sock;
 	int i;
 	int fdcount;
+#ifndef WIN32
 	sigset_t origsig;
+#endif
 
 #ifndef WIN32
 	sigprocmask(SIG_SETMASK, &my_sigblock, &origsig);

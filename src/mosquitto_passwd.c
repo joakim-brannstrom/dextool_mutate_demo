@@ -66,6 +66,8 @@ struct cb_helper {
 	bool found;
 };
 
+static enum pwhash hashtype = pw_sha512_pbkdf2;
+
 #ifdef WIN32
 static FILE *mpw_tmpfile(void)
 {
@@ -74,7 +76,6 @@ static FILE *mpw_tmpfile(void)
 #else
 
 static char alphanum[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-static enum pwhash hashtype = pw_sha512_pbkdf2;
 
 static unsigned char tmpfile_path[36];
 static FILE *mpw_tmpfile(void)

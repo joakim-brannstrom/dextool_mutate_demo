@@ -16,6 +16,11 @@ Contributors:
 
 #include "config.h"
 
+#ifdef WIN32
+   /* For rand_s on Windows */
+#  define _CRT_RAND_S
+#endif
+
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
@@ -737,21 +742,31 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 
 void rand_init(void)
 {
+#ifndef WIN32
 	struct tm *ti = NULL;
 	long ns;
 
 	if(!get_time(&ti, &ns)){
 		srandom(ns);
 	}
+#endif
 }
 
 
 void print_message(struct mosq_config *cfg, const struct mosquitto_message *message, const mosquitto_property *properties)
 {
-	long r;
+#ifdef WIN32
+	unsigned int r = 0;
+#else
+	long r = 0;
+#endif
 
 	if(cfg->random_filter < 10000){
+#ifdef WIN32
+		rand_s(&r);
+#else
 		r = random();
+#endif
 		if((r%10000) >= cfg->random_filter){
 			return;
 		}
