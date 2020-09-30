@@ -150,7 +150,12 @@ int plugin__handle_message(struct mosquitto_db *db, struct mosquitto *context, s
 }
 
 
-int mosquitto_callback_register(mosquitto_plugin_id_t *identifier, int event, MOSQ_FUNC_generic_callback cb_func, const void *data, void *userdata)
+int mosquitto_callback_register(
+		mosquitto_plugin_id_t *identifier,
+		int event,
+		MOSQ_FUNC_generic_callback cb_func,
+		const void *event_data,
+		void *userdata)
 {
 	struct mosquitto_db *db;
 	struct mosquitto__callback **cb_base = NULL, *cb_new;
@@ -185,7 +190,7 @@ int mosquitto_callback_register(mosquitto_plugin_id_t *identifier, int event, MO
 			cb_base = &security_options->plugin_callbacks.ext_auth_continue;
 			break;
 		case MOSQ_EVT_CONTROL:
-			return control__register_callback(db, security_options, cb_func, data, userdata);
+			return control__register_callback(db, security_options, cb_func, event_data, userdata);
 			break;
 		case MOSQ_EVT_MESSAGE:
 			cb_base = &security_options->plugin_callbacks.message;
@@ -211,7 +216,11 @@ int mosquitto_callback_register(mosquitto_plugin_id_t *identifier, int event, MO
 }
 
 
-int mosquitto_callback_unregister(mosquitto_plugin_id_t *identifier, int event, MOSQ_FUNC_generic_callback cb_func, const void *data)
+int mosquitto_callback_unregister(
+		mosquitto_plugin_id_t *identifier,
+		int event,
+		MOSQ_FUNC_generic_callback cb_func,
+		const void *event_data)
 {
 	struct mosquitto_db *db;
 	struct mosquitto__callback **cb_base = NULL;
@@ -245,7 +254,7 @@ int mosquitto_callback_unregister(mosquitto_plugin_id_t *identifier, int event, 
 			cb_base = &security_options->plugin_callbacks.ext_auth_continue;
 			break;
 		case MOSQ_EVT_CONTROL:
-			return control__unregister_callback(db, security_options, cb_func, data);
+			return control__unregister_callback(db, security_options, cb_func, event_data);
 			break;
 		case MOSQ_EVT_MESSAGE:
 			cb_base = &security_options->plugin_callbacks.message;

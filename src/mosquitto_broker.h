@@ -45,6 +45,7 @@ enum mosquitto_protocol {
  *
  * ========================================================================= */
 
+/* Callback events */
 enum mosquitto_plugin_event {
 	MOSQ_EVT_RELOAD = 1,
 	MOSQ_EVT_ACL_CHECK = 2,
@@ -56,12 +57,17 @@ enum mosquitto_plugin_event {
 	MOSQ_EVT_PSK_KEY = 8,
 };
 
+/* Data for the MOSQ_EVT_RELOAD event */
 struct mosquitto_evt_reload {
+	void *future;
 	struct mosquitto_opt *options;
 	int option_count;
+	void *future2[4];
 };
 
+/* Data for the MOSQ_EVT_ACL_CHECK event */
 struct mosquitto_evt_acl_check {
+	void *future;
 	struct mosquitto *client;
 	int access;
 	const char *topic;
@@ -70,31 +76,43 @@ struct mosquitto_evt_acl_check {
 	int qos;
 	bool retain;
 	mosquitto_property *properties;
+	void *future2[4];
 };
 
+/* Data for the MOSQ_EVT_BASIC_AUTH event */
 struct mosquitto_evt_basic_auth {
+	void *future;
 	struct mosquitto *client;
 	char *username;
 	char *password;
+	void *future2[4];
 };
 
+/* Data for the MOSQ_EVT_PSK_KEY event */
 struct mosquitto_evt_psk_key {
+	void *future;
 	struct mosquitto *client;
 	const char *hint;
 	const char *identity;
 	char *key;
 	int max_key_len;
+	void *future2[4];
 };
 
+/* Data for the MOSQ_EVT_EXTENDED_AUTH event */
 struct mosquitto_evt_extended_auth {
+	void *future;
 	struct mosquitto *client;
 	const void *data_in;
 	void *data_out;
 	uint16_t data_in_len;
 	uint16_t data_out_len;
+	void *future2[4];
 };
 
+/* Data for the MOSQ_EVT_CONTROL event */
 struct mosquitto_evt_control {
+	void *future;
 	struct mosquitto *client;
 	const char *topic;
 	const void *payload;
@@ -104,9 +122,12 @@ struct mosquitto_evt_control {
 	int qos;
 	uint8_t reason_code;
 	bool retain;
+	void *future2[4];
 };
 
+/* Data for the MOSQ_EVT_MESSAGE event */
 struct mosquitto_evt_message {
+	void *future;
 	struct mosquitto *client;
 	char *topic;
 	void *payload;
@@ -116,6 +137,7 @@ struct mosquitto_evt_message {
 	int qos;
 	uint8_t reason_code;
 	bool retain;
+	void *future2[4];
 };
 
 
