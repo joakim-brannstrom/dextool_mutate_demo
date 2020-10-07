@@ -6,10 +6,11 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <mosquitto.h>
+#include <stdatomic.h>
 
 #include <msgsps_common.h>
 
-static volatile int message_count = 0;
+static atomic_int message_count = 0;
 
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
 {
