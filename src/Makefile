@@ -214,10 +214,10 @@ property_broker.o : property_broker.c mosquitto_broker_internal.h
 property_mosq.o : ../lib/property_mosq.c ../lib/property_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
-plugin.o : plugin.c mosquitto_plugin.h mosquitto_broker_internal.h
+plugin.o : plugin.c ../include/mosquitto_plugin.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
-plugin_public.o : plugin_public.c mosquitto_plugin.h mosquitto_broker_internal.h
+plugin_public.o : plugin_public.c ../include/mosquitto_plugin.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
 read_handle.o : read_handle.c mosquitto_broker_internal.h
@@ -310,18 +310,18 @@ mosquitto_passwd : mosquitto_passwd.o misc_mosq.o
 mosquitto_passwd.o : mosquitto_passwd.c
 	${CROSS_COMPILE}${CC} -I.. -I../lib $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-plugin_defer.so : plugin_defer.c mosquitto_plugin.h mosquitto_broker.h mosquitto_broker_internal.h
+plugin_defer.so : plugin_defer.c ../include/mosquitto_plugin.h ../include/mosquitto_broker.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} -I. -I../lib -fPIC -shared $< -o $@
 
-plugin_debug.so : plugin_debug.c mosquitto_plugin.h mosquitto_broker.h mosquitto_broker_internal.h
+plugin_debug.so : plugin_debug.c ../include/mosquitto_plugin.../include/h mosquitto_broker.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} -I. -I../lib -fPIC -shared $< -o $@
 
 install : all
 	$(INSTALL) -d "${DESTDIR}$(prefix)/sbin"
 	$(INSTALL) ${STRIP_OPTS} mosquitto "${DESTDIR}${prefix}/sbin/mosquitto"
 	$(INSTALL) -d "${DESTDIR}$(prefix)/include"
-	$(INSTALL) mosquitto_broker.h "${DESTDIR}${prefix}/include/mosquitto_broker.h"
-	$(INSTALL) mosquitto_plugin.h "${DESTDIR}${prefix}/include/mosquitto_plugin.h"
+	$(INSTALL) ../include/mosquitto_broker.h "${DESTDIR}${prefix}/include/mosquitto_broker.h"
+	$(INSTALL) ../include/mosquitto_plugin.h "${DESTDIR}${prefix}/include/mosquitto_plugin.h"
 ifeq ($(WITH_TLS),yes)
 	$(INSTALL) -d "${DESTDIR}$(prefix)/bin"
 	$(INSTALL) ${STRIP_OPTS} mosquitto_passwd "${DESTDIR}${prefix}/bin/mosquitto_passwd"

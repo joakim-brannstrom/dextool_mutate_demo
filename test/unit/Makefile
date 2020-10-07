@@ -2,7 +2,7 @@ include ../../config.mk
 
 .PHONY: all check test test-broker test-lib clean coverage
 
-CPPFLAGS:=$(CPPFLAGS) -I../.. -I../../lib -I../../src
+CPPFLAGS:=$(CPPFLAGS) -I../.. -I../../include -I../../lib -I../../src
 ifeq ($(WITH_BUNDLED_DEPS),yes)
         CPPFLAGS:=$(CPPFLAGS) -I../../src/deps
 endif

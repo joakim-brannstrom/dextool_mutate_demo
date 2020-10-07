@@ -30,7 +30,7 @@ set (MOSQ_SRCS
 	../lib/memory_mosq.c ../lib/memory_mosq.h
 	memory_public.c
 	mosquitto.c
-	mosquitto_broker.h mosquitto_broker_internal.h
+	../include/mosquitto_broker.h mosquitto_broker_internal.h
 	../lib/misc_mosq.c ../lib/misc_mosq.h
 	mux.c mux.h mux_epoll.c mux_poll.c
 	net.c
@@ -203,7 +203,7 @@ if (UNIX)
 endif (UNIX)
 
 install(TARGETS mosquitto RUNTIME DESTINATION "${CMAKE_INSTALL_SBINDIR}")
-install(FILES mosquitto_broker.h mosquitto_plugin.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(FILES ../include/mosquitto_broker.h ../include/mosquitto_plugin.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 if (WITH_TLS)
 	add_executable(mosquitto_passwd mosquitto_passwd.c ../lib/misc_mosq.c)
