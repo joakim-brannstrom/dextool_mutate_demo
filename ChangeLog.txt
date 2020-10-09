@@ -49,6 +49,7 @@ Broker:
 - Add support for PBKDF2-SHA512 password hashing.
 - Enabling certificate based TLS encryption is now through certfile and
   keyfile, not capath or cafile.
+- Added support for controlling UNSUBSCRIBE calls in v5 plugin ACL checks.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are

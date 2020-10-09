@@ -36,6 +36,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 	int reason_code_max;
 	uint8_t *reason_codes = NULL, *reason_tmp;
 	mosquitto_property *properties = NULL;
+	bool allowed;
 
 	if(!context) return MOSQ_ERR_INVAL;
 
@@ -105,8 +106,25 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 			return MOSQ_ERR_MALFORMED_PACKET;
 		}
 
+		/* ACL check */
+		allowed = true;
+		rc = mosquitto_acl_check(db, context, sub, 0, NULL, 0, false, MOSQ_ACL_UNSUBSCRIBE);
+		switch(rc){
+			case MOSQ_ERR_SUCCESS:
+				break;
+			case MOSQ_ERR_ACL_DENIED:
+				allowed = false;
+				reason = MQTT_RC_NOT_AUTHORIZED;
+				break;
+			default:
+				mosquitto__free(sub);
+				return rc;
+		}
+
 		log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);
-		rc = sub__remove(db, context, sub, db->subs, &reason);
+		if(allowed){
+			rc = sub__remove(db, context, sub, db->subs, &reason);
+		}
 		log__printf(NULL, MOSQ_LOG_UNSUBSCRIBE, "%s %s", context->id, sub);
 		mosquitto__free(sub);
 		if(rc){

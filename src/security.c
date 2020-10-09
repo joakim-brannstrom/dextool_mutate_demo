@@ -614,11 +614,17 @@ static int acl__check_single(struct mosquitto__auth_plugin_config *auth_plugin, 
 	}
 
 	if(auth_plugin->plugin.version == 4){
+		if(access == MOSQ_ACL_UNSUBSCRIBE){
+			return MOSQ_ERR_SUCCESS;
+		}
 		return auth_plugin->plugin.acl_check_v4(auth_plugin->plugin.user_data, access, context, msg);
 	}else if(auth_plugin->plugin.version == 3){
+		if(access == MOSQ_ACL_UNSUBSCRIBE){
+			return MOSQ_ERR_SUCCESS;
+		}
 		return auth_plugin->plugin.acl_check_v3(auth_plugin->plugin.user_data, access, context, msg);
 	}else if(auth_plugin->plugin.version == 2){
-		if(access == MOSQ_ACL_SUBSCRIBE){
+		if(access == MOSQ_ACL_SUBSCRIBE || access == MOSQ_ACL_UNSUBSCRIBE){
 			return MOSQ_ERR_SUCCESS;
 		}
 		return auth_plugin->plugin.acl_check_v2(auth_plugin->plugin.user_data, context->id, username, topic, access);
@@ -649,8 +655,7 @@ static int acl__check_dollar(const char *topic, int access)
 		}
 	}else if(!strncmp(topic, "$share", 6)){
 		/* Only allow sub/unsub to shared subscriptions */
-		if(access == MOSQ_ACL_SUBSCRIBE){
-		/* FIXME if(access == MOSQ_ACL_SUBSCRIBE || access == MOSQ_ACL_UNSUBSCRIBE){ */
+		if(access == MOSQ_ACL_SUBSCRIBE || access == MOSQ_ACL_UNSUBSCRIBE){
 			return MOSQ_ERR_SUCCESS;
 		}else{
 			return MOSQ_ERR_ACL_DENIED;
