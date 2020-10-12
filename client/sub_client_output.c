@@ -313,7 +313,11 @@ static int json_print(const struct mosquitto_message *message, const mosquitto_p
 
 	/* Payload */
 	if(escaped){
-		tmp = cJSON_CreateString(message->payload);
+		if(message->payload){
+			tmp = cJSON_CreateString(message->payload);
+		}else{
+			tmp = cJSON_CreateNull();
+		}
 		if(tmp == NULL){
 			cJSON_Delete(root);
 			return MOSQ_ERR_NOMEM;
@@ -321,10 +325,18 @@ static int json_print(const struct mosquitto_message *message, const mosquitto_p
 		cJSON_AddItemToObject(root, "payload", tmp);
 	}else{
 		return_parse_end = NULL;
-		tmp = cJSON_ParseWithOpts(message->payload, &return_parse_end, true);
-		if(tmp == NULL || return_parse_end != message->payload + message->payloadlen){
-			cJSON_Delete(root);
-			return MOSQ_ERR_INVAL;
+		if(message->payload){
+			tmp = cJSON_ParseWithOpts(message->payload, &return_parse_end, true);
+			if(tmp == NULL || return_parse_end != message->payload + message->payloadlen){
+				cJSON_Delete(root);
+				return MOSQ_ERR_INVAL;
+			}
+		}else{
+			tmp = cJSON_CreateNull();
+			if(tmp == NULL){
+				cJSON_Delete(root);
+				return MOSQ_ERR_INVAL;
+			}
 		}
 		cJSON_AddItemToObject(root, "payload", tmp);
 	}
