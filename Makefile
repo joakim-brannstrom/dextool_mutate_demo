@@ -1,9 +1,10 @@
 include config.mk
 
-DIRS=lib client src
+DIRS=lib apps client src
 DOCDIRS=man
 DISTDIRS=man
 DISTFILES= \
+	apps/ \
 	client/ \
 	examples/ \
 	installer/ \

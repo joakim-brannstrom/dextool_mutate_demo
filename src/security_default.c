@@ -34,8 +34,6 @@ static int unpwd__cleanup(struct mosquitto__unpwd **unpwd, bool reload);
 static int psk__file_parse(struct mosquitto_db *db, struct mosquitto__unpwd **psk_id, const char *psk_file);
 #ifdef WITH_TLS
 static int pw__digest(const char *password, const unsigned char *salt, unsigned int salt_len, unsigned char *hash, unsigned int *hash_len, enum mosquitto_pwhash_type hashtype);
-static int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len);
-static int mosquitto__memcmp_const(const void *ptr1, const void *b, size_t len);
 #endif
 
 
@@ -1307,49 +1305,6 @@ int pw__digest(const char *password, const unsigned char *salt, unsigned int sal
 	}
 
 	return MOSQ_ERR_SUCCESS;
-}
-
-int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len)
-{
-	BIO *bmem, *b64;
-	int slen;
-
-	slen = strlen(in);
-
-	b64 = BIO_new(BIO_f_base64());
-	if(!b64){
-		return 1;
-	}
-	BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-
-	bmem = BIO_new(BIO_s_mem());
-	if(!bmem){
-		BIO_free_all(b64);
-		return 1;
-	}
-	b64 = BIO_push(b64, bmem);
-	BIO_write(bmem, in, slen);
-
-	if(BIO_flush(bmem) != 1){
-		BIO_free_all(b64);
-		return 1;
-	}
-	*decoded = mosquitto__calloc(slen, 1);
-	if(!(*decoded)){
-		BIO_free_all(b64);
-		return 1;
-	}
-	*decoded_len =  BIO_read(b64, *decoded, slen);
-	BIO_free_all(b64);
-
-	if(*decoded_len <= 0){
-		mosquitto__free(*decoded);
-		*decoded = NULL;
-		*decoded_len = 0;
-		return 1;
-	}
-
-	return 0;
 }
 
 #endif

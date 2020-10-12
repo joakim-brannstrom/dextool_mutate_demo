@@ -17,15 +17,14 @@ Contributors:
 #include "config.h"
 
 #include <errno.h>
-#include <openssl/opensslv.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
-#include <openssl/buffer.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "password_mosq.h"
 
 #ifdef WIN32
 #  include <windows.h>
@@ -54,11 +53,6 @@ Contributors:
 
 #include "misc_mosq.h"
 
-enum pwhash{
-	pw_sha512 = 6,
-	pw_sha512_pbkdf2 = 7,
-};
-
 struct cb_helper {
 	const char *line;
 	const char *username;
@@ -66,7 +60,7 @@ struct cb_helper {
 	bool found;
 };
 
-static enum pwhash hashtype = pw_sha512_pbkdf2;
+static enum mosquitto_pwhash_type hashtype = pw_sha512_pbkdf2;
 
 #ifdef WIN32
 static FILE *mpw_tmpfile(void)
@@ -108,34 +102,6 @@ static FILE *mpw_tmpfile(void)
 #endif
 
 
-int base64_encode(unsigned char *in, unsigned int in_len, char **encoded)
-{
-	BIO *bmem, *b64;
-	BUF_MEM *bptr;
-
-	b64 = BIO_new(BIO_f_base64());
-	BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-	bmem = BIO_new(BIO_s_mem());
-	b64 = BIO_push(b64, bmem);
-	BIO_write(b64, in, in_len);
-	if(BIO_flush(b64) != 1){
-		BIO_free_all(b64);
-		return 1;
-	}
-	BIO_get_mem_ptr(b64, &bptr);
-	*encoded = malloc(bptr->length+1);
-	if(!(*encoded)){
-		BIO_free_all(b64);
-		return 1;
-	}
-	memcpy(*encoded, bptr->data, bptr->length);
-	(*encoded)[bptr->length] = '\0';
-	BIO_free_all(b64);
-
-	return 0;
-}
-
-
 void print_usage(void)
 {
 	printf("mosquitto_passwd is a tool for managing password files for mosquitto.\n\n");
@@ -154,62 +120,26 @@ void print_usage(void)
 int output_new_password(FILE *fptr, const char *username, const char *password)
 {
 	int rc;
-	unsigned char salt[SALT_LEN];
 	char *salt64 = NULL, *hash64 = NULL;
-	unsigned char hash[EVP_MAX_MD_SIZE];
-	unsigned int hash_len;
-	const EVP_MD *digest;
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-	EVP_MD_CTX context;
-#else
-	EVP_MD_CTX *context;
-#endif
+	struct mosquitto_pw pw;
 
-	rc = RAND_bytes(salt, SALT_LEN);
-	if(!rc){
-		fprintf(stderr, "Error: Insufficient entropy available to perform password generation.\n");
+	memset(&pw, 0, sizeof(pw));
+
+	pw.hashtype = hashtype;
+
+	if(pw__hash(password, &pw, true)){
+		fprintf(stderr, "Error: Unable to hash password.\n");
 		return 1;
 	}
 
-	rc = base64_encode(salt, SALT_LEN, &salt64);
+	rc = base64_encode(pw.salt, sizeof(pw.salt), &salt64);
 	if(rc){
 		free(salt64);
 		fprintf(stderr, "Error: Unable to encode salt.\n");
 		return 1;
 	}
 
-
-	digest = EVP_get_digestbyname("sha512");
-	if(!digest){
-		free(salt64);
-		fprintf(stderr, "Error: Unable to create openssl digest.\n");
-		return 1;
-	}
-
-	if(hashtype == pw_sha512){
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-		EVP_MD_CTX_init(&context);
-		EVP_DigestInit_ex(&context, digest, NULL);
-		EVP_DigestUpdate(&context, password, strlen(password));
-		EVP_DigestUpdate(&context, salt, SALT_LEN);
-		EVP_DigestFinal_ex(&context, hash, &hash_len);
-		EVP_MD_CTX_cleanup(&context);
-#else
-		context = EVP_MD_CTX_new();
-		EVP_DigestInit_ex(context, digest, NULL);
-		EVP_DigestUpdate(context, password, strlen(password));
-		EVP_DigestUpdate(context, salt, SALT_LEN);
-		EVP_DigestFinal_ex(context, hash, &hash_len);
-		EVP_MD_CTX_free(context);
-#endif
-	}else{
-		hash_len = sizeof(hash);
-		PKCS5_PBKDF2_HMAC(password, strlen(password),
-			salt, SALT_LEN, 20000,
-			digest, hash_len, hash);
-	}
-
-	rc = base64_encode(hash, hash_len, &hash64);
+	rc = base64_encode(pw.password_hash, sizeof(pw.password_hash), &hash64);
 	if(rc){
 		free(salt64);
 		free(hash64);

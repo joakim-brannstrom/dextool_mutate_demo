@@ -48,6 +48,7 @@ Contributors:
 #include "mosquitto_broker.h"
 #include "mosquitto_plugin.h"
 #include "mosquitto.h"
+#include "password_mosq.h"
 #include "tls_mosq.h"
 #include "uthash.h"
 
@@ -168,11 +169,6 @@ typedef int (*FUNC_auth_plugin_psk_key_get_v2)(void *, const char *, const char 
 enum mosquitto_msg_origin{
 	mosq_mo_client = 0,
 	mosq_mo_broker = 1
-};
-
-enum mosquitto_pwhash_type{
-	pw_sha512 = 6,
-	pw_sha512_pbkdf2 = 7
 };
 
 struct mosquitto__auth_plugin{
