@@ -148,7 +148,7 @@ APP_CPPFLAGS=$(CPPFLAGS) -I. -I../../ -I../../include -I../../src -I../../lib
 
 LIB_CPPFLAGS=$(CPPFLAGS) -I. -I.. -I../include -I../../include
 ifeq ($(WITH_BUNDLED_DEPS),yes)
-	LIB_CPPFLAGS:=$(LIB_CPPFLAGS) -I../src/deps
+	LIB_CPPFLAGS:=$(LIB_CPPFLAGS) -I../deps
 endif
 LIB_CFLAGS:=$(CFLAGS)
 LIB_CXXFLAGS:=$(CXXFLAGS)
@@ -332,7 +332,7 @@ ifeq ($(WITH_EPOLL),yes)
 endif
 
 ifeq ($(WITH_BUNDLED_DEPS),yes)
-	BROKER_CPPFLAGS:=$(BROKER_CPPFLAGS) -Ideps
+	BROKER_CPPFLAGS:=$(BROKER_CPPFLAGS) -I../deps
 endif
 
 ifeq ($(WITH_COVERAGE),yes)

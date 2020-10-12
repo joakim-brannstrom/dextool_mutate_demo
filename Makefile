@@ -6,6 +6,7 @@ DISTDIRS=man
 DISTFILES= \
 	apps/ \
 	client/ \
+	deps/ \
 	examples/ \
 	installer/ \
 	lib/ \
