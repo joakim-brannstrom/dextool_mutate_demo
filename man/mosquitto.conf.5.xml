@@ -1970,7 +1970,7 @@ topic clients/total in 0 test/mosquitto/org/ $SYS/broker/
 							remote certificate matches the host/address being
 							connected to. This may cause problems in testing
 							scenarios, so <option>bridge_insecure</option> may
-							be set to <replaceable>false</replaceable> to
+							be set to <replaceable>true</replaceable> to
 							disable the hostname verification.</para>
 						<para>Setting this option to
 							<replaceable>true</replaceable> means that a
