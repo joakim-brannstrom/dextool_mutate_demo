@@ -395,7 +395,7 @@ int pid__write(struct mosquitto_db *db)
 {
 	FILE *pid;
 
-	if(db->config->daemon && db->config->pid_file){
+	if(db->config->pid_file){
 		pid = mosquitto__fopen(db->config->pid_file, "wt", false);
 		if(pid){
 			fprintf(pid, "%d", getpid());

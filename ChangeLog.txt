@@ -22,6 +22,8 @@ Breaking changes:
   method, or set `allow_anonymous true`. When the broker is run without a
   configured listener, and so binds to the loopback interface, anonymous
   connections are allowed.
+- The `pid_file` option will now always attempt to write a pid file,
+  regardless of whether the `-d` argument is used when running the broker.
 
 Broker:
 - When running as root, if dropping privileges to the "mosquitto" user fails,
