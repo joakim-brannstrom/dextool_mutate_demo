@@ -345,7 +345,7 @@ mosq_EXPORT int mosquitto_set_username(struct mosquitto *client, const char *use
  * If with_will == true, then if the client has a Last Will and Testament
  *   defined then this will be sent. If false, the LWT will not be sent.
  */
-int mosquitto_kick_client_by_clientid(const char *clientid, bool with_will);
+mosq_EXPORT int mosquitto_kick_client_by_clientid(const char *clientid, bool with_will);
 
 /* Function: mosquitto_kick_client_by_username
  *
