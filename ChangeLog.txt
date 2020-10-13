@@ -50,6 +50,8 @@ Broker:
 - Enabling certificate based TLS encryption is now through certfile and
   keyfile, not capath or cafile.
 - Added support for controlling UNSUBSCRIBE calls in v5 plugin ACL checks.
+- Document that X509_free() must be called after using
+  mosquitto_client_certificate(). Closes #1842.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are

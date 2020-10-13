@@ -260,6 +260,9 @@ mosq_EXPORT int mosquitto_client_keepalive(const struct mosquitto *client);
  * NULL will be returned. This function will only ever return a non-NULL value
  * if the `require_certificate` option is set to true.
  *
+ * When you have finished with the x509 pointer, it must be freed using
+ * X509_free().
+ *
  * If TLS is not supported, this function will always return NULL.
  */
 mosq_EXPORT void *mosquitto_client_certificate(const struct mosquitto *client);
