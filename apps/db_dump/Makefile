@@ -78,5 +78,11 @@ topic_tok.o : ../../src/topic_tok.c
 utf8_mosq.o : ../../lib/utf8_mosq.c
 	${CROSS_COMPILE}${CC} $(CFLAGS_FINAL) -c $< -o $@
 
+reallyclean: clean
+
 clean :
 	-rm -f *.o mosquitto_db_dump
+
+install:
+
+uninstall:
