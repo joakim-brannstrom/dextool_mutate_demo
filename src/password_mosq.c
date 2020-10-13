@@ -57,6 +57,7 @@ Contributors:
 
 #include "misc_mosq.h"
 
+#ifdef WITH_TLS
 int base64_encode(unsigned char *in, unsigned int in_len, char **encoded)
 {
 	BIO *bmem, *b64;
@@ -178,6 +179,7 @@ int pw__hash(const char *password, struct mosquitto_pw *pw, bool new_salt)
 
 	return MOSQ_ERR_SUCCESS;
 }
+#endif
 
 int pw__memcmp_const(const void *a, const void *b, size_t len)
 {

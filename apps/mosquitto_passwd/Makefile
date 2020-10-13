@@ -7,6 +7,12 @@ OBJS=	mosquitto_passwd.o \
 		misc_mosq.o \
 		password_mosq.o
 
+ifeq ($(WITH_TLS),yes)
+all: mosquitto_passwd
+else
+all:
+endif
+
 mosquitto_passwd : ${OBJS}
 	${CROSS_COMPILE}${CC} ${APP_LDFLAGS} $^ -o $@ $(PASSWD_LDADD)
 
