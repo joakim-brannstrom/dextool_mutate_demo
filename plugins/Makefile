@@ -1,6 +1,5 @@
 DIRS= \
-		db_dump \
-		mosquitto_passwd
+		message-timestamp
 
 .PHONY : all binary check clean reallyclean test install uninstall
 
