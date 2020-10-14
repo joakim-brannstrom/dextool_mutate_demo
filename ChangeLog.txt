@@ -75,6 +75,8 @@ Client library:
 - Fix send quota being incorrecly reset on reconnect. Closes #1822.
 - Don't use logging until log mutex is initialised. Closes #1819.
 - Fix missing mach/mach_time.h header on OS X. Closes #1831.
+- Add MOSQ_OPT_BIND_ADDRESS to allow setting of a bind address independently
+  of the `mosquitto_connect*()` call.
 
 Clients:
 - Add timeout return code (27) for `mosquitto_sub -W <secs>` and

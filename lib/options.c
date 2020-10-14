@@ -321,6 +321,20 @@ int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, cons
 #endif
 			break;
 
+		case MOSQ_OPT_BIND_ADDRESS:
+			mosquitto__free(mosq->bind_address);
+			if(value){
+				mosq->bind_address = mosquitto__strdup(value);
+				if(mosq->bind_address){
+					return MOSQ_ERR_SUCCESS;
+				}else{
+					return MOSQ_ERR_NOMEM;
+				}
+			}else{
+				return MOSQ_ERR_SUCCESS;
+			}
+
+
 		default:
 			return MOSQ_ERR_INVAL;
 	}

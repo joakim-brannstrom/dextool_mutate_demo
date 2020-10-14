@@ -33,10 +33,10 @@ Contributors:
 static char alphanum[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mosquitto_property *properties);
-static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address);
+static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int port, int keepalive);
 
 
-static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address)
+static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int port, int keepalive)
 {
 	int i;
 	int rc;
@@ -70,12 +70,6 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 	if(!mosq->host) return MOSQ_ERR_NOMEM;
 	mosq->port = port;
 
-	mosquitto__free(mosq->bind_address);
-	if(bind_address){
-		mosq->bind_address = mosquitto__strdup(bind_address);
-		if(!mosq->bind_address) return MOSQ_ERR_NOMEM;
-	}
-
 	mosq->keepalive = keepalive;
 	mosq->msgs_in.inflight_quota = mosq->msgs_in.inflight_maximum;
 	mosq->msgs_out.inflight_quota = mosq->msgs_out.inflight_maximum;
@@ -100,12 +94,15 @@ int mosquitto_connect_bind_v5(struct mosquitto *mosq, const char *host, int port
 {
 	int rc;
 
+	rc = mosquitto_string_option(mosq, MOSQ_OPT_BIND_ADDRESS, bind_address);
+	if(rc) return rc;
+
 	if(properties){
 		rc = mosquitto_property_check_all(CMD_CONNECT, properties);
 		if(rc) return rc;
 	}
 
-	rc = mosquitto__connect_init(mosq, host, port, keepalive, bind_address);
+	rc = mosquitto__connect_init(mosq, host, port, keepalive);
 	if(rc) return rc;
 
 	mosquitto__set_state(mosq, mosq_cs_new);
@@ -122,7 +119,12 @@ int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port, 
 
 int mosquitto_connect_bind_async(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address)
 {
-	int rc = mosquitto__connect_init(mosq, host, port, keepalive, bind_address);
+	int rc;
+
+	rc = mosquitto_string_option(mosq, MOSQ_OPT_BIND_ADDRESS, bind_address);
+	if(rc) return rc;
+
+	rc = mosquitto__connect_init(mosq, host, port, keepalive);
 	if(rc) return rc;
 
 	return mosquitto__reconnect(mosq, false, NULL);
