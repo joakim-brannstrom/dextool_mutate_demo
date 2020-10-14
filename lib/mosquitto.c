@@ -293,6 +293,8 @@ void mosquitto__destroy(struct mosquitto *mosq)
 	mosquitto__free(mosq->bind_address);
 	mosq->bind_address = NULL;
 
+	mosquitto_property_free_all(&mosq->connect_properties);
+
 	/* Out packet cleanup */
 	if(mosq->out_packet && !mosq->current_out_packet){
 		mosq->current_out_packet = mosq->out_packet;

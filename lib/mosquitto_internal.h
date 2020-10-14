@@ -330,6 +330,7 @@ struct mosquitto {
 	bool reconnect_exponential_backoff;
 	char threaded;
 	struct mosquitto__packet *out_packet_last;
+	mosquitto_property *connect_properties;
 #  ifdef WITH_SRV
 	ares_channel achan;
 #  endif

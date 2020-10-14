@@ -32,7 +32,7 @@ Contributors:
 
 static char alphanum[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mosquitto_property *properties);
+static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking);
 static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int port, int keepalive);
 
 
@@ -97,9 +97,14 @@ int mosquitto_connect_bind_v5(struct mosquitto *mosq, const char *host, int port
 	rc = mosquitto_string_option(mosq, MOSQ_OPT_BIND_ADDRESS, bind_address);
 	if(rc) return rc;
 
+	mosquitto_property_free_all(&mosq->connect_properties);
 	if(properties){
 		rc = mosquitto_property_check_all(CMD_CONNECT, properties);
 		if(rc) return rc;
+
+		rc = mosquitto_property_copy_all(&mosq->connect_properties, properties);
+		if(rc) return rc;
+		mosq->connect_properties->client_generated = true;
 	}
 
 	rc = mosquitto__connect_init(mosq, host, port, keepalive);
@@ -107,7 +112,7 @@ int mosquitto_connect_bind_v5(struct mosquitto *mosq, const char *host, int port
 
 	mosquitto__set_state(mosq, mosq_cs_new);
 
-	return mosquitto__reconnect(mosq, true, properties);
+	return mosquitto__reconnect(mosq, true);
 }
 
 
@@ -127,23 +132,23 @@ int mosquitto_connect_bind_async(struct mosquitto *mosq, const char *host, int p
 	rc = mosquitto__connect_init(mosq, host, port, keepalive);
 	if(rc) return rc;
 
-	return mosquitto__reconnect(mosq, false, NULL);
+	return mosquitto__reconnect(mosq, false);
 }
 
 
 int mosquitto_reconnect_async(struct mosquitto *mosq)
 {
-	return mosquitto__reconnect(mosq, false, NULL);
+	return mosquitto__reconnect(mosq, false);
 }
 
 
 int mosquitto_reconnect(struct mosquitto *mosq)
 {
-	return mosquitto__reconnect(mosq, true, NULL);
+	return mosquitto__reconnect(mosq, true);
 }
 
 
-static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mosquitto_property *properties)
+static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
 {
 	const mosquitto_property *outgoing_properties = NULL;
 	mosquitto_property local_property;
@@ -151,13 +156,14 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mos
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(!mosq->host || mosq->port < 0) return MOSQ_ERR_INVAL;
-	if(mosq->protocol != mosq_p_mqtt5 && properties) return MOSQ_ERR_NOT_SUPPORTED;
 
-	if(properties){
-		if(properties->client_generated){
-			outgoing_properties = properties;
+	if(mosq->connect_properties){
+		if(mosq->protocol != mosq_p_mqtt5) return MOSQ_ERR_NOT_SUPPORTED;
+
+		if(mosq->connect_properties->client_generated){
+			outgoing_properties = mosq->connect_properties;
 		}else{
-			memcpy(&local_property, properties, sizeof(mosquitto_property));
+			memcpy(&local_property, mosq->connect_properties, sizeof(mosquitto_property));
 			local_property.client_generated = true;
 			local_property.next = NULL;
 			outgoing_properties = &local_property;
