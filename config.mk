@@ -145,6 +145,7 @@ endif
 STATIC_LIB_DEPS:=
 
 APP_CPPFLAGS=$(CPPFLAGS) -I. -I../../ -I../../include -I../../src -I../../lib
+APP_CFLAGS=$(CFLAGS)
 
 LIB_CPPFLAGS=$(CPPFLAGS) -I. -I.. -I../include -I../../include
 ifeq ($(WITH_BUNDLED_DEPS),yes)
