@@ -69,13 +69,13 @@ struct mosquitto_evt_reload {
 struct mosquitto_evt_acl_check {
 	void *future;
 	struct mosquitto *client;
-	int access;
 	const char *topic;
 	const void *payload;
-	long payloadlen;
-	int qos;
-	bool retain;
 	mosquitto_property *properties;
+	int access;
+	uint32_t payloadlen;
+	uint8_t qos;
+	bool retain;
 	void *future2[4];
 };
 
@@ -118,8 +118,8 @@ struct mosquitto_evt_control {
 	const void *payload;
 	const mosquitto_property *properties;
 	char *reason_string;
-	long payloadlen;
-	int qos;
+	uint32_t payloadlen;
+	uint8_t qos;
 	uint8_t reason_code;
 	bool retain;
 	void *future2[4];
@@ -133,8 +133,8 @@ struct mosquitto_evt_message {
 	void *payload;
 	mosquitto_property *properties;
 	char *reason_string;
-	long payloadlen;
-	int qos;
+	uint32_t payloadlen;
+	uint8_t qos;
 	uint8_t reason_code;
 	bool retain;
 	void *future2[4];

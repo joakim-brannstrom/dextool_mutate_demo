@@ -23,7 +23,7 @@ int handle__packet(struct mosquitto_db *db, struct mosquitto *context)
 	return 0;
 }
 
-int log__printf(struct mosquitto *mosq, int level, const char *fmt, ...)
+int log__printf(struct mosquitto *mosq, unsigned int level, const char *fmt, ...)
 {
 	return 0;
 }
@@ -53,12 +53,12 @@ int retain__store(struct mosquitto_db *db, const char *topic, struct mosquitto_m
 	return 0;
 }
 
-int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, uint32_t identifier, int options, struct mosquitto__subhier **root)
+int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, uint8_t qos, uint32_t identifier, int options, struct mosquitto__subhier **root)
 {
 	return 0;
 }
 
-int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored)
+int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, uint8_t qos, int retain, struct mosquitto_msg_store **stored)
 {
 	return 0;
 }

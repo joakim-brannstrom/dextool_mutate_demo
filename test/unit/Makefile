@@ -4,7 +4,7 @@ include ../../config.mk
 
 CPPFLAGS:=$(CPPFLAGS) -I../.. -I../../include -I../../lib -I../../src
 ifeq ($(WITH_BUNDLED_DEPS),yes)
-        CPPFLAGS:=$(CPPFLAGS) -I../../src/deps
+        CPPFLAGS:=$(CPPFLAGS) -I../../deps
 endif
 
 CFLAGS:=$(CFLAGS) -coverage -Wall -ggdb

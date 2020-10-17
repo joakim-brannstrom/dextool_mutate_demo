@@ -42,8 +42,8 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 	int rc;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
-	if(!host || port < 0) return MOSQ_ERR_INVAL;
-	if(keepalive < 5) return MOSQ_ERR_INVAL;
+	if(!host || port < 0 || port > UINT16_MAX) return MOSQ_ERR_INVAL;
+	if(keepalive < 5 || keepalive > UINT16_MAX) return MOSQ_ERR_INVAL;
 
 	/* Only MQTT v3.1 requires a client id to be sent */
 	if(mosq->id == NULL && (mosq->protocol == mosq_p_mqtt31)){
@@ -68,9 +68,9 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 	mosquitto__free(mosq->host);
 	mosq->host = mosquitto__strdup(host);
 	if(!mosq->host) return MOSQ_ERR_NOMEM;
-	mosq->port = port;
+	mosq->port = (uint16_t)port;
 
-	mosq->keepalive = keepalive;
+	mosq->keepalive = (uint16_t)keepalive;
 	mosq->msgs_in.inflight_quota = mosq->msgs_in.inflight_maximum;
 	mosq->msgs_out.inflight_quota = mosq->msgs_out.inflight_maximum;
 	mosq->retain_available = 1;
@@ -233,6 +233,7 @@ int mosquitto_disconnect_v5(struct mosquitto *mosq, int reason_code, const mosqu
 	int rc;
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->protocol != mosq_p_mqtt5 && properties) return MOSQ_ERR_NOT_SUPPORTED;
+	if(reason_code < 0 || reason_code > UINT8_MAX) return MOSQ_ERR_INVAL;
 
 	if(properties){
 		if(properties->client_generated){
@@ -251,7 +252,7 @@ int mosquitto_disconnect_v5(struct mosquitto *mosq, int reason_code, const mosqu
 	if(mosq->sock == INVALID_SOCKET){
 		return MOSQ_ERR_NO_CONN;
 	}else{
-		return send__disconnect(mosq, reason_code, outgoing_properties);
+		return send__disconnect(mosq, (uint8_t)reason_code, outgoing_properties);
 	}
 }
 

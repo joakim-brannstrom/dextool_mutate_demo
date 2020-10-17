@@ -667,7 +667,7 @@ static int acl__check_dollar(const char *topic, int access)
 }
 
 
-int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, const char *topic, long payloadlen, void* payload, int qos, bool retain, int access)
+int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, const char *topic, uint32_t payloadlen, void* payload, uint8_t qos, bool retain, int access)
 {
 	int rc;
 	int i;

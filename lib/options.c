@@ -68,6 +68,8 @@ int mosquitto_will_clear(struct mosquitto *mosq)
 
 int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, const char *password)
 {
+	size_t slen;
+
 	if(!mosq) return MOSQ_ERR_INVAL;
 
 	if(mosq->protocol == mosq_p_mqtt311 || mosq->protocol == mosq_p_mqtt31){
@@ -83,7 +85,11 @@ int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, cons
 	mosq->password = NULL;
 
 	if(username){
-		if(mosquitto_validate_utf8(username, strlen(username))){
+		slen = strlen(username);
+		if(slen > UINT16_MAX){
+			return MOSQ_ERR_INVAL;
+		}
+		if(mosquitto_validate_utf8(username, (int)slen)){
 			return MOSQ_ERR_MALFORMED_UTF8;
 		}
 		mosq->username = mosquitto__strdup(username);
@@ -421,24 +427,24 @@ int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t option, int val
 			break;
 
 		case MOSQ_OPT_RECEIVE_MAXIMUM:
-			if(value < 0 || value > 65535){
+			if(value < 0 || value > UINT16_MAX){
 				return MOSQ_ERR_INVAL;
 			}
 			if(value == 0){
-				mosq->msgs_in.inflight_maximum = 65535;
+				mosq->msgs_in.inflight_maximum = UINT16_MAX;
 			}else{
-				mosq->msgs_in.inflight_maximum = value;
+				mosq->msgs_in.inflight_maximum = (uint16_t)value;
 			}
 			break;
 
 		case MOSQ_OPT_SEND_MAXIMUM:
-			if(value < 0 || value > 65535){
+			if(value < 0 || value > UINT16_MAX){
 				return MOSQ_ERR_INVAL;
 			}
 			if(value == 0){
-				mosq->msgs_out.inflight_maximum = 65535;
+				mosq->msgs_out.inflight_maximum = UINT16_MAX;
 			}else{
-				mosq->msgs_out.inflight_maximum = value;
+				mosq->msgs_out.inflight_maximum = (uint16_t)value;
 			}
 			break;
 

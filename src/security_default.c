@@ -362,7 +362,7 @@ static int mosquitto_acl_check_default(int event, void *event_data, void *userda
 	struct mosquitto__acl *acl_root;
 	bool result;
 	int i;
-	int len, tlen, clen, ulen;
+	size_t len, tlen, clen, ulen;
 	char *s;
 	struct mosquitto__security_options *security_opts = NULL;
 	struct mosquitto_db *db;
@@ -447,10 +447,10 @@ static int mosquitto_acl_check_default(int event, void *event_data, void *userda
 
 		if(ed->client->username){
 			ulen = strlen(ed->client->username);
-			len = tlen + acl_root->ccount*(clen-2) + acl_root->ucount*(ulen-2);
+			len = tlen + (size_t)acl_root->ccount*(clen-2) + (size_t)acl_root->ucount*(ulen-2);
 		}else{
 			ulen = 0;
-			len = tlen + acl_root->ccount*(clen-2);
+			len = tlen + (size_t)acl_root->ccount*(clen-2);
 		}
 		local_acl = mosquitto__malloc(len+1);
 		if(!local_acl) return 1; /* FIXME */
@@ -503,7 +503,7 @@ static int aclfile__parse(struct mosquitto_db *db, struct mosquitto__security_op
 	char *access_s;
 	int access;
 	int rc = MOSQ_ERR_SUCCESS;
-	int slen;
+	size_t slen;
 	int topic_pattern;
 	char *saveptr = NULL;
 	char *buf = NULL;
@@ -513,7 +513,7 @@ static int aclfile__parse(struct mosquitto_db *db, struct mosquitto__security_op
 	if(!security_opts) return MOSQ_ERR_INVAL;
 	if(!security_opts->acl_file) return MOSQ_ERR_SUCCESS;
 
-	buf = mosquitto__malloc(buflen);
+	buf = mosquitto__malloc((size_t)buflen);
 	if(buf == NULL){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return 1;
@@ -740,7 +740,7 @@ static int pwfile__parse(const char *file, struct mosquitto__unpwd **root)
 	char *buf;
 	int buflen = 256;
 
-	buf = mosquitto__malloc(buflen);
+	buf = mosquitto__malloc((size_t)buflen);
 	if(buf == NULL){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return 1;
@@ -1074,7 +1074,7 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 	struct mosquitto__listener *listener;
 	BIO *subject_bio;
 	char *data_start;
-	long name_length;
+	size_t name_length;
 	char *subject;
 #endif
 
@@ -1194,7 +1194,7 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 					subject_bio = BIO_new(BIO_s_mem());
 					X509_NAME_print_ex(subject_bio, X509_get_subject_name(client_cert), 0, XN_FLAG_RFC2253);
 					data_start = NULL;
-					name_length = BIO_get_mem_data(subject_bio, &data_start);
+					name_length = (size_t)BIO_get_mem_data(subject_bio, &data_start);
 					subject = mosquitto__malloc(sizeof(char)*name_length+1);
 					if(!subject){
 						BIO_free(subject_bio);
@@ -1284,7 +1284,7 @@ int mosquitto_psk_key_get_default(struct mosquitto_db *db, struct mosquitto *con
 
 	HASH_ITER(hh, psk_id_ref, u, tmp){
 		if(!strcmp(u->username, identity)){
-			strncpy(key, u->password, max_key_len);
+			strncpy(key, u->password, (size_t)max_key_len);
 			return MOSQ_ERR_SUCCESS;
 		}
 	}
@@ -1328,9 +1328,9 @@ int pw__digest(const char *password, const unsigned char *salt, unsigned int sal
 #endif
 	}else{
 		*hash_len = EVP_MAX_MD_SIZE;
-		PKCS5_PBKDF2_HMAC(password, strlen(password),
-			salt, salt_len, 20000,
-			digest, *hash_len, hash);
+		PKCS5_PBKDF2_HMAC(password, (int)strlen(password),
+			salt, (int)salt_len, 20000,
+			digest, (int)(*hash_len), hash);
 	}
 
 	return MOSQ_ERR_SUCCESS;

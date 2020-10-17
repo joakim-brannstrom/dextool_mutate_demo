@@ -69,7 +69,7 @@ static FILE *mpw_tmpfile(void)
 }
 #else
 
-static char alphanum[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+static char unsigned alphanum[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 static unsigned char tmpfile_path[36];
 static FILE *mpw_tmpfile(void)
@@ -167,13 +167,13 @@ static int pwfile_iterate(FILE *fptr, FILE *ftmp,
 	int line = 0;
 	char *username, *password;
 
-	buf = malloc(buflen);
+	buf = malloc((size_t)buflen);
 	if(buf == NULL){
 		fprintf(stderr, "Error: Out of memory.\n");
 		return 1;
 	}
 	lbuflen = buflen;
-	lbuf = malloc(lbuflen);
+	lbuf = malloc((size_t)lbuflen);
 	if(lbuf == NULL){
 		fprintf(stderr, "Error: Out of memory.\n");
 		free(buf);
@@ -184,14 +184,14 @@ static int pwfile_iterate(FILE *fptr, FILE *ftmp,
 		if(lbuflen != buflen){
 			free(lbuf);
 			lbuflen = buflen;
-			lbuf = malloc(lbuflen);
+			lbuf = malloc((size_t)lbuflen);
 			if(lbuf == NULL){
 				fprintf(stderr, "Error: Out of memory.\n");
 				free(buf);
 				return 1;
 			}
 		}
-		memcpy(lbuf, buf, buflen);
+		memcpy(lbuf, buf, (size_t)buflen);
 		line++;
 		username = strtok(buf, ":");
 		password = strtok(NULL, ":");
@@ -337,10 +337,10 @@ int gets_quiet(char *s, int len)
 	struct termios ts_quiet, ts_orig;
 	char *rs;
 
-	memset(s, 0, len);
+	memset(s, 0, (size_t)len);
 	tcgetattr(0, &ts_orig);
 	ts_quiet = ts_orig;
-	ts_quiet.c_lflag &= ~(ECHO | ICANON);
+	ts_quiet.c_lflag &= (unsigned int)(~(ECHO | ICANON));
 	tcsetattr(0, TCSANOW, &ts_quiet);
 
 	rs = fgets(s, len, stdin);
@@ -368,7 +368,7 @@ int get_password(char *password, size_t len)
 
 	printf("Password: ");
 	fflush(stdout);
-	if(gets_quiet(pw1, minLen)){
+	if(gets_quiet(pw1, (int)minLen)){
 		fprintf(stderr, "Error: Empty password.\n");
 		return 1;
 	}
@@ -376,7 +376,7 @@ int get_password(char *password, size_t len)
 
 	printf("Reenter password: ");
 	fflush(stdout);
-	if(gets_quiet(pw2, minLen)){
+	if(gets_quiet(pw2, (int)minLen)){
 		fprintf(stderr, "Error: Empty password.\n");
 		return 1;
 	}
@@ -633,7 +633,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 
-		backup_file = malloc(strlen(password_file)+5);
+		backup_file = malloc((size_t)strlen(password_file)+5);
 		if(!backup_file){
 			fprintf(stderr, "Error: Out of memory.\n");
 			free(password_file);

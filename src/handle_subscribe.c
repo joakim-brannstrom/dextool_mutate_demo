@@ -39,8 +39,8 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 	uint8_t retain_handling = 0;
 	uint8_t *payload = NULL, *tmp_payload;
 	uint32_t payloadlen = 0;
-	int len;
-	int slen;
+	size_t len;
+	uint16_t slen;
 	char *sub_mount;
 	mosquitto_property *properties = NULL;
 	bool allowed;

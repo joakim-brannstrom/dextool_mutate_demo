@@ -67,7 +67,7 @@ int base64_encode(unsigned char *in, unsigned int in_len, char **encoded)
 	BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
 	bmem = BIO_new(BIO_s_mem());
 	b64 = BIO_push(b64, bmem);
-	BIO_write(b64, in, in_len);
+	BIO_write(b64, in, (int)in_len);
 	if(BIO_flush(b64) != 1){
 		BIO_free_all(b64);
 		return 1;
@@ -89,7 +89,8 @@ int base64_encode(unsigned char *in, unsigned int in_len, char **encoded)
 int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len)
 {
 	BIO *bmem, *b64;
-	int slen;
+	size_t slen;
+	int len;
 
 	slen = strlen(in);
 
@@ -105,7 +106,7 @@ int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len)
 		return 1;
 	}
 	b64 = BIO_push(b64, bmem);
-	BIO_write(bmem, in, slen);
+	BIO_write(bmem, in, (int)slen);
 
 	if(BIO_flush(bmem) != 1){
 		BIO_free_all(b64);
@@ -116,15 +117,16 @@ int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len)
 		BIO_free_all(b64);
 		return 1;
 	}
-	*decoded_len =  BIO_read(b64, *decoded, slen);
+	len = BIO_read(b64, *decoded, (int)slen);
 	BIO_free_all(b64);
 
-	if(*decoded_len <= 0){
+	if(len <= 0){
 		mosquitto__free(*decoded);
 		*decoded = NULL;
 		*decoded_len = 0;
 		return 1;
 	}
+	*decoded_len = (unsigned int)len;
 
 	return 0;
 }
@@ -172,9 +174,9 @@ int pw__hash(const char *password, struct mosquitto_pw *pw, bool new_salt)
 #endif
 	}else{
 		hash_len = sizeof(pw->password_hash);
-		PKCS5_PBKDF2_HMAC(password, strlen(password),
+		PKCS5_PBKDF2_HMAC(password, (int)strlen(password),
 			pw->salt, sizeof(pw->salt), 20000,
-			digest, hash_len, pw->password_hash);
+			digest, (int)hash_len, pw->password_hash);
 	}
 
 	return MOSQ_ERR_SUCCESS;

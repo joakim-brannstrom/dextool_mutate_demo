@@ -298,7 +298,7 @@ struct mosquitto {
 #else
 #  ifdef WITH_SOCKS
 	char *socks5_host;
-	int socks5_port;
+	uint16_t socks5_port;
 	char *socks5_username;
 	char *socks5_password;
 #  endif
@@ -322,7 +322,7 @@ struct mosquitto {
 	void (*on_log)(struct mosquitto *, void *userdata, int level, const char *str);
 	/*void (*on_error)();*/
 	char *host;
-	int port;
+	uint16_t port;
 	char *bind_address;
 	unsigned int reconnects;
 	unsigned int reconnect_delay;
