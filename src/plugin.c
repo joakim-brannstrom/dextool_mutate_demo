@@ -137,9 +137,14 @@ int plugin__handle_message(struct mosquitto_db *db, struct mosquitto *context, s
 	}
 
 	stored->topic = event_data.topic;
-	if(stored->payloadlen != event_data.payloadlen){
+	if(UHPA_ACCESS(stored->payload, stored->payloadlen) != event_data.payload){
 		UHPA_FREE(stored->payload, stored->payloadlen);
-		UHPA_ALLOC(stored->payload, event_data.payloadlen);
+		if(event_data.payloadlen > sizeof(stored->payload.array)){
+			stored->payload.ptr = event_data.payload;
+		}else{
+			memcpy(stored->payload.array, event_data.payload, event_data.payloadlen);
+			mosquitto_free(event_data.payload);
+		}
 		stored->payloadlen = event_data.payloadlen;
 	}
 	memcpy(UHPA_ACCESS(stored->payload, stored->payloadlen), event_data.payload, stored->payloadlen);
