@@ -1,5 +1,6 @@
 DIRS= \
-		message-timestamp
+		message-timestamp \
+		payload-modification
 
 .PHONY : all binary check clean reallyclean test install uninstall
 
