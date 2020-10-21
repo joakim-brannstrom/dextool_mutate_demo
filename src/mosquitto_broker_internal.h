@@ -454,6 +454,7 @@ struct mosquitto__unpwd{
 	unsigned char *salt;
 	unsigned int password_len;
 	unsigned int salt_len;
+	int iterations;
 #endif
 	enum mosquitto_pwhash_type hashtype;
 };
