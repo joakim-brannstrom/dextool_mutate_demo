@@ -27,7 +27,7 @@ Contributors:
 #include <string.h>
 
 #include "mosquitto.h"
-#include "memory_mosq.h"
+#include "mosquitto_broker.h"
 #include "password_mosq.h"
 
 #ifdef WIN32
@@ -54,8 +54,6 @@ Contributors:
 
 #define MAX_BUFFER_LEN 65536
 #define SALT_LEN 12
-
-#include "misc_mosq.h"
 
 #ifdef WITH_TLS
 int base64__encode(unsigned char *in, unsigned int in_len, char **encoded)
@@ -112,7 +110,7 @@ int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len)
 		BIO_free_all(b64);
 		return 1;
 	}
-	*decoded = mosquitto__calloc(slen, 1);
+	*decoded = mosquitto_calloc(slen, 1);
 	if(!(*decoded)){
 		BIO_free_all(b64);
 		return 1;
@@ -121,7 +119,7 @@ int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len)
 	BIO_free_all(b64);
 
 	if(len <= 0){
-		mosquitto__free(*decoded);
+		mosquitto_free(*decoded);
 		*decoded = NULL;
 		*decoded_len = 0;
 		return 1;
