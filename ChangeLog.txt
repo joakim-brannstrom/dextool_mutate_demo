@@ -55,6 +55,7 @@ Broker:
 - Document that X509_free() must be called after using
   mosquitto_client_certificate(). Closes #1842.
 - Add "deny" acl type. Closes #1611.
+- The broker now sends the receive-maximum property for MQTT v5 CONNACKs.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are

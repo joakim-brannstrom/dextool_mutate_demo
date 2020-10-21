@@ -444,12 +444,14 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
             packet = packet + struct.pack("!H"+str(len(password))+"s", len(password), password)
     return packet
 
-def gen_connack(flags=0, rc=0, proto_ver=4, properties=b""):
+def gen_connack(flags=0, rc=0, proto_ver=4, properties=b"", property_helper=True):
     if proto_ver == 5:
-        if properties is not None:
-            properties = mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_TOPIC_ALIAS_MAXIMUM, 10) + properties
-        else:
-            properties = b""
+        if property_helper == True:
+            if properties is not None:
+                properties = mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_TOPIC_ALIAS_MAXIMUM, 10) \
+                    + properties + mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_RECEIVE_MAXIMUM, 20)
+            else:
+                properties = b""
         properties = mqtt5_props.prop_finalise(properties)
 
         packet = struct.pack('!BBBB', 32, 2+len(properties), flags, rc) + properties
