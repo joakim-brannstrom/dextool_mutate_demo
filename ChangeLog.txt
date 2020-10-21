@@ -204,7 +204,6 @@ Clients:
 Build:
 - Various fixes for building with <C99 support. Closes #1622.
 - Fix use of sed on BSD. Closes #1614.
->>>>>>> fixes
 
 
 1.6.9 - 20200227
