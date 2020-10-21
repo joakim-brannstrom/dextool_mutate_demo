@@ -35,7 +35,7 @@ struct mosquitto_pw{
 
 int pw__hash(const char *password, struct mosquitto_pw *pw, bool new_password, int new_iterations);
 int pw__memcmp_const(const void *ptr1, const void *b, size_t len);
-int base64_encode(unsigned char *in, unsigned int in_len, char **encoded);
+int base64__encode(unsigned char *in, unsigned int in_len, char **encoded);
 int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len);
 
 #endif

@@ -58,7 +58,7 @@ Contributors:
 #include "misc_mosq.h"
 
 #ifdef WITH_TLS
-int base64_encode(unsigned char *in, unsigned int in_len, char **encoded)
+int base64__encode(unsigned char *in, unsigned int in_len, char **encoded)
 {
 	BIO *bmem, *b64;
 	BUF_MEM *bptr;

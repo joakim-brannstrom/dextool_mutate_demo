@@ -133,14 +133,14 @@ int output_new_password(FILE *fptr, const char *username, const char *password, 
 		return 1;
 	}
 
-	rc = base64_encode(pw.salt, sizeof(pw.salt), &salt64);
+	rc = base64__encode(pw.salt, sizeof(pw.salt), &salt64);
 	if(rc){
 		free(salt64);
 		fprintf(stderr, "Error: Unable to encode salt.\n");
 		return 1;
 	}
 
-	rc = base64_encode(pw.password_hash, sizeof(pw.password_hash), &hash64);
+	rc = base64__encode(pw.password_hash, sizeof(pw.password_hash), &hash64);
 	if(rc){
 		free(salt64);
 		free(hash64);
