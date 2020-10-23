@@ -155,6 +155,26 @@ int plugin__handle_message(struct mosquitto_db *db, struct mosquitto *context, s
 }
 
 
+void plugin__handle_tick(struct mosquitto_db *db)
+{
+	struct mosquitto_evt_tick event_data;
+	struct mosquitto__callback *cb_base;
+	struct mosquitto__security_options *opts;
+
+	// FIXME - set now_s and now_ns to avoid need for multiple time lookups
+	if(db->config->per_listener_settings){
+		// FIXME - iterate over all listeners
+	}else{
+		opts = &db->config->security_options;
+		memset(&event_data, 0, sizeof(event_data));
+
+		DL_FOREACH(opts->plugin_callbacks.message, cb_base){
+			cb_base->cb(MOSQ_EVT_TICK, &event_data, cb_base->userdata);
+		}
+	}
+}
+
+
 int mosquitto_callback_register(
 		mosquitto_plugin_id_t *identifier,
 		int event,
@@ -199,6 +219,9 @@ int mosquitto_callback_register(
 			break;
 		case MOSQ_EVT_MESSAGE:
 			cb_base = &security_options->plugin_callbacks.message;
+			break;
+		case MOSQ_EVT_TICK:
+			cb_base = &security_options->plugin_callbacks.tick;
 			break;
 		default:
 			return MOSQ_ERR_INVAL;
@@ -263,6 +286,9 @@ int mosquitto_callback_unregister(
 			break;
 		case MOSQ_EVT_MESSAGE:
 			cb_base = &security_options->plugin_callbacks.message;
+			break;
+		case MOSQ_EVT_TICK:
+			cb_base = &security_options->plugin_callbacks.tick;
 			break;
 		default:
 			return MOSQ_ERR_INVAL;

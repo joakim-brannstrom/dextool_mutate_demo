@@ -229,6 +229,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 			}
 		}
 #endif
+		plugin__handle_tick(db);
 	}
 
 	mux__cleanup(db);
