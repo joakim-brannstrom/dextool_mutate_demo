@@ -370,8 +370,8 @@ static int security__module_init_single(struct mosquitto__listener *listener, st
 				}
 			}else{
 				log__printf(NULL, MOSQ_LOG_ERR,
-						"Error: Incorrect auth plugin version (got %d, expected %d).",
-						version, MOSQ_AUTH_PLUGIN_VERSION);
+						"Error: Unsupported auth plugin version (got %d, expected %d).",
+						version, MOSQ_PLUGIN_VERSION);
 				LIB_ERROR();
 
 				LIB_CLOSE(lib);

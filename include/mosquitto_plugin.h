@@ -123,6 +123,9 @@ struct mosquitto_acl_msg {
  * return the plugin interface version you support, i.e. 5.
  *
  * The supported_versions array tells you which plugin versions the broker supports.
+ *
+ * If the broker does not support the version that you require, return -1 to
+ * indicate failure.
  */
 int mosquitto_plugin_version(int supported_version_count, const int *supported_versions);
 
