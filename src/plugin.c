@@ -224,7 +224,7 @@ int mosquitto_callback_register(
 			cb_base = &security_options->plugin_callbacks.tick;
 			break;
 		default:
-			return MOSQ_ERR_INVAL;
+			return MOSQ_ERR_NOT_SUPPORTED;
 			break;
 	}
 
