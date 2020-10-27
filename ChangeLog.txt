@@ -59,6 +59,7 @@ Broker:
 - mosquitto_password now forbids the : character. Closes #1833.
 - Fix `log_timestamp_format` not applying to `log_dest topic`. Closes #1862.
 - Add the `bridge_max_packet_size` option. Closes #265.
+- Add the `bridge_bind_address` option. Closes #1311.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are

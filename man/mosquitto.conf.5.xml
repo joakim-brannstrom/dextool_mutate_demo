@@ -1522,6 +1522,17 @@ openssl dhparam -out dhparam.pem 2048</programlisting>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>bridge_bind_address</option> <replaceable>ip address</replaceable></term>
+				<listitem>
+					<para>
+						If you need to have the bridge connect over a particular
+						network interface, use bridge_bind_address to tell the
+						bridge which local IP address the socket should bind to,
+						e.g. <option>bridge_bind_address 192.168.1.10</option>.
+					</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>bridge_max_packet_size</option> <replaceable>value</replaceable></term>
 				<listitem>
 					<para>

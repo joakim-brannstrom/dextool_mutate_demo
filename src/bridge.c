@@ -411,7 +411,12 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	log__printf(NULL, MOSQ_LOG_NOTICE, "Connecting bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
-	rc = net__socket_connect(context, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port, NULL, false);
+	rc = net__socket_connect(context,
+			context->bridge->addresses[context->bridge->cur_address].address,
+			context->bridge->addresses[context->bridge->cur_address].port,
+			context->bridge->bind_address,
+			false);
+
 	if(rc > 0){
 		if(rc == MOSQ_ERR_TLS){
 			net__socket_close(db, context);
@@ -679,7 +684,8 @@ void bridge_check(struct mosquitto_db *db)
 				if(context->bridge->primary_retry_sock == INVALID_SOCKET){
 					rc = net__try_connect(context->bridge->addresses[0].address,
 							context->bridge->addresses[0].port,
-							&context->bridge->primary_retry_sock, NULL, false);
+							&context->bridge->primary_retry_sock,
+							context->bridge->bind_address, false);
 
 					if(rc == 0){
 						COMPAT_CLOSE(context->bridge->primary_retry_sock);
