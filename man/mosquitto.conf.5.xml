@@ -1522,6 +1522,20 @@ openssl dhparam -out dhparam.pem 2048</programlisting>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>bridge_max_packet_size</option> <replaceable>value</replaceable></term>
+				<listitem>
+					<para>
+						If you wish to restrict the size of messages sent to a
+						remote bridge, use this option. This sets the maximum
+						number of bytes for the total message, including headers
+						and payload. Note that MQTT v5 brokers may provide their
+						own maximum-packet-size property. In this case, the
+						smaller of the two limits will be used. Set to 0 for
+						"unlimited".
+					</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>bridge_outgoing_retain</option> [ true | false ]</term>
 				<listitem>
 					<para>Some MQTT brokers do not allow retained messages. MQTT v5 gives

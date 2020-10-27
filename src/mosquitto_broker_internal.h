@@ -586,6 +586,7 @@ struct mosquitto__bridge{
 	int backoff_base;
 	int backoff_cap;
 	int threshold;
+	uint32_t maximum_packet_size;
 	bool lazy_reconnect;
 	bool attempt_unsubscribe;
 	bool initial_notification_done;

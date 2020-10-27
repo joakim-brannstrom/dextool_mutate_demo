@@ -58,6 +58,7 @@ Broker:
 - The broker now sends the receive-maximum property for MQTT v5 CONNACKs.
 - mosquitto_password now forbids the : character. Closes #1833.
 - Fix `log_timestamp_format` not applying to `log_dest topic`. Closes #1862.
+- Add the `bridge_max_packet_size` option. Closes #265.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are
