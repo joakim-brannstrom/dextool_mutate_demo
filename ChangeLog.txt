@@ -56,6 +56,7 @@ Broker:
   mosquitto_client_certificate(). Closes #1842.
 - Add "deny" acl type. Closes #1611.
 - The broker now sends the receive-maximum property for MQTT v5 CONNACKs.
+- mosquitto_password now forbids the : character. Closes #1833.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are
