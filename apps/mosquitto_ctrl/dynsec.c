@@ -247,6 +247,10 @@ static cJSON *init_add_role(const char *rolename)
 	if(init_add_acl_to_role(j_acls, "publishClientSend", "$CONTROL/dynamic-security/#") == NULL
 			|| init_add_acl_to_role(j_acls, "publishClientReceive", "$CONTROL/dynamic-security/#") == NULL
 			|| init_add_acl_to_role(j_acls, "subscribePattern", "$CONTROL/dynamic-security/#") == NULL
+			|| init_add_acl_to_role(j_acls, "publishClientReceive", "$SYS/#") == NULL
+			|| init_add_acl_to_role(j_acls, "subscribePattern", "$SYS/#") == NULL
+			|| init_add_acl_to_role(j_acls, "publishClientReceive", "#") == NULL
+			|| init_add_acl_to_role(j_acls, "subscribePattern", "#") == NULL
 			|| init_add_acl_to_role(j_acls, "unsubscribePattern", "#") == NULL
 			){
 
