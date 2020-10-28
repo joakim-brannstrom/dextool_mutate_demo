@@ -162,11 +162,11 @@ int dynsec_group__add_remove_client(int argc, char *argv[], cJSON *j_command, co
 	int priority = -1;
 
 	if(argc == 2){
-		username = argv[0];
-		groupname = argv[1];
+		groupname = argv[0];
+		username = argv[1];
 	}else if(argc == 3){
-		username = argv[0];
-		groupname = argv[1];
+		groupname = argv[0];
+		username = argv[1];
 		priority = atoi(argv[2]);
 	}else{
 		return MOSQ_ERR_INVAL;
