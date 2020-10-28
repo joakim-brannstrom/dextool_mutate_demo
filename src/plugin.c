@@ -168,7 +168,7 @@ void plugin__handle_tick(struct mosquitto_db *db)
 		opts = &db->config->security_options;
 		memset(&event_data, 0, sizeof(event_data));
 
-		DL_FOREACH(opts->plugin_callbacks.message, cb_base){
+		DL_FOREACH(opts->plugin_callbacks.tick, cb_base){
 			cb_base->cb(MOSQ_EVT_TICK, &event_data, cb_base->userdata);
 		}
 	}
