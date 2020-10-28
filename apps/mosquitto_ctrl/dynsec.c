@@ -322,12 +322,30 @@ static cJSON *init_add_client(const char *username, const char *password, const 
 static cJSON *init_create(const char *username, const char *password, const char *rolename)
 {
 	cJSON *tree, *j_clients, *j_client, *j_roles, *j_role;
+	cJSON *j_default_access;
 
 	tree = cJSON_CreateObject();
 	if(tree == NULL) return NULL;
 
 	if((j_clients = cJSON_AddArrayToObject(tree, "clients")) == NULL
 			|| (j_roles = cJSON_AddArrayToObject(tree, "roles")) == NULL
+			|| (j_default_access = cJSON_AddObjectToObject(tree, "defaultACLAccess")) == NULL
+			){
+
+		cJSON_Delete(tree);
+		return NULL;
+	}
+
+	/* Set default behaviour:
+	 * * Client can not publish to the broker by default.
+	 * * Broker *CAN* publish to the client by default.
+	 * * Client con not subscribe to topics by default.
+	 * * Client *CAN* unsubscribe from topics by default.
+	 */
+	if(cJSON_AddBoolToObject(j_default_access, "publishClientToBroker", false) == NULL
+			|| cJSON_AddBoolToObject(j_default_access, "publishBrokerToClient", true) == NULL
+			|| cJSON_AddBoolToObject(j_default_access, "subscribe", false) == NULL
+			|| cJSON_AddBoolToObject(j_default_access, "unsubscribe", true) == NULL
 			){
 
 		cJSON_Delete(tree);
