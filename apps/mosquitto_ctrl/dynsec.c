@@ -66,7 +66,7 @@ void dynsec__print_usage(void)
 	printf("Get role information:        getRole           <rolename>\n");
 	printf("List all roles:              listRoles         [count [offset]]\n");
 	printf("\naclspec:                     <acltype> <topicFilter> allow|deny\n");
-	printf("acltype:                     publishClientToBroker|publishBrokerToClient\n");
+	printf("acltype:                     publishClientSend|publishClientReceive\n");
 	printf("                              |subscribeLiteral|subscribePattern\n");
 	printf("                              |unsubscribeLiteral|unsubscribePattern\n");
 }
@@ -165,8 +165,8 @@ static int dynsec__default_acl_access(int argc, char *argv[], cJSON *j_command)
 		return MOSQ_ERR_INVAL;
 	}
 
-	if(strcasecmp(acltype, "publishClientToBroker")
-			&& strcasecmp(acltype, "publishBrokerToClient")
+	if(strcasecmp(acltype, "publishClientSend")
+			&& strcasecmp(acltype, "publishClientReceive")
 			&& strcasecmp(acltype, "subscribe")
 			&& strcasecmp(acltype, "unsubscribe")){
 
@@ -244,8 +244,8 @@ static cJSON *init_add_role(const char *rolename)
 		return NULL;
 	}
 	cJSON_AddItemToObject(j_role, "acls", j_acls);
-	if(init_add_acl_to_role(j_acls, "publishClientToBroker", "$CONTROL/dynamic-security/#") == NULL
-			|| init_add_acl_to_role(j_acls, "publishBrokerToClient", "$CONTROL/dynamic-security/#") == NULL
+	if(init_add_acl_to_role(j_acls, "publishClientSend", "$CONTROL/dynamic-security/#") == NULL
+			|| init_add_acl_to_role(j_acls, "publishClientReceive", "$CONTROL/dynamic-security/#") == NULL
 			|| init_add_acl_to_role(j_acls, "subscribePattern", "$CONTROL/dynamic-security/#") == NULL
 			|| init_add_acl_to_role(j_acls, "unsubscribePattern", "#") == NULL
 			){
@@ -342,8 +342,8 @@ static cJSON *init_create(const char *username, const char *password, const char
 	 * * Client con not subscribe to topics by default.
 	 * * Client *CAN* unsubscribe from topics by default.
 	 */
-	if(cJSON_AddBoolToObject(j_default_access, "publishClientToBroker", false) == NULL
-			|| cJSON_AddBoolToObject(j_default_access, "publishBrokerToClient", true) == NULL
+	if(cJSON_AddBoolToObject(j_default_access, "publishClientSend", false) == NULL
+			|| cJSON_AddBoolToObject(j_default_access, "publishClientReceive", true) == NULL
 			|| cJSON_AddBoolToObject(j_default_access, "subscribe", false) == NULL
 			|| cJSON_AddBoolToObject(j_default_access, "unsubscribe", true) == NULL
 			){

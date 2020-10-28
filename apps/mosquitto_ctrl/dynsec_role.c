@@ -129,8 +129,8 @@ int dynsec_role__add_acl(int argc, char *argv[], cJSON *j_command)
 		return MOSQ_ERR_INVAL;
 	}
 
-	if(strcasecmp(acltype, "publishClientToBroker")
-			&& strcasecmp(acltype, "publishBrokerToClient")
+	if(strcasecmp(acltype, "publishClientSend")
+			&& strcasecmp(acltype, "publishClientReceive")
 			&& strcasecmp(acltype, "subscribe")
 			&& strcasecmp(acltype, "unsubscribe")){
 
@@ -170,8 +170,8 @@ int dynsec_role__remove_acl(int argc, char *argv[], cJSON *j_command)
 		return MOSQ_ERR_INVAL;
 	}
 
-	if(strcasecmp(acltype, "publishClientToBroker")
-			&& strcasecmp(acltype, "publishBrokerToClient")
+	if(strcasecmp(acltype, "publishClientSend")
+			&& strcasecmp(acltype, "publishClientReceive")
 			&& strcasecmp(acltype, "subscribe")
 			&& strcasecmp(acltype, "unsubscribe")){
 

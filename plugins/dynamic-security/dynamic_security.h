@@ -23,6 +23,21 @@ Contributors:
 
 /* ################################################################
  * #
+ * # ACL types
+ * #
+ * ################################################################ */
+
+#define ACL_TYPE_PUB_C_RECV "publishClientReceive"
+#define ACL_TYPE_PUB_C_SEND "publishClientSend"
+#define ACL_TYPE_SUB_GENERIC "subscribe"
+#define ACL_TYPE_SUB_LITERAL "subscribeLiteral"
+#define ACL_TYPE_SUB_PATTERN "subscribePattern"
+#define ACL_TYPE_UNSUB_GENERIC "unsubscribe"
+#define ACL_TYPE_UNSUB_LITERAL "unsubscribeLiteral"
+#define ACL_TYPE_UNSUB_PATTERN "unsubscribePattern"
+
+/* ################################################################
+ * #
  * # Error codes
  * #
  * ################################################################ */
@@ -87,8 +102,8 @@ struct dynsec__acl{
 };
 
 struct dynsec__acls{
-	struct dynsec__acl *publish_c2b;
-	struct dynsec__acl *publish_b2c;
+	struct dynsec__acl *publish_c_send;
+	struct dynsec__acl *publish_c_recv;
 	struct dynsec__acl *subscribe_literal;
 	struct dynsec__acl *subscribe_pattern;
 	struct dynsec__acl *unsubscribe_literal;
@@ -104,8 +119,8 @@ struct dynsec__role{
 };
 
 struct dynsec__acl_default_access{
-	bool publish_c2b;
-	bool publish_b2c;
+	bool publish_c_send;
+	bool publish_c_recv;
 	bool subscribe;
 	bool unsubscribe;
 };

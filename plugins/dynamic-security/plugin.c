@@ -128,13 +128,13 @@ int dynsec__process_default_acl_access(cJSON *j_responses, struct mosquitto *con
 
 			allow = cJSON_IsTrue(j_allow);
 
-			if(!strcasecmp(j_acltype->valuestring, "publishClientToBroker")){
-				default_access.publish_c2b = allow;
-			}else if(!strcasecmp(j_acltype->valuestring, "publishBrokerToClient")){
-				default_access.publish_b2c = allow;
-			}else if(!strcasecmp(j_acltype->valuestring, "subscribe")){
+			if(!strcasecmp(j_acltype->valuestring, ACL_TYPE_PUB_C_SEND)){
+				default_access.publish_c_send = allow;
+			}else if(!strcasecmp(j_acltype->valuestring, ACL_TYPE_PUB_C_RECV)){
+				default_access.publish_c_recv = allow;
+			}else if(!strcasecmp(j_acltype->valuestring, ACL_TYPE_SUB_GENERIC)){
 				default_access.subscribe = allow;
-			}else if(!strcasecmp(j_acltype->valuestring, "unsubscribe")){
+			}else if(!strcasecmp(j_acltype->valuestring, ACL_TYPE_UNSUB_GENERIC)){
 				default_access.unsubscribe = allow;
 			}
 		}
@@ -164,28 +164,28 @@ static int dynsec__general_config_load(cJSON *tree)
 
 	j_default_access = cJSON_GetObjectItem(tree, "defaultACLAccess");
 	if(j_default_access && cJSON_IsObject(j_default_access)){
-		jtmp = cJSON_GetObjectItem(j_default_access, "publishClientToBroker");
+		jtmp = cJSON_GetObjectItem(j_default_access, ACL_TYPE_PUB_C_SEND);
 		if(jtmp && cJSON_IsBool(jtmp)){
-			default_access.publish_c2b = cJSON_IsTrue(jtmp);
+			default_access.publish_c_send = cJSON_IsTrue(jtmp);
 		}else{
-			default_access.publish_c2b = false;
+			default_access.publish_c_send = false;
 		}
 
-		jtmp = cJSON_GetObjectItem(j_default_access, "publishBrokerToClient");
+		jtmp = cJSON_GetObjectItem(j_default_access, ACL_TYPE_PUB_C_RECV);
 		if(jtmp && cJSON_IsBool(jtmp)){
-			default_access.publish_b2c = cJSON_IsTrue(jtmp);
+			default_access.publish_c_recv = cJSON_IsTrue(jtmp);
 		}else{
-			default_access.publish_b2c = false;
+			default_access.publish_c_recv = false;
 		}
 
-		jtmp = cJSON_GetObjectItem(j_default_access, "subscribe");
+		jtmp = cJSON_GetObjectItem(j_default_access, ACL_TYPE_SUB_GENERIC);
 		if(jtmp && cJSON_IsBool(jtmp)){
 			default_access.subscribe = cJSON_IsTrue(jtmp);
 		}else{
 			default_access.subscribe = false;
 		}
 
-		jtmp = cJSON_GetObjectItem(j_default_access, "unsubscribe");
+		jtmp = cJSON_GetObjectItem(j_default_access, ACL_TYPE_UNSUB_GENERIC);
 		if(jtmp && cJSON_IsBool(jtmp)){
 			default_access.unsubscribe = cJSON_IsTrue(jtmp);
 		}else{
@@ -205,10 +205,10 @@ static int dynsec__general_config_save(cJSON *tree)
 	}
 	cJSON_AddItemToObject(tree, "defaultACLAccess", j_default_access);
 
-	if(cJSON_AddBoolToObject(j_default_access, "publishClientToBroker", default_access.publish_c2b) == NULL
-			|| cJSON_AddBoolToObject(j_default_access, "publishBrokerToClient", default_access.publish_b2c) == NULL
-			|| cJSON_AddBoolToObject(j_default_access, "subscribe", default_access.subscribe) == NULL
-			|| cJSON_AddBoolToObject(j_default_access, "unsubscribe", default_access.unsubscribe) == NULL
+	if(cJSON_AddBoolToObject(j_default_access, ACL_TYPE_PUB_C_SEND, default_access.publish_c_send) == NULL
+			|| cJSON_AddBoolToObject(j_default_access, ACL_TYPE_PUB_C_RECV, default_access.publish_c_recv) == NULL
+			|| cJSON_AddBoolToObject(j_default_access, ACL_TYPE_SUB_GENERIC, default_access.subscribe) == NULL
+			|| cJSON_AddBoolToObject(j_default_access, ACL_TYPE_UNSUB_GENERIC, default_access.unsubscribe) == NULL
 			){
 
 		return 1;

@@ -36,8 +36,8 @@ Command:
 		{
 			"command": "setDefaultACLAccess",
 			"acls":[
-				{ "acltype": "publishClientToBroker", "allow": false },
-				{ "acltype": "publishBrokerToClient", "allow": false },
+				{ "acltype": "publishClientSend", "allow": false },
+				{ "acltype": "publishClientReceive", "allow": false },
 				{ "acltype": "subscribe", "allow": false },
 				{ "acltype": "unsubscribe", "allow": false }
 			]

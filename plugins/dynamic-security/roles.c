@@ -202,8 +202,8 @@ static void role__free_item(struct dynsec__role *role, bool remove_from_hash)
 	mosquitto_free(role->text_name);
 	mosquitto_free(role->text_description);
 	mosquitto_free(role->rolename);
-	role__free_all_acls(&role->acls.publish_c2b);
-	role__free_all_acls(&role->acls.publish_b2c);
+	role__free_all_acls(&role->acls.publish_c_send);
+	role__free_all_acls(&role->acls.publish_c_recv);
 	role__free_all_acls(&role->acls.subscribe_literal);
 	role__free_all_acls(&role->acls.subscribe_pattern);
 	role__free_all_acls(&role->acls.unsubscribe_literal);
@@ -273,12 +273,12 @@ static int add_acls_to_json(cJSON *j_role, struct dynsec__role *role)
 		return 1;
 	}
 
-	if(add_single_acl_to_json(j_acls, "publishClientToBroker", role->acls.publish_c2b) != MOSQ_ERR_SUCCESS
-			|| add_single_acl_to_json(j_acls, "publishBrokerToClient", role->acls.publish_b2c) != MOSQ_ERR_SUCCESS
-			|| add_single_acl_to_json(j_acls, "subscribeLiteral", role->acls.subscribe_literal) != MOSQ_ERR_SUCCESS
-			|| add_single_acl_to_json(j_acls, "subscribePattern", role->acls.subscribe_pattern) != MOSQ_ERR_SUCCESS
-			|| add_single_acl_to_json(j_acls, "unsubscribeLiteral", role->acls.unsubscribe_literal) != MOSQ_ERR_SUCCESS
-			|| add_single_acl_to_json(j_acls, "unsubscribePattern", role->acls.unsubscribe_pattern) != MOSQ_ERR_SUCCESS
+	if(add_single_acl_to_json(j_acls, ACL_TYPE_PUB_C_SEND, role->acls.publish_c_send) != MOSQ_ERR_SUCCESS
+			|| add_single_acl_to_json(j_acls, ACL_TYPE_PUB_C_RECV, role->acls.publish_c_recv) != MOSQ_ERR_SUCCESS
+			|| add_single_acl_to_json(j_acls, ACL_TYPE_SUB_LITERAL, role->acls.subscribe_literal) != MOSQ_ERR_SUCCESS
+			|| add_single_acl_to_json(j_acls, ACL_TYPE_SUB_PATTERN, role->acls.subscribe_pattern) != MOSQ_ERR_SUCCESS
+			|| add_single_acl_to_json(j_acls, ACL_TYPE_UNSUB_LITERAL, role->acls.unsubscribe_literal) != MOSQ_ERR_SUCCESS
+			|| add_single_acl_to_json(j_acls, ACL_TYPE_UNSUB_PATTERN, role->acls.unsubscribe_pattern) != MOSQ_ERR_SUCCESS
 			){
 
 		return 1;
@@ -419,12 +419,12 @@ int dynsec_roles__config_load(cJSON *tree)
 			/* ACLs */
 			j_acls = cJSON_GetObjectItem(j_role, "acls");
 			if(j_acls && cJSON_IsArray(j_acls)){
-				if(dynsec_roles__acl_load(j_acls, "publishClientToBroker", &role->acls.publish_c2b) != 0
-						|| dynsec_roles__acl_load(j_acls, "publishBrokerToClient", &role->acls.publish_b2c) != 0
-						|| dynsec_roles__acl_load(j_acls, "subscribeLiteral", &role->acls.subscribe_literal) != 0
-						|| dynsec_roles__acl_load(j_acls, "subscribePattern", &role->acls.subscribe_pattern) != 0
-						|| dynsec_roles__acl_load(j_acls, "unsubscribeLiteral", &role->acls.unsubscribe_literal) != 0
-						|| dynsec_roles__acl_load(j_acls, "unsubscribePattern", &role->acls.unsubscribe_pattern) != 0
+				if(dynsec_roles__acl_load(j_acls, ACL_TYPE_PUB_C_SEND, &role->acls.publish_c_send) != 0
+						|| dynsec_roles__acl_load(j_acls, ACL_TYPE_PUB_C_RECV, &role->acls.publish_c_recv) != 0
+						|| dynsec_roles__acl_load(j_acls, ACL_TYPE_SUB_LITERAL, &role->acls.subscribe_literal) != 0
+						|| dynsec_roles__acl_load(j_acls, ACL_TYPE_SUB_PATTERN, &role->acls.subscribe_pattern) != 0
+						|| dynsec_roles__acl_load(j_acls, ACL_TYPE_UNSUB_LITERAL, &role->acls.unsubscribe_literal) != 0
+						|| dynsec_roles__acl_load(j_acls, ACL_TYPE_UNSUB_PATTERN, &role->acls.unsubscribe_pattern) != 0
 						){
 
 					// FIXME log
@@ -503,12 +503,12 @@ int dynsec_roles__process_create(cJSON *j_responses, struct mosquitto *context, 
 	/* ACLs */
 	j_acls = cJSON_GetObjectItem(command, "acls");
 	if(j_acls && cJSON_IsArray(j_acls)){
-		if(dynsec_roles__acl_load(j_acls, "publishClientToBroker", &role->acls.publish_c2b) != 0
-				|| dynsec_roles__acl_load(j_acls, "publishBrokerToClient", &role->acls.publish_b2c) != 0
-				|| dynsec_roles__acl_load(j_acls, "subscribeLiteral", &role->acls.subscribe_literal) != 0
-				|| dynsec_roles__acl_load(j_acls, "subscribePattern", &role->acls.subscribe_pattern) != 0
-				|| dynsec_roles__acl_load(j_acls, "unsubscribeLiteral", &role->acls.unsubscribe_literal) != 0
-				|| dynsec_roles__acl_load(j_acls, "unsubscribePattern", &role->acls.unsubscribe_pattern) != 0
+		if(dynsec_roles__acl_load(j_acls, ACL_TYPE_PUB_C_SEND, &role->acls.publish_c_send) != 0
+				|| dynsec_roles__acl_load(j_acls, ACL_TYPE_PUB_C_RECV, &role->acls.publish_c_recv) != 0
+				|| dynsec_roles__acl_load(j_acls, ACL_TYPE_SUB_LITERAL, &role->acls.subscribe_literal) != 0
+				|| dynsec_roles__acl_load(j_acls, ACL_TYPE_SUB_PATTERN, &role->acls.subscribe_pattern) != 0
+				|| dynsec_roles__acl_load(j_acls, ACL_TYPE_UNSUB_LITERAL, &role->acls.unsubscribe_literal) != 0
+				|| dynsec_roles__acl_load(j_acls, ACL_TYPE_UNSUB_PATTERN, &role->acls.unsubscribe_pattern) != 0
 				){
 
 			dynsec__command_reply(j_responses, context, "createRole", "Internal error", correlation_data);
@@ -692,17 +692,17 @@ int dynsec_roles__process_add_acl(cJSON *j_responses, struct mosquitto *context,
 		dynsec__command_reply(j_responses, context, "addRoleACL", "Invalid/missing acltype", correlation_data);
 		return MOSQ_ERR_SUCCESS;
 	}
-	if(!strcasecmp(jtmp->valuestring, "publishClientToBroker")){
-		acllist = &role->acls.publish_c2b;
-	}else if(!strcasecmp(jtmp->valuestring, "publishBrokerToClient")){
-		acllist = &role->acls.publish_b2c;
-	}else if(!strcasecmp(jtmp->valuestring, "subscribeLiteral")){
+	if(!strcasecmp(jtmp->valuestring, ACL_TYPE_PUB_C_SEND)){
+		acllist = &role->acls.publish_c_send;
+	}else if(!strcasecmp(jtmp->valuestring, ACL_TYPE_PUB_C_RECV)){
+		acllist = &role->acls.publish_c_recv;
+	}else if(!strcasecmp(jtmp->valuestring, ACL_TYPE_SUB_LITERAL)){
 		acllist = &role->acls.subscribe_literal;
-	}else if(!strcasecmp(jtmp->valuestring, "subscribePattern")){
+	}else if(!strcasecmp(jtmp->valuestring, ACL_TYPE_SUB_PATTERN)){
 		acllist = &role->acls.subscribe_pattern;
-	}else if(!strcasecmp(jtmp->valuestring, "unsubscribeLiteral")){
+	}else if(!strcasecmp(jtmp->valuestring, ACL_TYPE_UNSUB_LITERAL)){
 		acllist = &role->acls.unsubscribe_literal;
-	}else if(!strcasecmp(jtmp->valuestring, "unsubscribePattern")){
+	}else if(!strcasecmp(jtmp->valuestring, ACL_TYPE_UNSUB_PATTERN)){
 		acllist = &role->acls.unsubscribe_pattern;
 	}else{
 		dynsec__command_reply(j_responses, context, "addRoleACL", "Unknown acltype", correlation_data);
@@ -769,17 +769,17 @@ int dynsec_roles__process_remove_acl(cJSON *j_responses, struct mosquitto *conte
 		dynsec__command_reply(j_responses, context, "removeRoleACL", "Invalid/missing acltype", correlation_data);
 		return MOSQ_ERR_SUCCESS;
 	}
-	if(!strcasecmp(jtmp->valuestring, "publishClientToBroker")){
-		acllist = &role->acls.publish_c2b;
-	}else if(!strcasecmp(jtmp->valuestring, "publishBrokerToClient")){
-		acllist = &role->acls.publish_b2c;
-	}else if(!strcasecmp(jtmp->valuestring, "subscribeLiteral")){
+	if(!strcasecmp(jtmp->valuestring, ACL_TYPE_PUB_C_SEND)){
+		acllist = &role->acls.publish_c_send;
+	}else if(!strcasecmp(jtmp->valuestring, ACL_TYPE_PUB_C_RECV)){
+		acllist = &role->acls.publish_c_recv;
+	}else if(!strcasecmp(jtmp->valuestring, ACL_TYPE_SUB_LITERAL)){
 		acllist = &role->acls.subscribe_literal;
-	}else if(!strcasecmp(jtmp->valuestring, "subscribePattern")){
+	}else if(!strcasecmp(jtmp->valuestring, ACL_TYPE_SUB_PATTERN)){
 		acllist = &role->acls.subscribe_pattern;
-	}else if(!strcasecmp(jtmp->valuestring, "unsubscribeLiteral")){
+	}else if(!strcasecmp(jtmp->valuestring, ACL_TYPE_UNSUB_LITERAL)){
 		acllist = &role->acls.unsubscribe_literal;
-	}else if(!strcasecmp(jtmp->valuestring, "unsubscribePattern")){
+	}else if(!strcasecmp(jtmp->valuestring, ACL_TYPE_UNSUB_PATTERN)){
 		acllist = &role->acls.unsubscribe_pattern;
 	}else{
 		dynsec__command_reply(j_responses, context, "removeRoleACL", "Unknown acltype", correlation_data);
@@ -874,7 +874,7 @@ int dynsec_roles__process_modify(cJSON *j_responses, struct mosquitto *context, 
 	struct dynsec__role *role;
 	char *str;
 	cJSON *j_acls;
-	struct dynsec__acl *tmp_publish_c2b, *tmp_publish_b2c;
+	struct dynsec__acl *tmp_publish_c_send, *tmp_publish_c_recv;
 	struct dynsec__acl *tmp_subscribe_literal, *tmp_subscribe_pattern;
 	struct dynsec__acl *tmp_unsubscribe_literal, *tmp_unsubscribe_pattern;
 
@@ -911,17 +911,17 @@ int dynsec_roles__process_modify(cJSON *j_responses, struct mosquitto *context, 
 
 	j_acls = cJSON_GetObjectItem(command, "acls");
 	if(j_acls && cJSON_IsArray(j_acls)){
-		if(dynsec_roles__acl_load(j_acls, "publishClientToBroker", &tmp_publish_c2b) != 0
-				|| dynsec_roles__acl_load(j_acls, "publishBrokerToClient", &tmp_publish_b2c) != 0
-				|| dynsec_roles__acl_load(j_acls, "subscribeLiteral", &tmp_subscribe_literal) != 0
-				|| dynsec_roles__acl_load(j_acls, "subscribePattern", &tmp_subscribe_pattern) != 0
-				|| dynsec_roles__acl_load(j_acls, "unsubscribeLiteral", &tmp_unsubscribe_literal) != 0
-				|| dynsec_roles__acl_load(j_acls, "unsubscribePattern", &tmp_unsubscribe_pattern) != 0
+		if(dynsec_roles__acl_load(j_acls, ACL_TYPE_PUB_C_SEND, &tmp_publish_c_send) != 0
+				|| dynsec_roles__acl_load(j_acls, ACL_TYPE_PUB_C_RECV, &tmp_publish_c_recv) != 0
+				|| dynsec_roles__acl_load(j_acls, ACL_TYPE_SUB_LITERAL, &tmp_subscribe_literal) != 0
+				|| dynsec_roles__acl_load(j_acls, ACL_TYPE_SUB_PATTERN, &tmp_subscribe_pattern) != 0
+				|| dynsec_roles__acl_load(j_acls, ACL_TYPE_UNSUB_LITERAL, &tmp_unsubscribe_literal) != 0
+				|| dynsec_roles__acl_load(j_acls, ACL_TYPE_UNSUB_PATTERN, &tmp_unsubscribe_pattern) != 0
 				){
 
 			/* Free any that were successful */
-			role__free_all_acls(&tmp_publish_c2b);
-			role__free_all_acls(&tmp_publish_b2c);
+			role__free_all_acls(&tmp_publish_c_send);
+			role__free_all_acls(&tmp_publish_c_recv);
 			role__free_all_acls(&tmp_subscribe_literal);
 			role__free_all_acls(&tmp_subscribe_pattern);
 			role__free_all_acls(&tmp_unsubscribe_literal);
@@ -931,15 +931,15 @@ int dynsec_roles__process_modify(cJSON *j_responses, struct mosquitto *context, 
 			return MOSQ_ERR_NOMEM;
 		}
 
-		role__free_all_acls(&role->acls.publish_c2b);
-		role__free_all_acls(&role->acls.publish_b2c);
+		role__free_all_acls(&role->acls.publish_c_send);
+		role__free_all_acls(&role->acls.publish_c_recv);
 		role__free_all_acls(&role->acls.subscribe_literal);
 		role__free_all_acls(&role->acls.subscribe_pattern);
 		role__free_all_acls(&role->acls.unsubscribe_literal);
 		role__free_all_acls(&role->acls.unsubscribe_pattern);
 
-		role->acls.publish_c2b = tmp_publish_c2b;
-		role->acls.publish_b2c = tmp_publish_b2c;
+		role->acls.publish_c_send = tmp_publish_c_send;
+		role->acls.publish_c_recv = tmp_publish_c_recv;
 		role->acls.subscribe_literal = tmp_subscribe_literal;
 		role->acls.subscribe_pattern = tmp_subscribe_pattern;
 		role->acls.unsubscribe_literal = tmp_unsubscribe_literal;
