@@ -178,7 +178,7 @@ int dynsec_auth__basic_auth_callback(int event, void *event_data, void *userdata
 				return MOSQ_ERR_AUTH;
 			}
 		}
-		if(dynsec_auth__pw_hash(client, ed->password, password_hash, sizeof(password_hash), false) == MOSQ_ERR_SUCCESS){
+		if(client->pw.valid && dynsec_auth__pw_hash(client, ed->password, password_hash, sizeof(password_hash), false) == MOSQ_ERR_SUCCESS){
 			if(memcmp_const(client->pw.password_hash, password_hash, sizeof(password_hash)) == 0){
 				return MOSQ_ERR_SUCCESS;
 			}else{
