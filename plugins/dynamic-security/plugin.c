@@ -536,6 +536,10 @@ int dynsec__handle_control(cJSON *j_responses, struct mosquitto *context, cJSON 
 					rc = dynsec_clients__process_add_role(j_responses, context, aiter, correlation_data);
 				}else if(!strcasecmp(command, "removeClientRole")){
 					rc = dynsec_clients__process_remove_role(j_responses, context, aiter, correlation_data);
+				}else if(!strcasecmp(command, "enableClient")){
+					rc = dynsec_clients__process_enable(j_responses, context, aiter, correlation_data);
+				}else if(!strcasecmp(command, "disableClient")){
+					rc = dynsec_clients__process_disable(j_responses, context, aiter, correlation_data);
 
 				/* Groups */
 				}else if(!strcasecmp(command, "addGroupClient")){

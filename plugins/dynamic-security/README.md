@@ -120,6 +120,47 @@ mosquitto_ctrl example:
 mosquitto_ctrl dynsec deleteClient username
 ```
 
+## Enable Client
+
+Command:
+```
+{
+	"commands":[
+		{
+			"command": "enableClient",
+			"username": "username to enable"
+		}
+	]
+}
+```
+
+mosquitto_ctrl example:
+```
+mosquitto_ctrl dynsec enableClient username
+```
+
+## Disable Client
+
+Stop a client from being able to log in, and kick any clients with matching
+username that are currently connected.
+
+Command:
+```
+{
+	"commands":[
+		{
+			"command": "disableClient",
+			"username": "username to disable"
+		}
+	]
+}
+```
+
+mosquitto_ctrl example:
+```
+mosquitto_ctrl dynsec disableClient username
+```
+
 ## Get Client
 
 Command:

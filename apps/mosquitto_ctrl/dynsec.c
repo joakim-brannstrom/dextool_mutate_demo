@@ -46,6 +46,8 @@ void dynsec__print_usage(void)
 	printf("Remove role from a client:   removeClientRole  <username> <rolename>\n");
 	printf("Get client information:      getClient         <username>\n");
 	printf("List all clients:            listClients       [count [offset]]\n");
+	printf("Enable client:               enableClient      <username>\n");
+	printf("Disable client:              disableClient     <username>\n");
 
 	printf("\nGroups\n------\n");
 	printf("Create a new group:          createGroup       <groupname>\n");
@@ -791,6 +793,10 @@ int dynsec__main(int argc, char *argv[], struct mosq_ctrl *ctrl)
 		return dynsec_client__add_remove_role(argc-1, &argv[1], j_command, argv[0]);
 	}else if(!strcasecmp(argv[0], "removeClientRole")){
 		return dynsec_client__add_remove_role(argc-1, &argv[1], j_command, argv[0]);
+	}else if(!strcasecmp(argv[0], "enableClient")){
+		return dynsec_client__enable_disable(argc-1, &argv[1], j_command, argv[0]);
+	}else if(!strcasecmp(argv[0], "disableClient")){
+		return dynsec_client__enable_disable(argc-1, &argv[1], j_command, argv[0]);
 
 	}else if(!strcasecmp(argv[0], "createGroup")){
 		return dynsec_group__create(argc-1, &argv[1], j_command);

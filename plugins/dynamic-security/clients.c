@@ -139,6 +139,11 @@ int dynsec_clients__config_load(cJSON *tree)
 				continue;
 			}
 
+			jtmp = cJSON_GetObjectItem(j_client, "disabled");
+			if(jtmp && cJSON_IsBool(jtmp)){
+				client->disabled = cJSON_IsTrue(jtmp);
+			}
+
 			/* Hash iterations */
 			jtmp = cJSON_GetObjectItem(j_client, "iterations");
 			if(jtmp == NULL || !cJSON_IsNumber(jtmp)){
@@ -269,6 +274,7 @@ static int dynsec__config_add_clients(cJSON *j_clients)
 				|| (client->clientid && cJSON_AddStringToObject(j_client, "clientid", client->clientid) == NULL)
 				|| (client->text_name && cJSON_AddStringToObject(j_client, "textname", client->text_name) == NULL)
 				|| (client->text_description && cJSON_AddStringToObject(j_client, "textdescription", client->text_description) == NULL)
+				|| (client->disabled && cJSON_AddBoolToObject(j_client, "disabled", true) == NULL)
 				){
 
 			return 1;
@@ -467,6 +473,55 @@ int dynsec_clients__process_delete(cJSON *j_responses, struct mosquitto *context
 		dynsec__command_reply(j_responses, context, "deleteClient", "Client not found", correlation_data);
 		return MOSQ_ERR_SUCCESS;
 	}
+}
+
+int dynsec_clients__process_disable(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data)
+{
+	char *username;
+	struct dynsec__client *client;
+
+	if(json_get_string(command, "username", &username, false) != MOSQ_ERR_SUCCESS){
+		dynsec__command_reply(j_responses, context, "disableClient", "Invalid/missing username", correlation_data);
+		return MOSQ_ERR_INVAL;
+	}
+
+	client = dynsec_clients__find(username);
+	if(client == NULL){
+		dynsec__command_reply(j_responses, context, "disableClient", "Client not found", correlation_data);
+		return MOSQ_ERR_SUCCESS;
+	}
+
+	client->disabled = true;
+
+	mosquitto_kick_client_by_username(username, false);
+
+	dynsec__config_save();
+	dynsec__command_reply(j_responses, context, "disableClient", NULL, correlation_data);
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int dynsec_clients__process_enable(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data)
+{
+	char *username;
+	struct dynsec__client *client;
+
+	if(json_get_string(command, "username", &username, false) != MOSQ_ERR_SUCCESS){
+		dynsec__command_reply(j_responses, context, "enableClient", "Invalid/missing username", correlation_data);
+		return MOSQ_ERR_INVAL;
+	}
+
+	client = dynsec_clients__find(username);
+	if(client == NULL){
+		dynsec__command_reply(j_responses, context, "enableClient", "Client not found", correlation_data);
+		return MOSQ_ERR_SUCCESS;
+	}
+
+	client->disabled = false;
+
+	dynsec__config_save();
+	dynsec__command_reply(j_responses, context, "enableClient", NULL, correlation_data);
+	return MOSQ_ERR_SUCCESS;
 }
 
 

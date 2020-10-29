@@ -172,6 +172,9 @@ int dynsec_auth__basic_auth_callback(int event, void *event_data, void *userdata
 
 	client = dynsec_clients__find(ed->username);
 	if(client){
+		if(client->disabled){
+			return MOSQ_ERR_AUTH;
+		}
 		if(client->clientid){
 			clientid = mosquitto_client_id(ed->client);
 			if(clientid == NULL || strcmp(client->clientid, clientid)){
