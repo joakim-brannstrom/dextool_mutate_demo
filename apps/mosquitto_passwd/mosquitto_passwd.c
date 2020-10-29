@@ -541,7 +541,7 @@ int main(int argc, char *argv[])
 
 	if(create_new){
 		if(batch_mode == false){
-			rc = get_password("Password: ", "Reenter password: ", password, MAX_BUFFER_LEN);
+			rc = get_password("Password: ", "Reenter password: ", false, password, MAX_BUFFER_LEN);
 			if(rc){
 				free(password_file);
 				return rc;
@@ -598,7 +598,7 @@ int main(int argc, char *argv[])
 				/* Update password for individual user */
 				rc = update_pwuser(fptr, ftmp, username, password_cmd, iterations);
 			}else{
-				rc = get_password("Password: ", "Reenter password: ", password, MAX_BUFFER_LEN);
+				rc = get_password("Password: ", "Reenter password: ", false, password, MAX_BUFFER_LEN);
 				if(rc){
 					fclose(fptr);
 					fclose(ftmp);

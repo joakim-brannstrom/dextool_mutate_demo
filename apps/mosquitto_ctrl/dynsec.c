@@ -21,6 +21,7 @@ Contributors:
 #include "mosquitto_ctrl.h"
 #include "mosquitto.h"
 #include "password_mosq.h"
+#include "get_password.h"
 
 void dynsec__print_usage(void)
 {
@@ -28,7 +29,7 @@ void dynsec__print_usage(void)
 	printf("=======================\n");
 	printf("\nInitialisation\n--------------\n");
 	printf("Create a new configuration file with an admin user:\n");
-	printf("    mosquitto_ctrl dynsec init <new-config-file> <admin-username> <admin-password> [admin-role]\n");
+	printf("    mosquitto_ctrl dynsec init <new-config-file> <admin-username> [admin-password]\n");
 
 	printf("\nGeneral\n-------\n");
 	printf("Get ACL default access:          getDefaultACLAccess\n");
@@ -37,9 +38,9 @@ void dynsec__print_usage(void)
 	printf("Set group for anonymous clients: setAnonymousGroup   <groupname>\n");
 
 	printf("\nClients\n-------\n");
-	printf("Create a new client:         createClient      <username> <password>\n");
+	printf("Create a new client:         createClient      <username> [password]\n");
 	printf("Delete a client:             deleteClient      <username>\n");
-	printf("Set a client password:       setClientPassword <username> <password>\n");
+	printf("Set a client password:       setClientPassword <username> [password]\n");
 	printf("Add a role to a client:      addClientRole     <username> <rolename> [priority]\n");
 	printf("    Higher priority (larger numerical value) roles are evaluated first.\n");
 	printf("Remove role from a client:   removeClientRole  <username> <rolename>\n");
@@ -669,26 +670,38 @@ int dynsec_init(int argc, char *argv[])
 	char *filename;
 	char *admin_user;
 	char *admin_password;
-	char *rolename = "admin";
 	char *json_str;
 	cJSON *tree;
 	FILE *fptr;
+	char prompt[200], verify_prompt[200];
+	char password[200];
+	int rc;
 
-	if(argc < 3){
-		fprintf(stderr, "dynsec init: Not enough arguments - filename, admin-user or admin-password missing.\n");
+	if(argc < 2){
+		fprintf(stderr, "dynsec init: Not enough arguments - filename, or admin-user missing.\n");
 		return MOSQ_ERR_INVAL;
 	}
 
-	if(argc > 4){
+	if(argc > 3){
 		fprintf(stderr, "dynsec init: Too many arguments.\n");
 		return MOSQ_ERR_INVAL;
 	}
 
 	filename = argv[0];
 	admin_user = argv[1];
-	admin_password = argv[2];
-	if(argc == 4){
-		rolename = argv[3];
+
+	if(argc == 3){
+		admin_password = argv[2];
+	}else{
+		snprintf(prompt, sizeof(prompt), "New password for %s: ", admin_user);
+		snprintf(verify_prompt, sizeof(verify_prompt), "Reenter password for %s: ", admin_user);
+		rc = get_password(prompt, verify_prompt, false, password, sizeof(password));
+		if(rc){
+			fprintf(stderr, "Error getting password.\n");
+			mosquitto_lib_cleanup();
+			return 1;
+		}
+		admin_password = password;
 	}
 
 	fptr = fopen(filename, "rb");
@@ -698,7 +711,7 @@ int dynsec_init(int argc, char *argv[])
 		return -1;
 	}
 
-	tree = init_create(admin_user, admin_password, rolename);
+	tree = init_create(admin_user, admin_password, "admin");
 	if(tree == NULL){
 		fprintf(stderr, "dynsec init: Out of memory.\n");
 		return MOSQ_ERR_NOMEM;

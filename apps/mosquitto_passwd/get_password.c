@@ -16,6 +16,7 @@ Contributors:
 
 #include "config.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,7 +102,7 @@ static int gets_quiet(char *s, int len)
 #endif
 }
 
-int get_password(const char *prompt, const char *verify_prompt, char *password, size_t len)
+int get_password(const char *prompt, const char *verify_prompt, bool quiet, char *password, size_t len)
 {
 	char pw1[MAX_BUFFER_LEN], pw2[MAX_BUFFER_LEN];
 	size_t minLen;
@@ -110,7 +111,9 @@ int get_password(const char *prompt, const char *verify_prompt, char *password, 
 	printf("%s", prompt);
 	fflush(stdout);
 	if(gets_quiet(pw1, (int)minLen)){
-		fprintf(stderr, "Error: Empty password.\n");
+		if(!quiet){
+			fprintf(stderr, "Error: Empty password.\n");
+		}
 		return 1;
 	}
 	printf("\n");
@@ -119,13 +122,17 @@ int get_password(const char *prompt, const char *verify_prompt, char *password, 
 		printf("%s", verify_prompt);
 		fflush(stdout);
 		if(gets_quiet(pw2, (int)minLen)){
-			fprintf(stderr, "Error: Empty password.\n");
+			if(!quiet){
+				fprintf(stderr, "Error: Empty password.\n");
+			}
 			return 1;
 		}
 		printf("\n");
 
 		if(strcmp(pw1, pw2)){
-			fprintf(stderr, "Error: Passwords do not match.\n");
+			if(!quiet){
+				fprintf(stderr, "Error: Passwords do not match.\n");
+			}
 			return 1;
 		}
 	}

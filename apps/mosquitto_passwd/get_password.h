@@ -16,7 +16,9 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#include <stdbool.h>
+
 void get_password__reset_term(void);
-int get_password(const char *prompt, const char *verify_prompt, char *password, size_t len);
+int get_password(const char *prompt, const char *verify_prompt, bool quiet, char *password, size_t len);
 
 #endif

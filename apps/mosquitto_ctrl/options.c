@@ -568,7 +568,7 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 	if(cfg->username && cfg->password == NULL){
 		/* Ask for password */
 		snprintf(prompt, sizeof(prompt), "Password for %s: ", cfg->username);
-		rc = get_password(prompt, NULL, password, sizeof(password));
+		rc = get_password(prompt, NULL, false, password, sizeof(password));
 		if(rc){
 			fprintf(stderr, "Error getting password.\n");
 			mosquitto_lib_cleanup();
