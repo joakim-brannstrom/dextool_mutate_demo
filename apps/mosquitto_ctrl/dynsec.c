@@ -31,7 +31,9 @@ void dynsec__print_usage(void)
 	printf("    mosquitto_ctrl dynsec init <new-config-file> <admin-username> <admin-password> [admin-role]\n");
 
 	printf("\nGeneral\n-------\n");
+	printf("Get ACL default access:          getDefaultACLAccess\n");
 	printf("Set ACL default access:          setDefaultACLAccess <acltype> allow|deny\n");
+	printf("Get group for anonymous clients: getAnonymousGroup\n");
 	printf("Set group for anonymous clients: setAnonymousGroup   <groupname>\n");
 
 	printf("\nClients\n-------\n");
@@ -82,10 +84,16 @@ static void print_list(cJSON *j_response, const char *arrayname, const char *key
 	cJSON *j_data, *j_array, *j_elem, *j_name;
 
 	j_data = cJSON_GetObjectItem(j_response, "data");
-	if(j_data == NULL) return;
+	if(j_data == NULL){
+		fprintf(stderr, "Error: Invalid response from server.\n");
+		return;
+	}
 
 	j_array = cJSON_GetObjectItem(j_data, arrayname);
-	if(j_array == NULL || !cJSON_IsArray(j_array)) return;
+	if(j_array == NULL || !cJSON_IsArray(j_array)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
+		return;
+	}
 
 	cJSON_ArrayForEach(j_elem, j_array){
 		if(cJSON_IsObject(j_elem)){
@@ -107,16 +115,19 @@ static void print_client(cJSON *j_response)
 
 	j_data = cJSON_GetObjectItem(j_response, "data");
 	if(j_data == NULL || !cJSON_IsObject(j_data)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
 		return;
 	}
 
 	j_client = cJSON_GetObjectItem(j_data, "client");
 	if(j_client == NULL || !cJSON_IsObject(j_client)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
 		return;
 	}
 
 	jtmp = cJSON_GetObjectItem(j_client, "username");
 	if(jtmp == NULL || !cJSON_IsString(jtmp)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
 		return;
 	}
 	printf("Username: %s\n", jtmp->valuestring);
@@ -186,16 +197,19 @@ static void print_group(cJSON *j_response)
 
 	j_data = cJSON_GetObjectItem(j_response, "data");
 	if(j_data == NULL || !cJSON_IsObject(j_data)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
 		return;
 	}
 
 	j_group = cJSON_GetObjectItem(j_data, "group");
 	if(j_group == NULL || !cJSON_IsObject(j_group)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
 		return;
 	}
 
 	jtmp = cJSON_GetObjectItem(j_group, "groupname");
 	if(jtmp == NULL || !cJSON_IsString(jtmp)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
 		return;
 	}
 	printf("Groupname: %s\n", jtmp->valuestring);
@@ -248,16 +262,19 @@ static void print_role(cJSON *j_response)
 
 	j_data = cJSON_GetObjectItem(j_response, "data");
 	if(j_data == NULL || !cJSON_IsObject(j_data)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
 		return;
 	}
 
 	j_role = cJSON_GetObjectItem(j_data, "role");
 	if(j_role == NULL || !cJSON_IsObject(j_role)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
 		return;
 	}
 
 	jtmp = cJSON_GetObjectItem(j_role, "rolename");
 	if(jtmp == NULL || !cJSON_IsString(jtmp)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
 		return;
 	}
 	printf("Rolename: %s\n", jtmp->valuestring);
@@ -295,6 +312,61 @@ static void print_role(cJSON *j_response)
 	}
 }
 
+
+static void print_anonymous_group(cJSON *j_response)
+{
+	cJSON *j_data, *j_group, *j_groupname;
+
+	j_data = cJSON_GetObjectItem(j_response, "data");
+	if(j_data == NULL || !cJSON_IsObject(j_data)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
+		return;
+	}
+
+	j_group = cJSON_GetObjectItem(j_data, "group");
+	if(j_group == NULL || !cJSON_IsObject(j_group)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
+		return;
+	}
+
+	j_groupname = cJSON_GetObjectItem(j_group, "groupname");
+	if(j_groupname == NULL || !cJSON_IsString(j_groupname)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
+		return;
+	}
+	printf("%s\n", j_groupname->valuestring);
+}
+
+static void print_default_acl_access(cJSON *j_response)
+{
+	cJSON *j_data, *j_acls, *j_acl, *j_acltype, *j_allow;
+
+	j_data = cJSON_GetObjectItem(j_response, "data");
+	if(j_data == NULL || !cJSON_IsObject(j_data)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
+		return;
+	}
+
+	j_acls = cJSON_GetObjectItem(j_data, "acls");
+	if(j_acls == NULL || !cJSON_IsArray(j_acls)){
+		fprintf(stderr, "Error: Invalid response from server.\n");
+		return;
+	}
+
+	cJSON_ArrayForEach(j_acl, j_acls){
+		j_acltype = cJSON_GetObjectItem(j_acl, "acltype");
+		j_allow = cJSON_GetObjectItem(j_acl, "allow");
+
+		if(j_acltype == NULL || !cJSON_IsString(j_acltype)
+				|| j_allow == NULL || !cJSON_IsBool(j_allow)
+				){
+			
+			fprintf(stderr, "Error: Invalid response from server.\n");
+			return;
+		}
+		printf("%-20s : %s\n", j_acltype->valuestring, cJSON_IsTrue(j_allow)?"allow":"deny");
+	}
+}
 
 static void dynsec__payload_callback(struct mosq_ctrl *ctrl, long payloadlen, const void *payload)
 {
@@ -343,6 +415,10 @@ static void dynsec__payload_callback(struct mosq_ctrl *ctrl, long payloadlen, co
 			print_group(j_response);
 		}else if(!strcasecmp(j_command->valuestring, "getRole")){
 			print_role(j_response);
+		}else if(!strcasecmp(j_command->valuestring, "getDefaultACLAccess")){
+			print_default_acl_access(j_response);
+		}else if(!strcasecmp(j_command->valuestring, "getAnonymousGroup")){
+			print_anonymous_group(j_response);
 		}else{
 			//fprintf(stderr, "%s: Success\n", j_command->valuestring);
 		}
@@ -356,7 +432,7 @@ static void dynsec__payload_callback(struct mosq_ctrl *ctrl, long payloadlen, co
  * #
  * ################################################################ */
 
-static int dynsec__default_acl_access(int argc, char *argv[], cJSON *j_command)
+static int dynsec__set_default_acl_access(int argc, char *argv[], cJSON *j_command)
 {
 	char *acltype, *access;
 	cJSON *j_acls, *j_acl;
@@ -395,6 +471,17 @@ static int dynsec__default_acl_access(int argc, char *argv[], cJSON *j_command)
 	cJSON_AddItemToArray(j_acls, j_acl);
 	if(cJSON_AddStringToObject(j_acl, "acltype", acltype) == NULL
 			|| cJSON_AddStringToObject(j_acl, "access", access) == NULL
+			){
+
+		return MOSQ_ERR_NOMEM;
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+static int dynsec__get_default_acl_access(int argc, char *argv[], cJSON *j_command)
+{
+	if(cJSON_AddStringToObject(j_command, "command", "getDefaultACLAccess") == NULL
 			){
 
 		return MOSQ_ERR_NOMEM;
@@ -673,7 +760,9 @@ int dynsec__main(int argc, char *argv[], struct mosq_ctrl *ctrl)
 	cJSON_AddItemToArray(j_commands, j_command);
 
 	if(!strcasecmp(argv[0], "setDefaultACLAccess")){
-		return dynsec__default_acl_access(argc-1, &argv[1], j_command);
+		return dynsec__set_default_acl_access(argc-1, &argv[1], j_command);
+	}else if(!strcasecmp(argv[0], "getDefaultACLAccess")){
+		return dynsec__get_default_acl_access(argc-1, &argv[1], j_command);
 
 	}else if(!strcasecmp(argv[0], "createClient")){
 		return dynsec_client__create(argc-1, &argv[1], j_command);
@@ -708,6 +797,8 @@ int dynsec__main(int argc, char *argv[], struct mosq_ctrl *ctrl)
 		return dynsec_group__add_remove_client(argc-1, &argv[1], j_command, argv[0]);
 	}else if(!strcasecmp(argv[0], "setAnonymousGroup")){
 		return dynsec_group__set_anonymous(argc-1, &argv[1], j_command);
+	}else if(!strcasecmp(argv[0], "getAnonymousGroup")){
+		return dynsec_group__get_anonymous(argc-1, &argv[1], j_command);
 
 	}else if(!strcasecmp(argv[0], "createRole")){
 		return dynsec_role__create(argc-1, &argv[1], j_command);

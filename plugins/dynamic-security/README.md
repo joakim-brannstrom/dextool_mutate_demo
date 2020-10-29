@@ -27,7 +27,8 @@ subscribe to.
 Sets the default access behaviour for the different ACL types, assuming there
 are no matching ACLs for a topic.
 
-By default, all ACL types default to deny.
+By default, publishClientSend and subscribe default to deny, and
+publishClientReceive and unsubscribe default to allow.
 
 Command:
 ```
@@ -37,9 +38,9 @@ Command:
 			"command": "setDefaultACLAccess",
 			"acls":[
 				{ "acltype": "publishClientSend", "allow": false },
-				{ "acltype": "publishClientReceive", "allow": false },
+				{ "acltype": "publishClientReceive", "allow": true },
 				{ "acltype": "subscribe", "allow": false },
-				{ "acltype": "unsubscribe", "allow": false }
+				{ "acltype": "unsubscribe", "allow": true }
 			]
 		}
 	]
@@ -49,6 +50,26 @@ Command:
 mosquitto_ctrl example:
 ```
 mosquitto_ctrl dynsec setDefaultACLAccess subscribe deny
+```
+
+### Get default ACL access
+
+Gets the default access behaviour for the different ACL types.
+
+Command:
+```
+{
+	"commands":[
+		{
+			"command": "getDefaultACLAccess",
+		}
+	]
+}
+```
+
+mosquitto_ctrl example:
+```
+mosquitto_ctrl dynsec getDefaultACLAccess
 ```
 
 ## Create Client
@@ -430,6 +451,24 @@ Command:
 mosquitto_ctrl example:
 ```
 mosquitto_ctrl dynsec setAnonymousGroup groupname
+```
+
+## Get Group for Anonymous Clients
+
+Command:
+```
+{
+	"commands":[
+		{
+			"command": "getAnonymousGroup",
+		}
+	]
+}
+```
+
+mosquitto_ctrl example:
+```
+mosquitto_ctrl dynsec getAnonymousGroup
 ```
 
 ## Create Role

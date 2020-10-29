@@ -98,6 +98,7 @@ int dynsec_group__delete(int argc, char *argv[], cJSON *j_command);
 int dynsec_group__get(int argc, char *argv[], cJSON *j_command);
 int dynsec_group__list_all(int argc, char *argv[], cJSON *j_command);
 int dynsec_group__set_anonymous(int argc, char *argv[], cJSON *j_command);
+int dynsec_group__get_anonymous(int argc, char *argv[], cJSON *j_command);
 
 int dynsec_role__create(int argc, char *argv[], cJSON *j_command);
 int dynsec_role__delete(int argc, char *argv[], cJSON *j_command);

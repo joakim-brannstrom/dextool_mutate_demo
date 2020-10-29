@@ -204,6 +204,7 @@ int dynsec_groups__process_list(cJSON *j_responses, struct mosquitto *context, c
 int dynsec_groups__process_modify(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data);
 int dynsec_groups__process_remove_client(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data);
 int dynsec_groups__process_remove_role(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data);
+int dynsec_groups__process_get_anonymous_group(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data);
 int dynsec_groups__process_set_anonymous_group(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data);
 int dynsec_groups__remove_client(const char *username, const char *groupname, bool update_config);
 struct dynsec__group *dynsec_groups__find(const char *groupname);

@@ -62,6 +62,17 @@ int dynsec_group__delete(int argc, char *argv[], cJSON *j_command)
 	}
 }
 
+int dynsec_group__get_anonymous(int argc, char *argv[], cJSON *j_command)
+{
+	if(cJSON_AddStringToObject(j_command, "command", "getAnonymousGroup") == NULL
+			){
+
+		return MOSQ_ERR_NOMEM;
+	}else{
+		return MOSQ_ERR_SUCCESS;
+	}
+}
+
 int dynsec_group__set_anonymous(int argc, char *argv[], cJSON *j_command)
 {
 	char *groupname = NULL;
