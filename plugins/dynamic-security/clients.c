@@ -263,7 +263,6 @@ static int dynsec__config_add_clients(cJSON *j_clients)
 	struct dynsec__client *client, *client_tmp;
 	cJSON *j_client, *j_roles, *jtmp;
 	char *buf;
-	char s_iterations[10];
 
 	HASH_ITER(hh, local_clients, client, client_tmp){
 		j_client = cJSON_CreateObject();
@@ -304,8 +303,7 @@ static int dynsec__config_add_clients(cJSON *j_clients)
 			if(jtmp == NULL) return 1;
 			cJSON_AddItemToObject(j_client, "salt", jtmp);
 
-			snprintf(s_iterations, sizeof(s_iterations), "%d", client->pw.iterations);
-			if(cJSON_AddRawToObject(j_client, "iterations", s_iterations) == NULL){
+			if(cJSON_AddIntToObject(j_client, "iterations", client->pw.iterations) == NULL){
 				return 1;
 			}
 		}
@@ -768,7 +766,6 @@ int dynsec_clients__process_list(cJSON *j_responses, struct mosquitto *context, 
 	struct dynsec__client *client, *client_tmp;
 	cJSON *tree, *j_clients, *j_client, *jtmp, *j_data;
 	int i, count, offset;
-	char buf[30];
 
 	json_get_bool(command, "verbose", &verbose, true, false);
 	json_get_int(command, "count", &count, true, -1);
@@ -796,8 +793,7 @@ int dynsec_clients__process_list(cJSON *j_responses, struct mosquitto *context, 
 	}
 	cJSON_AddItemToObject(tree, "data", j_data);
 
-	snprintf(buf, sizeof(buf), "%d", HASH_CNT(hh, local_clients));
-	cJSON_AddRawToObject(j_data, "totalCount", buf);
+	cJSON_AddIntToObject(j_data, "totalCount", HASH_CNT(hh, local_clients));
 
 	j_clients = cJSON_CreateArray();
 	if(j_clients == NULL){

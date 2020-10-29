@@ -88,7 +88,6 @@ cJSON *dynsec_clientlists__all_to_json(struct dynsec__clientlist *base_clientlis
 {
 	struct dynsec__clientlist *clientlist, *clientlist_tmp;
 	cJSON *j_clients, *j_client;
-	char buf[30];
 
 	j_clients = cJSON_CreateArray();
 	if(j_clients == NULL) return NULL;
@@ -101,11 +100,8 @@ cJSON *dynsec_clientlists__all_to_json(struct dynsec__clientlist *base_clientlis
 		}
 		cJSON_AddItemToArray(j_clients, j_client);
 
-		if(clientlist->priority != -1){
-			snprintf(buf, sizeof(buf), "%d", clientlist->priority);
-		}
 		if(cJSON_AddStringToObject(j_client, "username", clientlist->client->username) == NULL
-				|| (clientlist->priority != -1 && cJSON_AddRawToObject(j_client, "priority", buf) == NULL)
+				|| (clientlist->priority != -1 && cJSON_AddIntToObject(j_client, "priority", clientlist->priority) == NULL)
 				){
 
 			cJSON_Delete(j_clients);
@@ -120,7 +116,6 @@ cJSON *dynsec_grouplists__all_to_json(struct dynsec__grouplist *base_grouplist)
 {
 	struct dynsec__grouplist *grouplist, *grouplist_tmp;
 	cJSON *j_groups, *j_group;
-	char buf[30];
 
 	j_groups = cJSON_CreateArray();
 	if(j_groups == NULL) return NULL;
@@ -133,11 +128,8 @@ cJSON *dynsec_grouplists__all_to_json(struct dynsec__grouplist *base_grouplist)
 		}
 		cJSON_AddItemToArray(j_groups, j_group);
 
-		if(grouplist->priority != -1){
-			snprintf(buf, sizeof(buf), "%d", grouplist->priority);
-		}
 		if(cJSON_AddStringToObject(j_group, "groupname", grouplist->group->groupname) == NULL
-				|| (grouplist->priority != -1 && cJSON_AddRawToObject(j_group, "priority", buf) == NULL)
+				|| (grouplist->priority != -1 && cJSON_AddIntToObject(j_group, "priority", grouplist->priority) == NULL)
 				){
 
 			cJSON_Delete(j_groups);
@@ -722,7 +714,6 @@ int dynsec_groups__process_list(cJSON *j_responses, struct mosquitto *context, c
 	cJSON *tree, *j_groups, *j_group, *jtmp, *j_data;
 	struct dynsec__group *group, *group_tmp;
 	int i, count, offset;
-	char buf[30];
 
 	json_get_bool(command, "verbose", &verbose, true, false);
 	json_get_int(command, "count", &count, true, -1);
@@ -750,8 +741,7 @@ int dynsec_groups__process_list(cJSON *j_responses, struct mosquitto *context, c
 	}
 	cJSON_AddItemToObject(tree, "data", j_data);
 
-	snprintf(buf, sizeof(buf), "%d", HASH_CNT(hh, local_groups));
-	cJSON_AddRawToObject(j_data, "totalCount", buf);
+	cJSON_AddIntToObject(j_data, "totalCount", HASH_CNT(hh, local_groups));
 
 	j_groups = cJSON_CreateArray();
 	if(j_groups == NULL){
