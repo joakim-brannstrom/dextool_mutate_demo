@@ -99,6 +99,203 @@ static void print_list(cJSON *j_response, const char *arrayname, const char *key
 	}
 }
 
+
+static void print_client(cJSON *j_response)
+{
+	cJSON *j_data, *j_client, *j_array, *j_elem, *jtmp;
+	bool first;
+
+	j_data = cJSON_GetObjectItem(j_response, "data");
+	if(j_data == NULL || !cJSON_IsObject(j_data)){
+		return;
+	}
+
+	j_client = cJSON_GetObjectItem(j_data, "client");
+	if(j_client == NULL || !cJSON_IsObject(j_client)){
+		return;
+	}
+
+	jtmp = cJSON_GetObjectItem(j_client, "username");
+	if(jtmp == NULL || !cJSON_IsString(jtmp)){
+		return;
+	}
+	printf("Username: %s\n", jtmp->valuestring);
+
+	jtmp = cJSON_GetObjectItem(j_client, "clientid");
+	if(jtmp && cJSON_IsString(jtmp)){
+		printf("Clientid: %s\n", jtmp->valuestring);
+	}else{
+		printf("Clientid:\n");
+	}
+
+	j_array = cJSON_GetObjectItem(j_client, "roles");
+	if(j_array && cJSON_IsArray(j_array)){
+		first = true;
+		cJSON_ArrayForEach(j_elem, j_array){
+			jtmp = cJSON_GetObjectItem(j_elem, "rolename");
+			if(jtmp && cJSON_IsString(jtmp)){
+				if(first){
+					first = false;
+					printf("Roles:    %s", jtmp->valuestring);
+				}else{
+					printf("          %s", jtmp->valuestring);
+				}
+				jtmp = cJSON_GetObjectItem(j_elem, "priority");
+				if(jtmp && cJSON_IsNumber(jtmp)){
+					printf(" (priority: %d)", (int)jtmp->valuedouble);
+				}else{
+					printf(" (priority: -1)");
+				}
+				printf("\n");
+			}
+		}
+	}else{
+		printf("Roles:\n");
+	}
+	j_array = cJSON_GetObjectItem(j_client, "groups");
+	if(j_array && cJSON_IsArray(j_array)){
+		first = true;
+		cJSON_ArrayForEach(j_elem, j_array){
+			jtmp = cJSON_GetObjectItem(j_elem, "groupname");
+			if(jtmp && cJSON_IsString(jtmp)){
+				if(first){
+					printf("Groups:   %s", jtmp->valuestring);
+					first = false;
+				}else{
+					printf("          %s", jtmp->valuestring);
+				}
+				jtmp = cJSON_GetObjectItem(j_elem, "priority");
+				if(jtmp && cJSON_IsNumber(jtmp)){
+					printf(" (priority: %d)", (int)jtmp->valuedouble);
+				}else{
+					printf(" (priority: -1)");
+				}
+				printf("\n");
+			}
+		}
+	}else{
+		printf("Groups:\n");
+	}
+}
+
+
+static void print_group(cJSON *j_response)
+{
+	cJSON *j_data, *j_group, *j_array, *j_elem, *jtmp;
+	bool first;
+
+	j_data = cJSON_GetObjectItem(j_response, "data");
+	if(j_data == NULL || !cJSON_IsObject(j_data)){
+		return;
+	}
+
+	j_group = cJSON_GetObjectItem(j_data, "group");
+	if(j_group == NULL || !cJSON_IsObject(j_group)){
+		return;
+	}
+
+	jtmp = cJSON_GetObjectItem(j_group, "groupname");
+	if(jtmp == NULL || !cJSON_IsString(jtmp)){
+		return;
+	}
+	printf("Groupname: %s\n", jtmp->valuestring);
+
+	j_array = cJSON_GetObjectItem(j_group, "roles");
+	if(j_array && cJSON_IsArray(j_array)){
+		first = true;
+		cJSON_ArrayForEach(j_elem, j_array){
+			jtmp = cJSON_GetObjectItem(j_elem, "groupname");
+			if(jtmp && cJSON_IsString(jtmp)){
+				if(first){
+					first = false;
+					printf("Roles:  %s", jtmp->valuestring);
+				}else{
+					printf("    %s", jtmp->valuestring);
+				}
+				jtmp = cJSON_GetObjectItem(j_elem, "priority");
+				if(jtmp && cJSON_IsNumber(jtmp)){
+					printf(" (priority: %d)", (int)jtmp->valuedouble);
+				}else{
+					printf(" (priority: -1)");
+				}
+				printf("\n");
+			}
+		}
+	}
+
+	j_array = cJSON_GetObjectItem(j_group, "clients");
+	if(j_array && cJSON_IsArray(j_array)){
+		first = true;
+		cJSON_ArrayForEach(j_elem, j_array){
+			jtmp = cJSON_GetObjectItem(j_elem, "username");
+			if(jtmp && cJSON_IsString(jtmp)){
+				if(first){
+					first = false;
+					printf("Clients:   %s\n", jtmp->valuestring);
+				}else{
+					printf("           %s\n", jtmp->valuestring);
+				}
+			}
+		}
+	}
+}
+
+
+static void print_role(cJSON *j_response)
+{
+	cJSON *j_data, *j_role, *j_array, *j_elem, *jtmp;
+	bool first;
+
+	j_data = cJSON_GetObjectItem(j_response, "data");
+	if(j_data == NULL || !cJSON_IsObject(j_data)){
+		return;
+	}
+
+	j_role = cJSON_GetObjectItem(j_data, "role");
+	if(j_role == NULL || !cJSON_IsObject(j_role)){
+		return;
+	}
+
+	jtmp = cJSON_GetObjectItem(j_role, "rolename");
+	if(jtmp == NULL || !cJSON_IsString(jtmp)){
+		return;
+	}
+	printf("Rolename: %s\n", jtmp->valuestring);
+
+	j_array = cJSON_GetObjectItem(j_role, "acls");
+	if(j_array && cJSON_IsArray(j_array)){
+		first = true;
+		cJSON_ArrayForEach(j_elem, j_array){
+			jtmp = cJSON_GetObjectItem(j_elem, "acltype");
+			if(jtmp && cJSON_IsString(jtmp)){
+				if(first){
+					first = false;
+					printf("ACLs:     %-20s", jtmp->valuestring);
+				}else{
+					printf("          %-20s", jtmp->valuestring);
+				}
+
+				jtmp = cJSON_GetObjectItem(j_elem, "allow");
+				if(jtmp && cJSON_IsBool(jtmp)){
+					printf(" : %s", cJSON_IsTrue(jtmp)?"allow":"deny ");
+				}
+				jtmp = cJSON_GetObjectItem(j_elem, "topic");
+				if(jtmp && cJSON_IsString(jtmp)){
+					printf(" : %s", jtmp->valuestring);
+				}
+				jtmp = cJSON_GetObjectItem(j_elem, "priority");
+				if(jtmp && cJSON_IsNumber(jtmp)){
+					printf(" (priority: %d)", (int)jtmp->valuedouble);
+				}else{
+					printf(" (priority: -1)");
+				}
+				printf("\n");
+			}
+		}
+	}
+}
+
+
 static void dynsec__payload_callback(struct mosq_ctrl *ctrl, long payloadlen, const void *payload)
 {
 	cJSON *tree, *j_responses, *j_response, *j_command, *j_error;
@@ -140,8 +337,14 @@ static void dynsec__payload_callback(struct mosq_ctrl *ctrl, long payloadlen, co
 			print_list(j_response, "groups", "groupname");
 		}else if(!strcasecmp(j_command->valuestring, "listRoles")){
 			print_list(j_response, "roles", "rolename");
+		}else if(!strcasecmp(j_command->valuestring, "getClient")){
+			print_client(j_response);
+		}else if(!strcasecmp(j_command->valuestring, "getGroup")){
+			print_group(j_response);
+		}else if(!strcasecmp(j_command->valuestring, "getRole")){
+			print_role(j_response);
 		}else{
-			fprintf(stderr, "%s: Success\n", j_command->valuestring);
+			//fprintf(stderr, "%s: Success\n", j_command->valuestring);
 		}
 	}
 	cJSON_Delete(tree);

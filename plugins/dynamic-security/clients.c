@@ -612,7 +612,6 @@ static cJSON *add_client_to_json(struct dynsec__client *client, bool verbose)
 				|| (client->clientid && cJSON_AddStringToObject(j_client, "clientid", client->clientid) == NULL)
 				|| (client->text_name && cJSON_AddStringToObject(j_client, "textname", client->text_name) == NULL)
 				|| (client->text_description && cJSON_AddStringToObject(j_client, "textdescription", client->text_description) == NULL)
-				|| (j_groups = cJSON_AddArrayToObject(j_client, "groups")) == NULL
 				){
 
 			cJSON_Delete(j_client);
