@@ -466,6 +466,10 @@ int dynsec_clients__process_delete(cJSON *j_responses, struct mosquitto *context
 		client__free_item(client);
 		dynsec__config_save();
 		dynsec__command_reply(j_responses, context, "deleteClient", NULL, correlation_data);
+
+		/* Enforce any changes */
+		mosquitto_kick_client_by_username(username, false);
+
 		return MOSQ_ERR_SUCCESS;
 	}else{
 		dynsec__command_reply(j_responses, context, "deleteClient", "Client not found", correlation_data);
@@ -634,6 +638,10 @@ int dynsec_clients__process_modify(cJSON *j_responses, struct mosquitto *context
 
 	dynsec__config_save();
 	dynsec__command_reply(j_responses, context, "modifyClient", NULL, correlation_data);
+
+	/* Enforce any changes */
+	mosquitto_kick_client_by_username(username, false);
+
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -882,6 +890,10 @@ int dynsec_clients__process_add_role(cJSON *j_responses, struct mosquitto *conte
 	dynsec_rolelists__add_role(&client->rolelist, role, priority);
 	dynsec__config_save();
 	dynsec__command_reply(j_responses, context, "addClientRole", NULL, correlation_data);
+
+	/* Enforce any changes */
+	mosquitto_kick_client_by_username(username, false);
+
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -917,5 +929,9 @@ int dynsec_clients__process_remove_role(cJSON *j_responses, struct mosquitto *co
 	dynsec_rolelists__remove_role(&client->rolelist, role);
 	dynsec__config_save();
 	dynsec__command_reply(j_responses, context, "removeClientRole", NULL, correlation_data);
+
+	/* Enforce any changes */
+	mosquitto_kick_client_by_username(username, false);
+
 	return MOSQ_ERR_SUCCESS;
 }

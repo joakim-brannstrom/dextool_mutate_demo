@@ -84,6 +84,15 @@ static int clientlist_cmp(void *a, void *b)
 	return strcmp(clientlist_a->username, clientlist_b->username);
 }
 
+static void clientlist__kick_all(struct dynsec__clientlist *base_clientlist)
+{
+	struct dynsec__clientlist *clientlist, *clientlist_tmp;
+
+	HASH_ITER(hh, base_clientlist, clientlist, clientlist_tmp){
+		mosquitto_kick_client_by_username(clientlist->client->username, false);
+	}
+}
+
 cJSON *dynsec_clientlists__all_to_json(struct dynsec__clientlist *base_clientlist)
 {
 	struct dynsec__clientlist *clientlist, *clientlist_tmp;
@@ -480,9 +489,16 @@ int dynsec_groups__process_delete(cJSON *j_responses, struct mosquitto *context,
 
 	group = dynsec_groups__find(groupname);
 	if(group){
+		/* Enforce any changes */
+		if(group == dynsec_anonymous_group){
+			mosquitto_kick_client_by_username(NULL, false);
+		}
+		clientlist__kick_all(group->clientlist);
+
 		group__free_item(group);
 		dynsec__config_save();
 		dynsec__command_reply(j_responses, context, "deleteGroup", NULL, correlation_data);
+
 		return MOSQ_ERR_SUCCESS;
 	}else{
 		dynsec__command_reply(j_responses, context, "deleteGroup", "Group not found", correlation_data);
@@ -567,6 +583,10 @@ int dynsec_groups__process_add_client(cJSON *j_responses, struct mosquitto *cont
 	}else{
 		dynsec__command_reply(j_responses, context, "addGroupClient", "Internal error", correlation_data);
 	}
+
+	/* Enforce any changes */
+	mosquitto_kick_client_by_username(username, false);
+
 	return rc;
 }
 
@@ -657,6 +677,10 @@ int dynsec_groups__process_remove_client(cJSON *j_responses, struct mosquitto *c
 	}else{
 		dynsec__command_reply(j_responses, context, "removeGroupClient", "Internal error", correlation_data);
 	}
+
+	/* Enforce any changes */
+	mosquitto_kick_client_by_username(username, false);
+
 	return rc;
 }
 
@@ -905,6 +929,12 @@ int dynsec_groups__process_remove_role(cJSON *j_responses, struct mosquitto *con
 	dynsec_rolelists__remove_role(&group->rolelist, role);
 	dynsec__config_save();
 	dynsec__command_reply(j_responses, context, "removeGroupRole", NULL, correlation_data);
+
+	/* Enforce any changes */
+	if(group == dynsec_anonymous_group){
+		mosquitto_kick_client_by_username(NULL, false);
+	}
+	clientlist__kick_all(group->clientlist);
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -985,6 +1015,12 @@ int dynsec_groups__process_modify(cJSON *j_responses, struct mosquitto *context,
 	dynsec__config_save();
 
 	dynsec__command_reply(j_responses, context, "modifyGroup", NULL, correlation_data);
+
+	/* Enforce any changes */
+	if(group == dynsec_anonymous_group){
+		mosquitto_kick_client_by_username(NULL, false);
+	}
+	clientlist__kick_all(group->clientlist);
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -1009,6 +1045,10 @@ int dynsec_groups__process_set_anonymous_group(cJSON *j_responses, struct mosqui
 
 	dynsec__config_save();
 	dynsec__command_reply(j_responses, context, "setAnonymousGroup", NULL, correlation_data);
+
+	/* Enforce any changes */
+	mosquitto_kick_client_by_username(NULL, false);
+
 	return MOSQ_ERR_SUCCESS;
 }
 
