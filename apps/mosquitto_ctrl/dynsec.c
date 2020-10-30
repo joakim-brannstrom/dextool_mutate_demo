@@ -142,6 +142,11 @@ static void print_client(cJSON *j_response)
 		printf("Clientid:\n");
 	}
 
+	jtmp = cJSON_GetObjectItem(j_client, "disabled");
+	if(jtmp && cJSON_IsBool(jtmp)){
+		printf("Disabled: %s\n", cJSON_IsTrue(jtmp)?"true":"false");
+	}
+
 	j_array = cJSON_GetObjectItem(j_client, "roles");
 	if(j_array && cJSON_IsArray(j_array)){
 		first = true;
