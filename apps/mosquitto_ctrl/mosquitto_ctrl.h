@@ -73,6 +73,8 @@ struct mosq_ctrl {
 	void *userdata;
 };
 
+typedef int (*FUNC_ctrl_main)(int argc, char *argv[], struct mosq_ctrl *ctrl);
+
 void init_config(struct mosq_config *cfg);
 int ctrl_config_parse(struct mosq_config *cfg, int *argc, char **argv[]);
 int client_config_load(struct mosq_config *cfg);
@@ -108,5 +110,9 @@ int dynsec_role__get(int argc, char *argv[], cJSON *j_command);
 int dynsec_role__list_all(int argc, char *argv[], cJSON *j_command);
 int dynsec_role__add_acl(int argc, char *argv[], cJSON *j_command);
 int dynsec_role__remove_acl(int argc, char *argv[], cJSON *j_command);
+
+/* Functions to implement as an external module: */
+void ctrl_help(void);
+int ctrl_main(int argc, char *argv[], struct mosq_ctrl *ctrl);
 
 #endif
