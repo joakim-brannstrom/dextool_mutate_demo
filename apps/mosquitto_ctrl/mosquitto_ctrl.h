@@ -68,8 +68,9 @@ struct mosq_ctrl {
 	struct mosq_config cfg;
 	char *request_topic;
 	char *response_topic;
-	cJSON *j_tree;
+	char *payload;
 	void (*payload_callback)(struct mosq_ctrl *, long , const void *);
+	void *userdata;
 };
 
 void init_config(struct mosq_config *cfg);
