@@ -954,6 +954,7 @@ int db__message_write_inflight_in(struct mosquitto_db *db, struct mosquitto *con
 			if(now > tail->store->message_expiry_time){
 				/* Message is expired, must not send. */
 				db__message_remove(db, &context->msgs_in, tail);
+				util__decrement_send_quota(context);
 				continue;
 			}
 		}
@@ -1016,6 +1017,9 @@ static int db__message_write_inflight_out_single(struct mosquitto_db *db, struct
 		if(now > msg->store->message_expiry_time){
 			/* Message is expired, must not send. */
 			db__message_remove(db, &context->msgs_out, msg);
+			if(msg->direction == mosq_md_out && msg->qos > 0){
+				util__increment_send_quota(context);
+			}
 			return MOSQ_ERR_SUCCESS;
 		}else{
 			expiry_interval = (uint32_t)(msg->store->message_expiry_time - now);
