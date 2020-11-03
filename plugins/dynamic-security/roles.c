@@ -617,7 +617,7 @@ int dynsec_roles__process_list(cJSON *j_responses, struct mosquitto *context, cJ
 	}
 	cJSON_AddItemToObject(tree, "data", j_data);
 
-	cJSON_AddIntToObject(j_data, "totalCount", HASH_CNT(hh, local_roles));
+	cJSON_AddIntToObject(j_data, "totalCount", (int)HASH_CNT(hh, local_roles));
 
 	j_roles = cJSON_CreateArray();
 	if(j_roles == NULL){

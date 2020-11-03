@@ -765,7 +765,7 @@ int dynsec_groups__process_list(cJSON *j_responses, struct mosquitto *context, c
 	}
 	cJSON_AddItemToObject(tree, "data", j_data);
 
-	cJSON_AddIntToObject(j_data, "totalCount", HASH_CNT(hh, local_groups));
+	cJSON_AddIntToObject(j_data, "totalCount", (int)HASH_CNT(hh, local_groups));
 
 	j_groups = cJSON_CreateArray();
 	if(j_groups == NULL){

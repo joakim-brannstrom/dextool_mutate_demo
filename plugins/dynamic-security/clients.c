@@ -104,7 +104,7 @@ int dynsec_clients__config_load(cJSON *tree)
 	struct dynsec__client *client;
 	struct dynsec__role *role;
 	unsigned char *buf;
-	unsigned int buf_len;
+	int buf_len;
 	int priority;
 	int iterations;
 
@@ -152,7 +152,7 @@ int dynsec_clients__config_load(cJSON *tree)
 				mosquitto_free(client);
 				continue;
 			}
-			iterations = jtmp->valuedouble;
+			iterations = (int)jtmp->valuedouble;
 			if(iterations < 1){
 				// FIXME log
 				mosquitto_free(client->username);
@@ -177,7 +177,7 @@ int dynsec_clients__config_load(cJSON *tree)
 					mosquitto_free(client);
 					continue;
 				}
-				memcpy(client->pw.salt, buf, buf_len);
+				memcpy(client->pw.salt, buf, (size_t)buf_len);
 				mosquitto_free(buf);
 
 				if(dynsec_auth__base64_decode(j_password->valuestring, &buf, &buf_len) != MOSQ_ERR_SUCCESS
@@ -188,7 +188,7 @@ int dynsec_clients__config_load(cJSON *tree)
 					mosquitto_free(client);
 					continue;
 				}
-				memcpy(client->pw.password_hash, buf, buf_len);
+				memcpy(client->pw.password_hash, buf, (size_t)buf_len);
 				mosquitto_free(buf);
 				client->pw.valid = true;
 			}else{
@@ -802,7 +802,7 @@ int dynsec_clients__process_list(cJSON *j_responses, struct mosquitto *context, 
 	}
 	cJSON_AddItemToObject(tree, "data", j_data);
 
-	cJSON_AddIntToObject(j_data, "totalCount", HASH_CNT(hh, local_clients));
+	cJSON_AddIntToObject(j_data, "totalCount", (int)HASH_CNT(hh, local_clients));
 
 	j_clients = cJSON_CreateArray();
 	if(j_clients == NULL){
