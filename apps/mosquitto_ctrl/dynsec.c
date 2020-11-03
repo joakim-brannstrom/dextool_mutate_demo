@@ -853,5 +853,5 @@ int dynsec__main(int argc, char *argv[], struct mosq_ctrl *ctrl)
 			return MOSQ_ERR_NOMEM;
 		}
 	}
-	return 0;
+	return rc;
 }
