@@ -663,6 +663,7 @@ int net__socket_listen(struct mosquitto__listener *listener);
 int net__socket_get_address(mosq_sock_t sock, char *buf, size_t len);
 int net__tls_load_verify(struct mosquitto__listener *listener);
 int net__tls_server_ctx(struct mosquitto__listener *listener);
+int net__load_certificates(struct mosquitto__listener *listener);
 
 /* ============================================================
  * Read handling functions
@@ -795,6 +796,7 @@ int mux__cleanup(struct mosquitto_db *db);
  * Listener related functions
  * ============================================================ */
 void listener__set_defaults(struct mosquitto__listener *listener);
+void listeners__reload_all_certificates(struct mosquitto_db *db);
 
 /* ============================================================
  * Plugin related functions

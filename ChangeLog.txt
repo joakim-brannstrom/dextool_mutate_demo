@@ -63,6 +63,7 @@ Broker:
 - Add the `bridge_max_packet_size` option. Closes #265.
 - Add the `bridge_bind_address` option. Closes #1311.
 - Fix crash on Windows if loading a plugin fails. Closes #1866.
+- TLS certificates for the server are now reloaded on SIGHUP.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are

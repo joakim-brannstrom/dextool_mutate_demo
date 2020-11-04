@@ -217,6 +217,25 @@ void listener__set_defaults(struct mosquitto__listener *listener)
 }
 
 
+void listeners__reload_all_certificates(struct mosquitto_db *db)
+{
+	int i;
+	int rc;
+	struct mosquitto__listener *listener;
+
+	for(i=0; i<db->config->listener_count; i++){
+		listener = &db->config->listeners[i];
+		if(listener->ssl_ctx && listener->certfile && listener->keyfile){
+			rc = net__load_certificates(listener);
+			if(rc){
+				log__printf(NULL, MOSQ_LOG_ERR, "Error when reloading certificate '%s' or key '%s'.",
+						listener->certfile, listener->keyfile);
+			}
+		}
+	}
+}
+
+
 int listeners__start_single_mqtt(struct mosquitto_db *db, mosq_sock_t **listensock, int *listensock_count, int *listensock_index, struct mosquitto__listener *listener)
 {
 	int i;
