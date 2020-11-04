@@ -446,7 +446,7 @@ int net__load_crl_file(struct mosquitto__listener *listener)
 }
 
 
-int net__tls_load_verify(struct mosquitto__listener *listener)
+int net__load_certificates(struct mosquitto__listener *listener)
 {
 #ifdef WITH_TLS
 	ENGINE *engine = NULL;
@@ -456,57 +456,6 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 #  endif
 	int rc;
 
-#if OPENSSL_VERSION_NUMBER < 0x30000000L
-	if(listener->cafile || listener->capath){
-		rc = SSL_CTX_load_verify_locations(listener->ssl_ctx, listener->cafile, listener->capath);
-		if(rc == 0){
-			if(listener->cafile && listener->capath){
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\" and capath \"%s\".", listener->cafile, listener->capath);
-			}else if(listener->cafile){
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\".", listener->cafile);
-			}else{
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
-			}
-		}
-	}
-#else
-	if(listener->cafile){
-		rc = SSL_CTX_load_verify_file(listener->ssl_ctx, listener->cafile);
-		if(rc == 0){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\".", listener->cafile);
-			net__print_ssl_error(NULL);
-			return MOSQ_ERR_TLS;
-		}
-	}
-	if(listener->capath){
-		rc = SSL_CTX_load_verify_dir(listener->ssl_ctx, listener->capath);
-		if(rc == 0){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
-			net__print_ssl_error(NULL);
-			return MOSQ_ERR_TLS;
-		}
-	}
-#endif
-
-	if(listener->tls_engine){
-#if !defined(OPENSSL_NO_ENGINE)
-		engine = ENGINE_by_id(listener->tls_engine);
-		if(!engine){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error loading %s engine\n", listener->tls_engine);
-			net__print_ssl_error(NULL);
-			return MOSQ_ERR_TLS;
-		}
-		if(!ENGINE_init(engine)){
-			log__printf(NULL, MOSQ_LOG_ERR, "Failed engine initialisation\n");
-			net__print_ssl_error(NULL);
-			ENGINE_free(engine);
-			return MOSQ_ERR_TLS;
-		}
-		ENGINE_set_default(engine, ENGINE_METHOD_ALL);
-		ENGINE_free(engine); /* release the structural reference from ENGINE_by_id() */
-#endif
-	}
-	/* FIXME user data? */
 	if(listener->require_certificate){
 		SSL_CTX_set_verify(listener->ssl_ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, client_certificate_verify);
 	}else{
@@ -584,8 +533,68 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 		}
 	}
 #endif
-
 	return MOSQ_ERR_SUCCESS;
+}
+
+
+int net__tls_load_verify(struct mosquitto__listener *listener)
+{
+#ifdef WITH_TLS
+	ENGINE *engine = NULL;
+	int rc;
+
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+	if(listener->cafile || listener->capath){
+		rc = SSL_CTX_load_verify_locations(listener->ssl_ctx, listener->cafile, listener->capath);
+		if(rc == 0){
+			if(listener->cafile && listener->capath){
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\" and capath \"%s\".", listener->cafile, listener->capath);
+			}else if(listener->cafile){
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\".", listener->cafile);
+			}else{
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
+			}
+		}
+	}
+#else
+	if(listener->cafile){
+		rc = SSL_CTX_load_verify_file(listener->ssl_ctx, listener->cafile);
+		if(rc == 0){
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\".", listener->cafile);
+			net__print_ssl_error(NULL);
+			return MOSQ_ERR_TLS;
+		}
+	}
+	if(listener->capath){
+		rc = SSL_CTX_load_verify_dir(listener->ssl_ctx, listener->capath);
+		if(rc == 0){
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
+			net__print_ssl_error(NULL);
+			return MOSQ_ERR_TLS;
+		}
+	}
+#endif
+
+	if(listener->tls_engine){
+#if !defined(OPENSSL_NO_ENGINE)
+		engine = ENGINE_by_id(listener->tls_engine);
+		if(!engine){
+			log__printf(NULL, MOSQ_LOG_ERR, "Error loading %s engine\n", listener->tls_engine);
+			net__print_ssl_error(NULL);
+			return MOSQ_ERR_TLS;
+		}
+		if(!ENGINE_init(engine)){
+			log__printf(NULL, MOSQ_LOG_ERR, "Failed engine initialisation\n");
+			net__print_ssl_error(NULL);
+			ENGINE_free(engine);
+			return MOSQ_ERR_TLS;
+		}
+		ENGINE_set_default(engine, ENGINE_METHOD_ALL);
+		ENGINE_free(engine); /* release the structural reference from ENGINE_by_id() */
+#endif
+	}
+#endif
+	return net__load_certificates(listener);
 }
 
 
