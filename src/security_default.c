@@ -820,7 +820,9 @@ void unpwd__free_item(struct mosquitto__unpwd **unpwd, struct mosquitto__unpwd *
 {
 	mosquitto__free(item->username);
 	mosquitto__free(item->password);
+#ifdef WITH_TLS
 	mosquitto__free(item->salt);
+#endif
 	HASH_DEL(*unpwd, item);
 	mosquitto__free(item);
 }

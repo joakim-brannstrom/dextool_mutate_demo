@@ -347,7 +347,7 @@ struct mosquitto__config {
 	char *user;
 #ifdef WITH_WEBSOCKETS
 	int websockets_log_level;
-	int websockets_headers_size;
+	uint16_t websockets_headers_size;
 	bool have_websockets_listener;
 #endif
 #ifdef WITH_BRIDGE

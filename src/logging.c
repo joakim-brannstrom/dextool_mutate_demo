@@ -207,7 +207,7 @@ int log__vprintf(unsigned int priority, const char *fmt, va_list va)
 	int syslog_priority;
 	time_t now = time(NULL);
 	char log_line[1000];
-	int log_line_pos;
+	size_t log_line_pos;
 #ifdef WIN32
 	char *sp;
 #endif
@@ -303,10 +303,10 @@ int log__vprintf(unsigned int priority, const char *fmt, va_list va)
 				get_time(&ti);
 				log_line_pos = strftime(log_line, sizeof(log_line), log_timestamp_format, ti);
 				if(log_line_pos == 0){
-					log_line_pos = snprintf(log_line, sizeof(log_line), "Time error");
+					log_line_pos = (size_t)snprintf(log_line, sizeof(log_line), "Time error");
 				}
 			}else{
-				log_line_pos = snprintf(log_line, sizeof(log_line), "%d", (int)now);
+				log_line_pos = (size_t)snprintf(log_line, sizeof(log_line), "%d", (int)now);
 			}
 			if(log_line_pos < sizeof(log_line)-3){
 				log_line[log_line_pos] = ':';

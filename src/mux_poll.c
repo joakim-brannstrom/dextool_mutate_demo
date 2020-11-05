@@ -58,7 +58,7 @@ Contributors:
 static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds);
 
 static struct pollfd *pollfds = NULL;
-static int pollfd_max;
+static size_t pollfd_max;
 #ifndef WIN32
 static sigset_t my_sigblock;
 #endif
@@ -78,9 +78,9 @@ int mux_poll__init(struct mosquitto_db *db, mosq_sock_t *listensock, int listens
 #endif
 
 #ifdef WIN32
-	pollfd_max = _getmaxstdio();
+	pollfd_max = (size_t)_getmaxstdio();
 #else
-	pollfd_max = sysconf(_SC_OPEN_MAX);
+	pollfd_max = (size_t)sysconf(_SC_OPEN_MAX);
 #endif
 
 	pollfds = mosquitto__malloc(sizeof(struct pollfd)*pollfd_max);

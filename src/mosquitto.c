@@ -219,6 +219,7 @@ void listener__set_defaults(struct mosquitto__listener *listener)
 
 void listeners__reload_all_certificates(struct mosquitto_db *db)
 {
+#ifdef WITH_TLS
 	int i;
 	int rc;
 	struct mosquitto__listener *listener;
@@ -233,6 +234,7 @@ void listeners__reload_all_certificates(struct mosquitto_db *db)
 			}
 		}
 	}
+#endif
 }
 
 
@@ -435,7 +437,9 @@ int main(int argc, char *argv[])
 	mosq_sock_t *listensock = NULL;
 	int listensock_count = 0;
 	struct mosquitto__config config;
+#ifdef WITH_BRIDGE
 	int i;
+#endif
 	int rc;
 #ifdef WIN32
 	SYSTEMTIME st;

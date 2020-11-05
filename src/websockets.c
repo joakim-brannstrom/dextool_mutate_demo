@@ -189,6 +189,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 	struct mosquitto__packet *packet;
 	size_t txlen;
 	int count;
+	unsigned int ucount;
 	const struct libwebsocket_protocols *p;
 	struct libws_mqtt_data *u = (struct libws_mqtt_data *)user;
 	size_t pos;
@@ -315,11 +316,12 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					}
 					return 0;
 				}
+				ucount = (unsigned int)count;
 #ifdef WITH_SYS_TREE
-				g_bytes_sent += count;
+				g_bytes_sent += ucount;
 #endif
-				packet->to_process -= count;
-				packet->pos += count;
+				packet->to_process -= ucount;
+				packet->pos += ucount;
 				if(packet->to_process > 0){
 					if (mosq->state == mosq_cs_disconnect_ws
 							|| mosq->state == mosq_cs_disconnecting
@@ -398,7 +400,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 						mosq->in_packet.remaining_length += (byte & 127) * mosq->in_packet.remaining_mult;
 						mosq->in_packet.remaining_mult *= 128;
 					}while((byte & 128) != 0);
-					mosq->in_packet.remaining_count *= -1;
+					mosq->in_packet.remaining_count = (int8_t)(mosq->in_packet.remaining_count -1);
 
 					if(mosq->in_packet.remaining_length > 0){
 						mosq->in_packet.payload = mosquitto__malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
@@ -409,15 +411,15 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					}
 				}
 				if(mosq->in_packet.to_process>0){
-					if(len - pos >= mosq->in_packet.to_process){
+					if((uint32_t)len - pos >= mosq->in_packet.to_process){
 						memcpy(&mosq->in_packet.payload[mosq->in_packet.pos], &buf[pos], mosq->in_packet.to_process);
 						mosq->in_packet.pos += mosq->in_packet.to_process;
 						pos += mosq->in_packet.to_process;
 						mosq->in_packet.to_process = 0;
 					}else{
 						memcpy(&mosq->in_packet.payload[mosq->in_packet.pos], &buf[pos], len-pos);
-						mosq->in_packet.pos += len-pos;
-						mosq->in_packet.to_process -= len-pos;
+						mosq->in_packet.pos += (uint32_t)(len-pos);
+						mosq->in_packet.to_process -= (uint32_t)(len-pos);
 						return 0;
 					}
 				}
@@ -537,6 +539,7 @@ static int callback_http(struct libwebsocket_context *context,
 	char *http_dir;
 	size_t buflen;
 	size_t wlen;
+	int rc;
 	char *filename_canonical;
 	unsigned char buf[4096];
 	struct stat filestat;
@@ -601,7 +604,7 @@ static int callback_http(struct libwebsocket_context *context,
 				free(filename_canonical);
 
 				/* FIXME - use header functions from lws 2.x */
-				buflen = snprintf((char *)buf, 4096, "HTTP/1.0 302 OK\r\n"
+				buflen = (size_t)snprintf((char *)buf, 4096, "HTTP/1.0 302 OK\r\n"
 												"Location: %s/\r\n\r\n",
 												(char *)in);
 				return libwebsocket_write(wsi, buf, buflen, LWS_WRITE_HTTP);
@@ -618,7 +621,7 @@ static int callback_http(struct libwebsocket_context *context,
 			log__printf(NULL, MOSQ_LOG_DEBUG, "http serving file \"%s\".", filename_canonical);
 			free(filename_canonical);
 			/* FIXME - use header functions from lws 2.x */
-			buflen = snprintf((char *)buf, 4096, "HTTP/1.0 200 OK\r\n"
+			buflen = (size_t)snprintf((char *)buf, 4096, "HTTP/1.0 200 OK\r\n"
 												"Server: mosquitto\r\n"
 												"Content-Length: %u\r\n\r\n",
 												(unsigned int)filestat.st_size);
@@ -652,9 +655,13 @@ static int callback_http(struct libwebsocket_context *context,
 						u->fptr = NULL;
 						return -1;
 					}
-					wlen = libwebsocket_write(wsi, buf, buflen, LWS_WRITE_HTTP);
+					rc = libwebsocket_write(wsi, buf, buflen, LWS_WRITE_HTTP);
+					if(rc < 0){
+						return -1;
+					}
+					wlen = (size_t)rc;
 					if(wlen < buflen){
-						if(fseek(u->fptr, buflen-wlen, SEEK_CUR) < 0){
+						if(fseek(u->fptr, (long)(buflen-wlen), SEEK_CUR) < 0){
 							fclose(u->fptr);
 							u->fptr = NULL;
 							return -1;
@@ -721,7 +728,7 @@ struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *li
 {
 	struct lws_context_creation_info info;
 	struct libwebsocket_protocols *p;
-	int protocol_count;
+	size_t protocol_count;
 	int i;
 	struct libws_mqtt_hack *user;
 

@@ -147,7 +147,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int rc;
 	char *notification_topic;
-	int notification_topic_len;
+	size_t notification_topic_len;
 	uint8_t notification_payload;
 	int i;
 

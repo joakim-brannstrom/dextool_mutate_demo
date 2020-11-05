@@ -252,8 +252,8 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, mosq_sock_t sock, 
 		if(context->wsi){
 			struct lws_pollfd wspoll;
 			wspoll.fd = context->sock;
-			wspoll.events = context->events;
-			wspoll.revents = events;
+			wspoll.events = (int16_t)context->events;
+			wspoll.revents = (int16_t)events;
 #ifdef LWS_LIBRARY_VERSION_NUMBER
 			lws_service_fd(lws_get_context(context->wsi), &wspoll);
 #else
