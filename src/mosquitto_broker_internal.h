@@ -643,8 +643,7 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 void config__cleanup(struct mosquitto__config *config);
 int config__get_dir_files(const char *include_dir, char ***files, int *file_count);
 
-int drop_privileges(struct mosquitto__config *config, bool temporary);
-int restore_privileges(void);
+int drop_privileges(struct mosquitto__config *config);
 
 /* ============================================================
  * Server send functions

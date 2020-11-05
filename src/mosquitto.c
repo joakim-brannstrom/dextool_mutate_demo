@@ -88,7 +88,7 @@ struct mosquitto_db *mosquitto__get_db(void)
  * Note that setting config->user to "root" does not produce an error, but it
  * strongly discouraged.
  */
-int drop_privileges(struct mosquitto__config *config, bool temporary)
+int drop_privileges(struct mosquitto__config *config)
 {
 #if !defined(__CYGWIN__) && !defined(WIN32)
 	struct passwd *pwd;
@@ -122,21 +122,13 @@ int drop_privileges(struct mosquitto__config *config, bool temporary)
 				log__printf(NULL, MOSQ_LOG_ERR, "Error setting groups whilst dropping privileges: %s.", err);
 				return 1;
 			}
-			if(temporary){
-				rc = setegid(pwd->pw_gid);
-			}else{
-				rc = setgid(pwd->pw_gid);
-			}
+			rc = setgid(pwd->pw_gid);
 			if(rc == -1){
 				err = strerror(errno);
 				log__printf(NULL, MOSQ_LOG_ERR, "Error setting gid whilst dropping privileges: %s.", err);
 				return 1;
 			}
-			if(temporary){
-				rc = seteuid(pwd->pw_uid);
-			}else{
-				rc = setuid(pwd->pw_uid);
-			}
+			rc = setuid(pwd->pw_uid);
 			if(rc == -1){
 				err = strerror(errno);
 				log__printf(NULL, MOSQ_LOG_ERR, "Error setting uid whilst dropping privileges: %s.", err);
@@ -150,31 +142,6 @@ int drop_privileges(struct mosquitto__config *config, bool temporary)
 #endif
 	return MOSQ_ERR_SUCCESS;
 }
-
-int restore_privileges(void)
-{
-#if !defined(__CYGWIN__) && !defined(WIN32)
-	char *err;
-	int rc;
-
-	if(getuid() == 0){
-		rc = setegid(0);
-		if(rc == -1){
-			err = strerror(errno);
-			log__printf(NULL, MOSQ_LOG_ERR, "Error setting gid whilst restoring privileges: %s.", err);
-			return 1;
-		}
-		rc = seteuid(0);
-		if(rc == -1){
-			err = strerror(errno);
-			log__printf(NULL, MOSQ_LOG_ERR, "Error setting uid whilst restoring privileges: %s.", err);
-			return 1;
-		}
-	}
-#endif
-	return MOSQ_ERR_SUCCESS;
-}
-
 
 void mosquitto__daemonise(void)
 {
@@ -485,6 +452,13 @@ int main(int argc, char *argv[])
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
 	int_db.config = &config;
 
+	/* Drop privileges permanently immediately after the config is loaded.
+	 * This requires the user to ensure that all certificates, log locations,
+	 * etc. are accessible my the `mosquitto` or other unprivileged user.
+	 */
+	rc = drop_privileges(&config);
+	if(rc != MOSQ_ERR_SUCCESS) return rc;
+
 	if(config.daemon){
 		mosquitto__daemonise();
 	}
@@ -532,9 +506,6 @@ int main(int argc, char *argv[])
 #endif
 
 	if(listeners__start(&int_db, &listensock, &listensock_count)) return 1;
-
-	rc = drop_privileges(&config, false);
-	if(rc != MOSQ_ERR_SUCCESS) return rc;
 
 	signal__setup();
 

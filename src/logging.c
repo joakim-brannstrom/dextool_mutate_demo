@@ -130,9 +130,6 @@ int log__init(struct mosquitto__config *config)
 	}
 
 	if(log_destinations & MQTT3_LOG_FILE){
-		if(drop_privileges(config, true)){
-			return 1;
-		}
 		config->log_fptr = mosquitto__fopen(config->log_file, "at", true);
 		if(config->log_fptr){
 			setvbuf(config->log_fptr, NULL, _IOLBF, 0);
@@ -141,7 +138,6 @@ int log__init(struct mosquitto__config *config)
 			log_priorities = MOSQ_LOG_ERR;
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
 		}
-		restore_privileges();
 	}
 #ifdef WITH_DLT
 	dlt_fifo_check();
