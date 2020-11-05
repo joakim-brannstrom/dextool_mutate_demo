@@ -105,10 +105,8 @@ static void net__print_error(unsigned int log, const char *format_str)
 }
 
 
-int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
+int net__socket_accept(struct mosquitto_db *db, struct mosquitto__listener_sock *listensock)
 {
-	int i;
-	int j;
 	mosq_sock_t new_sock = INVALID_SOCKET;
 	struct mosquitto *new_context;
 #ifdef WITH_TLS
@@ -122,7 +120,7 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 	char address[1024];
 #endif
 
-	new_sock = accept(listensock, NULL, 0);
+	new_sock = accept(listensock->sock, NULL, 0);
 	if(new_sock == INVALID_SOCKET){
 #ifdef WIN32
 		errno = WSAGetLastError();
@@ -138,7 +136,7 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 			 * but there are lots of reasons why this would be tricky (TLS
 			 * being the big one). */
 			COMPAT_CLOSE(spare_sock);
-			new_sock = accept(listensock, NULL, 0);
+			new_sock = accept(listensock->sock, NULL, 0);
 			if(new_sock != INVALID_SOCKET){
 				COMPAT_CLOSE(new_sock);
 			}
@@ -187,19 +185,12 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 		COMPAT_CLOSE(new_sock);
 		return -1;
 	}
-	for(i=0; i<db->config->listener_count; i++){
-		for(j=0; j<db->config->listeners[i].sock_count; j++){
-			if(db->config->listeners[i].socks[j] == listensock){
-				new_context->listener = &db->config->listeners[i];
-				new_context->listener->client_count++;
-				break;
-			}
-		}
-	}
+	new_context->listener = listensock->listener;
 	if(!new_context->listener){
 		context__cleanup(db, new_context, true);
 		return -1;
 	}
+	new_context->listener->client_count++;
 
 	if(new_context->listener->max_connections > 0 && new_context->listener->client_count > new_context->listener->max_connections){
 		if(db->config->connection_messages == true){

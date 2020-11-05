@@ -17,7 +17,7 @@ Contributors:
 
 #include "mux.h"
 
-int mux__init(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count)
+int mux__init(struct mosquitto_db *db, struct mosquitto__listener_sock *listensock, int listensock_count)
 {
 #ifdef WITH_EPOLL
 	return mux_epoll__init(db, listensock, listensock_count);
@@ -66,7 +66,7 @@ int mux__delete(struct mosquitto_db *db, struct mosquitto *context)
 }
 
 
-int mux__handle(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count)
+int mux__handle(struct mosquitto_db *db, struct mosquitto__listener_sock *listensock, int listensock_count)
 {
 #ifdef WITH_EPOLL
 	return mux_epoll__handle(db, listensock, listensock_count);

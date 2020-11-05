@@ -38,6 +38,9 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 	context = mosquitto__calloc(1, sizeof(struct mosquitto));
 	if(!context) return NULL;
 	
+#ifdef WITH_EPOLL
+	context->ident = id_client;
+#endif
 	context->pollfd_index = -1;
 	mosquitto__set_state(context, mosq_cs_new);
 	context->sock = sock;

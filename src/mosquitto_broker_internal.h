@@ -261,6 +261,14 @@ struct mosquitto__security_options {
 	mosquitto_plugin_id_t *pid; /* For registering as a "plugin" */
 };
 
+#ifdef WITH_EPOLL
+enum struct_ident{
+	id_invalid = 0,
+	id_listener = 1,
+	id_client = 2,
+};
+#endif
+
 struct mosquitto__listener {
 	uint16_t port;
 	char *host;
@@ -302,6 +310,16 @@ struct mosquitto__listener {
 #ifdef WITH_UNIX_SOCKETS
 	char *unix_socket_path;
 #endif
+};
+
+
+struct mosquitto__listener_sock{
+#ifdef WITH_EPOLL
+	/* This *must* be the first element in the struct. */
+	int ident;
+#endif
+	struct mosquitto__listener *listener;
+	mosq_sock_t sock;
 };
 
 typedef struct mosquitto_plugin_id_t{
@@ -624,7 +642,7 @@ struct libws_mqtt_data {
 /* ============================================================
  * Main functions
  * ============================================================ */
-int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count);
+int mosquitto_main_loop(struct mosquitto_db *db, struct mosquitto__listener_sock *listensock, int listensock_count);
 struct mosquitto_db *mosquitto__get_db(void);
 
 /* ============================================================
@@ -658,7 +676,7 @@ int send__auth(struct mosquitto_db *db, struct mosquitto *context, uint8_t reaso
  * ============================================================ */
 void net__broker_init(void);
 void net__broker_cleanup(void);
-int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock);
+int net__socket_accept(struct mosquitto_db *db, struct mosquitto__listener_sock *listensock);
 int net__socket_listen(struct mosquitto__listener *listener);
 int net__socket_get_address(mosq_sock_t sock, char *buf, size_t len);
 int net__tls_load_verify(struct mosquitto__listener *listener);
@@ -782,14 +800,14 @@ int bridge__remap_topic_in(struct mosquitto *context, char **topic);
 /* ============================================================
  * IO multiplex related functions
  * ============================================================ */
-int mux__init(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count);
+int mux__init(struct mosquitto_db *db, struct mosquitto__listener_sock *listensock, int listensock_count);
 int mux__loop_prepare(void);
 int mux__add_out(struct mosquitto_db *db, struct mosquitto *context);
 int mux__remove_out(struct mosquitto_db *db, struct mosquitto *context);
 int mux__add_in(struct mosquitto_db *db, struct mosquitto *context);
 int mux__delete(struct mosquitto_db *db, struct mosquitto *context);
 int mux__wait(void);
-int mux__handle(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count);
+int mux__handle(struct mosquitto_db *db, struct mosquitto__listener_sock *listensock, int listensock_count);
 int mux__cleanup(struct mosquitto_db *db);
 
 /* ============================================================

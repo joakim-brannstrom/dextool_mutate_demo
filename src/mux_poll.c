@@ -63,7 +63,7 @@ static size_t pollfd_max;
 static sigset_t my_sigblock;
 #endif
 
-int mux_poll__init(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count)
+int mux_poll__init(struct mosquitto_db *db, struct mosquitto__listener_sock *listensock, int listensock_count)
 {
 	int i;
 	int pollfd_index = 0;
@@ -91,7 +91,7 @@ int mux_poll__init(struct mosquitto_db *db, mosq_sock_t *listensock, int listens
 	memset(pollfds, -1, sizeof(struct pollfd)*pollfd_max);
 
 	for(i=0; i<listensock_count; i++){
-		pollfds[pollfd_index].fd = listensock[i];
+		pollfds[pollfd_index].fd = listensock[i].sock;
 		pollfds[pollfd_index].events = POLLIN;
 		pollfds[pollfd_index].revents = 0;
 		pollfd_index++;
@@ -169,7 +169,7 @@ int mux_poll__delete(struct mosquitto_db *db, struct mosquitto *context)
 
 
 
-int mux_poll__handle(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count)
+int mux_poll__handle(struct mosquitto_db *db, struct mosquitto__listener_sock *listensock, int listensock_count)
 {
 	struct mosquitto *context;
 	mosq_sock_t sock;
@@ -204,7 +204,7 @@ int mux_poll__handle(struct mosquitto_db *db, mosq_sock_t *listensock, int liste
 
 		for(i=0; i<listensock_count; i++){
 			if(pollfds[i].revents & (POLLIN | POLLPRI)){
-				while((sock = net__socket_accept(db, listensock[i])) != -1){
+				while((sock = net__socket_accept(db, &listensock[i])) != -1){
 					context = NULL;
 					HASH_FIND(hh_sock, db->contexts_by_sock, &sock, sizeof(mosq_sock_t), context);
 					if(!context) {
