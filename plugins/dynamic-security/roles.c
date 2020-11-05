@@ -55,10 +55,16 @@ static int role_cmp(void *a, void *b)
 
 static int rolelist_cmp(void *a, void *b)
 {
+	int prio;
 	struct dynsec__rolelist *rolelist_a = a;
 	struct dynsec__rolelist *rolelist_b = b;
 
-	return rolelist_b->priority - rolelist_a->priority;
+	prio = rolelist_b->priority - rolelist_a->priority;
+	if(prio == 0){
+		return strcmp(rolelist_a->rolename, rolelist_b->rolename);
+	}else{
+		return prio;
+	}
 }
 
 

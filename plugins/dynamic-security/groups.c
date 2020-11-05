@@ -70,10 +70,16 @@ static int group_cmp(void *a, void *b)
 
 int dynsec_grouplist__cmp(void *a, void *b)
 {
+	int prio;
 	struct dynsec__grouplist *grouplist_a = a;
 	struct dynsec__grouplist *grouplist_b = b;
 
-	return grouplist_b->priority - grouplist_a->priority;
+	prio = grouplist_b->priority - grouplist_a->priority;
+	if(prio == 0){
+		return strcmp(grouplist_a->groupname, grouplist_b->groupname);
+	}else{
+		return prio;
+	}
 }
 
 void dynsec_clientlist__kick_all(struct dynsec__clientlist *base_clientlist)
