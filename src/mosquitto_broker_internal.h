@@ -227,15 +227,16 @@ struct mosquitto__callback{
 };
 
 struct plugin__callbacks{
-	struct mosquitto__callback *reload;
+	struct mosquitto__callback *tick;
 	struct mosquitto__callback *acl_check;
 	struct mosquitto__callback *basic_auth;
-	struct mosquitto__callback *ext_auth_start;
-	struct mosquitto__callback *ext_auth_continue;
 	struct mosquitto__callback *control;
+	struct mosquitto__callback *disconnect;
+	struct mosquitto__callback *ext_auth_continue;
+	struct mosquitto__callback *ext_auth_start;
 	struct mosquitto__callback *message;
-	struct mosquitto__callback *tick;
 	struct mosquitto__callback *psk_key;
+	struct mosquitto__callback *reload;
 };
 
 struct mosquitto__security_options {
@@ -802,6 +803,7 @@ void listeners__reload_all_certificates(struct mosquitto_db *db);
  * Plugin related functions
  * ============================================================ */
 int plugin__load_v5(struct mosquitto__listener *listener, struct mosquitto__auth_plugin *plugin, struct mosquitto_opt *auth_options, int auth_option_count, void *lib);
+void plugin__handle_disconnect(struct mosquitto_db *db, struct mosquitto *context, int reason);
 int plugin__handle_message(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_msg_store *stored);
 void LIB_ERROR(void);
 void plugin__handle_tick(struct mosquitto_db *db);

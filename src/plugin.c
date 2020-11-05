@@ -101,6 +101,30 @@ int plugin__load_v5(struct mosquitto__listener *listener, struct mosquitto__auth
 }
 
 
+void plugin__handle_disconnect(struct mosquitto_db *db, struct mosquitto *context, int reason)
+{
+	struct mosquitto_evt_disconnect event_data;
+	struct mosquitto__callback *cb_base;
+	struct mosquitto__security_options *opts;
+
+	if(db->config->per_listener_settings){
+		if(context->listener == NULL){
+			return;
+		}
+		opts = &context->listener->security_options;
+	}else{
+		opts = &db->config->security_options;
+		memset(&event_data, 0, sizeof(event_data));
+	}
+
+	event_data.client = context;
+	event_data.reason = reason;
+	DL_FOREACH(opts->plugin_callbacks.disconnect, cb_base){
+		cb_base->cb(MOSQ_EVT_DISCONNECT, &event_data, cb_base->userdata);
+	}
+}
+
+
 int plugin__handle_message(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_msg_store *stored)
 {
 	struct mosquitto_evt_message event_data;
@@ -223,6 +247,9 @@ int mosquitto_callback_register(
 		case MOSQ_EVT_TICK:
 			cb_base = &security_options->plugin_callbacks.tick;
 			break;
+		case MOSQ_EVT_DISCONNECT:
+			cb_base = &security_options->plugin_callbacks.disconnect;
+			break;
 		default:
 			return MOSQ_ERR_NOT_SUPPORTED;
 			break;
@@ -289,6 +316,9 @@ int mosquitto_callback_unregister(
 			break;
 		case MOSQ_EVT_TICK:
 			cb_base = &security_options->plugin_callbacks.tick;
+			break;
+		case MOSQ_EVT_DISCONNECT:
+			cb_base = &security_options->plugin_callbacks.disconnect;
 			break;
 		default:
 			return MOSQ_ERR_INVAL;

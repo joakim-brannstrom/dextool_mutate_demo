@@ -202,6 +202,8 @@ void context__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 		return;
 	}
 
+	plugin__handle_disconnect(db, context, -1);
+
 	net__socket_close(db, context);
 
 	context__send_will(db, context);
