@@ -33,7 +33,7 @@ void keepalive__check(struct mosquitto_db *db, time_t now)
 {
 	struct mosquitto *context, *ctxt_tmp;
 
-	if(last_keepalive_check != now){
+	if(last_keepalive_check + 5 < now){
 		last_keepalive_check = now;
 
 		/* FIXME - this needs replacing with something more efficient */
