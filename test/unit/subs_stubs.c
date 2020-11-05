@@ -154,3 +154,12 @@ void util__decrement_send_quota(struct mosquitto *mosq)
 }
 
 
+void util__increment_receive_quota(struct mosquitto *mosq)
+{
+	mosq->msgs_in.inflight_quota++;
+}
+
+void util__increment_send_quota(struct mosquitto *mosq)
+{
+	mosq->msgs_out.inflight_quota++;
+}
