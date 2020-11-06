@@ -1018,10 +1018,10 @@ static int db__message_write_inflight_out_single(struct mosquitto_db *db, struct
 		}
 		if(now > msg->store->message_expiry_time){
 			/* Message is expired, must not send. */
-			db__message_remove(db, &context->msgs_out, msg);
 			if(msg->direction == mosq_md_out && msg->qos > 0){
 				util__increment_send_quota(context);
 			}
+			db__message_remove(db, &context->msgs_out, msg);
 			return MOSQ_ERR_SUCCESS;
 		}else{
 			expiry_interval = (uint32_t)(msg->store->message_expiry_time - now);
