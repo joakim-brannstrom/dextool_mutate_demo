@@ -81,26 +81,9 @@ void dlt_fifo_check(void)
 
 static int get_time(struct tm **ti)
 {
-#if defined(__APPLE__)
-	struct timeval tv;
-#else
-	struct timespec ts;
-#endif
 	time_t s;
 
-#ifdef WIN32
-	s = time(NULL);
-
-#elif defined(__APPLE__)
-	gettimeofday(&tv, NULL);
-	s = tv.tv_sec;
-#else
-	if(clock_gettime(CLOCK_REALTIME, &ts) != 0){
-		fprintf(stderr, "Error obtaining system time.\n");
-		return 1;
-	}
-	s = ts.tv_sec;
-#endif
+	s = db.now_real_s;
 
 	*ti = localtime(&s);
 	if(!(*ti)){
@@ -199,7 +182,6 @@ int log__vprintf(unsigned int priority, const char *fmt, va_list va)
 {
 	const char *topic;
 	int syslog_priority;
-	time_t now = time(NULL);
 	char log_line[1000];
 	size_t log_line_pos;
 #ifdef WIN32
@@ -300,7 +282,7 @@ int log__vprintf(unsigned int priority, const char *fmt, va_list va)
 					log_line_pos = (size_t)snprintf(log_line, sizeof(log_line), "Time error");
 				}
 			}else{
-				log_line_pos = (size_t)snprintf(log_line, sizeof(log_line), "%d", (int)now);
+				log_line_pos = (size_t)snprintf(log_line, sizeof(log_line), "%d", (int)db.now_real_s);
 			}
 			if(log_line_pos < sizeof(log_line)-3){
 				log_line[log_line_pos] = ':';
