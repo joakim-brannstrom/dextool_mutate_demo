@@ -33,8 +33,6 @@ Contributors:
 #include "misc_mosq.h"
 #include "util_mosq.h"
 
-extern struct mosquitto_db int_db;
-
 #ifdef WIN32
 HANDLE syslog_h;
 #endif
@@ -211,10 +209,10 @@ int log__vprintf(unsigned int priority, const char *fmt, va_list va)
 	char *log_timestamp_format = NULL;
 	FILE *log_fptr = NULL;
 
-	if(int_db.config){
-		log_timestamp = int_db.config->log_timestamp;
-		log_timestamp_format = int_db.config->log_timestamp_format;
-		log_fptr = int_db.config->log_fptr;
+	if(db.config){
+		log_timestamp = db.config->log_timestamp;
+		log_timestamp_format = db.config->log_timestamp_format;
+		log_fptr = db.config->log_fptr;
 	}
 
 	if((log_priorities & priority) && log_destinations != MQTT3_LOG_NONE){
@@ -334,7 +332,7 @@ int log__vprintf(unsigned int priority, const char *fmt, va_list va)
 #endif
 		}
 		if(log_destinations & MQTT3_LOG_TOPIC && priority != MOSQ_LOG_DEBUG && priority != MOSQ_LOG_INTERNAL){
-			db__messages_easy_queue(&int_db, NULL, topic, 2, (uint32_t)strlen(log_line), log_line, 0, 20, NULL);
+			db__messages_easy_queue(NULL, topic, 2, (uint32_t)strlen(log_line), log_line, 0, 20, NULL);
 		}
 #ifdef WITH_DLT
 		if(log_destinations & MQTT3_LOG_DLT && priority != MOSQ_LOG_INTERNAL){

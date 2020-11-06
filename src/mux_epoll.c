@@ -62,12 +62,12 @@ Contributors:
 #  error "epoll not supported on WIN32"
 #endif
 
-static void loop_handle_reads_writes(struct mosquitto_db *db, struct mosquitto *context, uint32_t events);
+static void loop_handle_reads_writes(struct mosquitto *context, uint32_t events);
 
 static sigset_t my_sigblock;
 static struct epoll_event ep_events[MAX_EVENTS];
 
-int mux_epoll__init(struct mosquitto_db *db, struct mosquitto__listener_sock *listensock, int listensock_count)
+int mux_epoll__init(struct mosquitto__listener_sock *listensock, int listensock_count)
 {
 	struct epoll_event ev;
 	int i;
@@ -83,8 +83,8 @@ int mux_epoll__init(struct mosquitto_db *db, struct mosquitto__listener_sock *li
 
 	memset(&ep_events, 0, sizeof(struct epoll_event)*MAX_EVENTS);
 
-	db->epollfd = 0;
-	if ((db->epollfd = epoll_create(MAX_EVENTS)) == -1) {
+	db.epollfd = 0;
+	if ((db.epollfd = epoll_create(MAX_EVENTS)) == -1) {
 		log__printf(NULL, MOSQ_LOG_ERR, "Error in epoll creating: %s", strerror(errno));
 		return MOSQ_ERR_UNKNOWN;
 	}
@@ -92,10 +92,10 @@ int mux_epoll__init(struct mosquitto_db *db, struct mosquitto__listener_sock *li
 	for(i=0; i<listensock_count; i++){
 		ev.data.ptr = &listensock[i];
 		ev.events = EPOLLIN;
-		if (epoll_ctl(db->epollfd, EPOLL_CTL_ADD, listensock[i].sock, &ev) == -1) {
+		if (epoll_ctl(db.epollfd, EPOLL_CTL_ADD, listensock[i].sock, &ev) == -1) {
 			log__printf(NULL, MOSQ_LOG_ERR, "Error in epoll initial registering: %s", strerror(errno));
-			(void)close(db->epollfd);
-			db->epollfd = 0;
+			(void)close(db.epollfd);
+			db.epollfd = 0;
 			return MOSQ_ERR_UNKNOWN;
 		}
 	}
@@ -109,7 +109,7 @@ int mux_epoll__loop_setup(void)
 }
 
 
-int mux_epoll__add_out(struct mosquitto_db *db, struct mosquitto *context)
+int mux_epoll__add_out(struct mosquitto *context)
 {
 	struct epoll_event ev;
 
@@ -117,8 +117,8 @@ int mux_epoll__add_out(struct mosquitto_db *db, struct mosquitto *context)
 	if(!(context->events & EPOLLOUT)) {
 		ev.data.ptr = context;
 		ev.events = EPOLLIN | EPOLLOUT;
-		if(epoll_ctl(db->epollfd, EPOLL_CTL_ADD, context->sock, &ev) == -1) {
-			if((errno != EEXIST)||(epoll_ctl(db->epollfd, EPOLL_CTL_MOD, context->sock, &ev) == -1)) {
+		if(epoll_ctl(db.epollfd, EPOLL_CTL_ADD, context->sock, &ev) == -1) {
+			if((errno != EEXIST)||(epoll_ctl(db.epollfd, EPOLL_CTL_MOD, context->sock, &ev) == -1)) {
 				log__printf(NULL, MOSQ_LOG_DEBUG, "Error in epoll re-registering to EPOLLOUT: %s", strerror(errno));
 			}
 		}
@@ -128,7 +128,7 @@ int mux_epoll__add_out(struct mosquitto_db *db, struct mosquitto *context)
 }
 
 
-int mux_epoll__remove_out(struct mosquitto_db *db, struct mosquitto *context)
+int mux_epoll__remove_out(struct mosquitto *context)
 {
 	struct epoll_event ev;
 
@@ -136,8 +136,8 @@ int mux_epoll__remove_out(struct mosquitto_db *db, struct mosquitto *context)
 	if(context->events & EPOLLOUT) {
 		ev.data.ptr = context;
 		ev.events = EPOLLIN;
-		if(epoll_ctl(db->epollfd, EPOLL_CTL_ADD, context->sock, &ev) == -1) {
-			if((errno != EEXIST)||(epoll_ctl(db->epollfd, EPOLL_CTL_MOD, context->sock, &ev) == -1)) {
+		if(epoll_ctl(db.epollfd, EPOLL_CTL_ADD, context->sock, &ev) == -1) {
+			if((errno != EEXIST)||(epoll_ctl(db.epollfd, EPOLL_CTL_MOD, context->sock, &ev) == -1)) {
 					log__printf(NULL, MOSQ_LOG_DEBUG, "Error in epoll re-registering to EPOLLIN: %s", strerror(errno));
 			}
 		}
@@ -147,14 +147,14 @@ int mux_epoll__remove_out(struct mosquitto_db *db, struct mosquitto *context)
 }
 
 
-int mux_epoll__add_in(struct mosquitto_db *db, struct mosquitto *context)
+int mux_epoll__add_in(struct mosquitto *context)
 {
 	struct epoll_event ev;
 
 	memset(&ev, 0, sizeof(struct epoll_event));
 	ev.events = EPOLLIN;
 	ev.data.ptr = context;
-	if (epoll_ctl(db->epollfd, EPOLL_CTL_ADD, context->sock, &ev) == -1) {
+	if (epoll_ctl(db.epollfd, EPOLL_CTL_ADD, context->sock, &ev) == -1) {
 		log__printf(NULL, MOSQ_LOG_ERR, "Error in epoll accepting: %s", strerror(errno));
 	}
 	context->events = EPOLLIN;
@@ -162,13 +162,13 @@ int mux_epoll__add_in(struct mosquitto_db *db, struct mosquitto *context)
 }
 
 
-int mux_epoll__delete(struct mosquitto_db *db, struct mosquitto *context)
+int mux_epoll__delete(struct mosquitto *context)
 {
 	struct epoll_event ev;
 
 	memset(&ev, 0, sizeof(struct epoll_event));
 	if(context->sock != INVALID_SOCKET){
-		if(epoll_ctl(db->epollfd, EPOLL_CTL_DEL, context->sock, &ev) == -1){
+		if(epoll_ctl(db.epollfd, EPOLL_CTL_DEL, context->sock, &ev) == -1){
 			return 1;
 		}
 	}
@@ -176,7 +176,7 @@ int mux_epoll__delete(struct mosquitto_db *db, struct mosquitto *context)
 }
 
 
-int mux_epoll__handle(struct mosquitto_db *db)
+int mux_epoll__handle(void)
 {
 	int i;
 	struct epoll_event ev;
@@ -188,11 +188,11 @@ int mux_epoll__handle(struct mosquitto_db *db)
 
 	memset(&ev, 0, sizeof(struct epoll_event));
 	sigprocmask(SIG_SETMASK, &my_sigblock, &origsig);
-	event_count = epoll_wait(db->epollfd, ep_events, MAX_EVENTS, 100);
+	event_count = epoll_wait(db.epollfd, ep_events, MAX_EVENTS, 100);
 	sigprocmask(SIG_SETMASK, &origsig, NULL);
 
-	db->now_s = mosquitto_time();
-	db->now_real_s = time(NULL);
+	db.now_s = mosquitto_time();
+	db.now_real_s = time(NULL);
 
 	switch(event_count){
 	case -1:
@@ -206,19 +206,19 @@ int mux_epoll__handle(struct mosquitto_db *db)
 		for(i=0; i<event_count; i++){
 			context = ep_events[i].data.ptr;
 			if(context->ident == id_client){
-				loop_handle_reads_writes(db, context, ep_events[i].events);
+				loop_handle_reads_writes(context, ep_events[i].events);
 			}else if(context->ident == id_listener){
 				listensock = ep_events[i].data.ptr;
 
 				if (ep_events[i].events & (EPOLLIN | EPOLLPRI)){
-					while((sock = net__socket_accept(db, listensock)) != -1){
+					while((sock = net__socket_accept(listensock)) != -1){
 						context = NULL;
-						HASH_FIND(hh_sock, db->contexts_by_sock, &sock, sizeof(mosq_sock_t), context);
+						HASH_FIND(hh_sock, db.contexts_by_sock, &sock, sizeof(mosq_sock_t), context);
 						if(!context) {
 							log__printf(NULL, MOSQ_LOG_ERR, "Error in epoll accepting: no context");
 						}
 						context->events = EPOLLIN;
-						mux__add_in(db, context);
+						mux__add_in(context);
 					}
 				}
 			}
@@ -228,15 +228,15 @@ int mux_epoll__handle(struct mosquitto_db *db)
 }
 
 
-int mux_epoll__cleanup(struct mosquitto_db *db)
+int mux_epoll__cleanup(void)
 {
-	(void)close(db->epollfd);
-	db->epollfd = 0;
+	(void)close(db.epollfd);
+	db.epollfd = 0;
 	return MOSQ_ERR_SUCCESS;
 }
 
 
-static void loop_handle_reads_writes(struct mosquitto_db *db, struct mosquitto *context, uint32_t events)
+static void loop_handle_reads_writes(struct mosquitto *context, uint32_t events)
 {
 	int err;
 	socklen_t len;
@@ -271,18 +271,18 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct mosquitto *
 					mosquitto__set_state(context, mosq_cs_new);
 #if defined(WITH_ADNS) && defined(WITH_BRIDGE)
 					if(context->bridge){
-						bridge__connect_step3(db, context);
+						bridge__connect_step3(context);
 					}
 #endif
 				}
 			}else{
-				do_disconnect(db, context, MOSQ_ERR_CONN_LOST);
+				do_disconnect(context, MOSQ_ERR_CONN_LOST);
 				return;
 			}
 		}
 		rc = packet__write(context);
 		if(rc){
-			do_disconnect(db, context, rc);
+			do_disconnect(context, rc);
 			return;
 		}
 	}
@@ -294,15 +294,15 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct mosquitto *
 			){
 
 		do{
-			rc = packet__read(db, context);
+			rc = packet__read(context);
 			if(rc){
-				do_disconnect(db, context, rc);
+				do_disconnect(context, rc);
 				return;
 			}
 		}while(SSL_DATA_PENDING(context));
 	}else{
 		if(events & (EPOLLERR | EPOLLHUP)){
-			do_disconnect(db, context, MOSQ_ERR_CONN_LOST);
+			do_disconnect(context, MOSQ_ERR_CONN_LOST);
 			return;
 		}
 	}

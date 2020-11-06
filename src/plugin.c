@@ -101,19 +101,19 @@ int plugin__load_v5(struct mosquitto__listener *listener, struct mosquitto__auth
 }
 
 
-void plugin__handle_disconnect(struct mosquitto_db *db, struct mosquitto *context, int reason)
+void plugin__handle_disconnect(struct mosquitto *context, int reason)
 {
 	struct mosquitto_evt_disconnect event_data;
 	struct mosquitto__callback *cb_base;
 	struct mosquitto__security_options *opts;
 
-	if(db->config->per_listener_settings){
+	if(db.config->per_listener_settings){
 		if(context->listener == NULL){
 			return;
 		}
 		opts = &context->listener->security_options;
 	}else{
-		opts = &db->config->security_options;
+		opts = &db.config->security_options;
 		memset(&event_data, 0, sizeof(event_data));
 	}
 
@@ -125,20 +125,20 @@ void plugin__handle_disconnect(struct mosquitto_db *db, struct mosquitto *contex
 }
 
 
-int plugin__handle_message(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_msg_store *stored)
+int plugin__handle_message(struct mosquitto *context, struct mosquitto_msg_store *stored)
 {
 	struct mosquitto_evt_message event_data;
 	struct mosquitto__callback *cb_base;
 	struct mosquitto__security_options *opts;
 	int rc = MOSQ_ERR_SUCCESS;
 
-	if(db->config->per_listener_settings){
+	if(db.config->per_listener_settings){
 		if(context->listener == NULL){
 			return MOSQ_ERR_SUCCESS;
 		}
 		opts = &context->listener->security_options;
 	}else{
-		opts = &db->config->security_options;
+		opts = &db.config->security_options;
 	}
 	if(opts->plugin_callbacks.message == NULL){
 		return MOSQ_ERR_SUCCESS;
@@ -179,17 +179,17 @@ int plugin__handle_message(struct mosquitto_db *db, struct mosquitto *context, s
 }
 
 
-void plugin__handle_tick(struct mosquitto_db *db)
+void plugin__handle_tick(void)
 {
 	struct mosquitto_evt_tick event_data;
 	struct mosquitto__callback *cb_base;
 	struct mosquitto__security_options *opts;
 
 	// FIXME - set now_s and now_ns to avoid need for multiple time lookups
-	if(db->config->per_listener_settings){
+	if(db.config->per_listener_settings){
 		// FIXME - iterate over all listeners
 	}else{
-		opts = &db->config->security_options;
+		opts = &db.config->security_options;
 		memset(&event_data, 0, sizeof(event_data));
 
 		DL_FOREACH(opts->plugin_callbacks.tick, cb_base){
@@ -206,15 +206,13 @@ int mosquitto_callback_register(
 		const void *event_data,
 		void *userdata)
 {
-	struct mosquitto_db *db;
 	struct mosquitto__callback **cb_base = NULL, *cb_new;
 	struct mosquitto__security_options *security_options;
 
 	if(cb_func == NULL) return MOSQ_ERR_INVAL;
 
-	db = mosquitto__get_db();
 	if(identifier->listener == NULL){
-		security_options = &db->config->security_options;
+		security_options = &db.config->security_options;
 	}else{
 		security_options = &identifier->listener->security_options;
 	}
@@ -239,7 +237,7 @@ int mosquitto_callback_register(
 			cb_base = &security_options->plugin_callbacks.ext_auth_continue;
 			break;
 		case MOSQ_EVT_CONTROL:
-			return control__register_callback(db, security_options, cb_func, event_data, userdata);
+			return control__register_callback(security_options, cb_func, event_data, userdata);
 			break;
 		case MOSQ_EVT_MESSAGE:
 			cb_base = &security_options->plugin_callbacks.message;
@@ -277,15 +275,13 @@ int mosquitto_callback_unregister(
 		MOSQ_FUNC_generic_callback cb_func,
 		const void *event_data)
 {
-	struct mosquitto_db *db;
 	struct mosquitto__callback **cb_base = NULL;
 	struct mosquitto__security_options *security_options;
 
 	if(cb_func == NULL) return MOSQ_ERR_INVAL;
 
-	db = mosquitto__get_db();
 	if(identifier->listener == NULL){
-		security_options = &db->config->security_options;
+		security_options = &db.config->security_options;
 	}else{
 		security_options = &identifier->listener->security_options;
 	}
@@ -309,7 +305,7 @@ int mosquitto_callback_unregister(
 			cb_base = &security_options->plugin_callbacks.ext_auth_continue;
 			break;
 		case MOSQ_EVT_CONTROL:
-			return control__unregister_callback(db, security_options, cb_func, event_data);
+			return control__unregister_callback(security_options, cb_func, event_data);
 			break;
 		case MOSQ_EVT_MESSAGE:
 			cb_base = &security_options->plugin_callbacks.message;

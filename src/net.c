@@ -105,7 +105,7 @@ static void net__print_error(unsigned int log, const char *format_str)
 }
 
 
-int net__socket_accept(struct mosquitto_db *db, struct mosquitto__listener_sock *listensock)
+int net__socket_accept(struct mosquitto__listener_sock *listensock)
 {
 	mosq_sock_t new_sock = INVALID_SOCKET;
 	struct mosquitto *new_context;
@@ -159,7 +159,7 @@ int net__socket_accept(struct mosquitto_db *db, struct mosquitto__listener_sock 
 	fromhost(&wrap_req);
 	if(!hosts_access(&wrap_req)){
 		/* Access is denied */
-		if(db->config->connection_messages == true){
+		if(db.config->connection_messages == true){
 			if(!net__socket_get_address(new_sock, address, 1024)){
 				log__printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied access by tcpd.", address);
 			}
@@ -169,7 +169,7 @@ int net__socket_accept(struct mosquitto_db *db, struct mosquitto__listener_sock 
 	}
 #endif
 
-	if(db->config->set_tcp_nodelay){
+	if(db.config->set_tcp_nodelay){
 		int flag = 1;
 #ifdef WIN32
 			if (setsockopt(new_sock, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int)) != 0) {
@@ -180,23 +180,23 @@ int net__socket_accept(struct mosquitto_db *db, struct mosquitto__listener_sock 
 		}
 	}
 
-	new_context = context__init(db, new_sock);
+	new_context = context__init(new_sock);
 	if(!new_context){
 		COMPAT_CLOSE(new_sock);
 		return -1;
 	}
 	new_context->listener = listensock->listener;
 	if(!new_context->listener){
-		context__cleanup(db, new_context, true);
+		context__cleanup(new_context, true);
 		return -1;
 	}
 	new_context->listener->client_count++;
 
 	if(new_context->listener->max_connections > 0 && new_context->listener->client_count > new_context->listener->max_connections){
-		if(db->config->connection_messages == true){
+		if(db.config->connection_messages == true){
 			log__printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", new_context->address);
 		}
-		context__cleanup(db, new_context, true);
+		context__cleanup(new_context, true);
 		return -1;
 	}
 
@@ -205,7 +205,7 @@ int net__socket_accept(struct mosquitto_db *db, struct mosquitto__listener_sock 
 	if(new_context->listener->ssl_ctx){
 		new_context->ssl = SSL_new(new_context->listener->ssl_ctx);
 		if(!new_context->ssl){
-			context__cleanup(db, new_context, true);
+			context__cleanup(new_context, true);
 			return -1;
 		}
 		SSL_set_ex_data(new_context->ssl, tls_ex_index_context, new_context);
@@ -222,7 +222,7 @@ int net__socket_accept(struct mosquitto_db *db, struct mosquitto__listener_sock 
 			}else if(rc == SSL_ERROR_WANT_WRITE){
 				new_context->want_write = true;
 			}else{
-				if(db->config->connection_messages == true){
+				if(db.config->connection_messages == true){
 					e = ERR_get_error();
 					while(e){
 						log__printf(NULL, MOSQ_LOG_NOTICE,
@@ -231,14 +231,14 @@ int net__socket_accept(struct mosquitto_db *db, struct mosquitto__listener_sock 
 						e = ERR_get_error();
 					}
 				}
-				context__cleanup(db, new_context, true);
+				context__cleanup(new_context, true);
 				return -1;
 			}
 		}
 	}
 #endif
 
-	if(db->config->connection_messages == true){
+	if(db.config->connection_messages == true){
 		log__printf(NULL, MOSQ_LOG_NOTICE, "New connection from %s on port %d.", new_context->address, new_context->listener->port);
 	}
 
@@ -258,7 +258,6 @@ static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 #ifdef FINAL_WITH_TLS_PSK
 static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
 {
-	struct mosquitto_db *db;
 	struct mosquitto *context;
 	struct mosquitto__listener *listener;
 	char *psk_key = NULL;
@@ -266,8 +265,6 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 	const char *psk_hint;
 
 	if(!identity) return 0;
-
-	db = mosquitto__get_db();
 
 	context = SSL_get_ex_data(ssl, tls_ex_index_context);
 	if(!context) return 0;
@@ -282,7 +279,7 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 	psk_key = mosquitto__calloc(1, max_psk_len*2 + 1);
 	if(!psk_key) return 0;
 
-	if(mosquitto_psk_key_get(db, context, psk_hint, identity, psk_key, (int)max_psk_len*2) != MOSQ_ERR_SUCCESS){
+	if(mosquitto_psk_key_get(context, psk_hint, identity, psk_key, (int)max_psk_len*2) != MOSQ_ERR_SUCCESS){
 		mosquitto__free(psk_key);
 		return 0;
 	}
