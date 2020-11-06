@@ -274,8 +274,8 @@ int connect__on_authorised(struct mosquitto *context, void *auth_data_out, uint1
 
 	mosquitto__set_state(context, mosq_cs_active);
 	rc = send__connack(context, connect_ack, CONNACK_ACCEPTED, connack_props);
-	if(rc) return rc;
 	mosquitto_property_free_all(&connack_props);
+	if(rc) return rc;
 	rc = db__message_write_queued_out(context);
 	if(rc) return rc;
 	rc = db__message_write_inflight_out_all(context);
