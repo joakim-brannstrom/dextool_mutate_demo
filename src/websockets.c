@@ -351,7 +351,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				packet__cleanup(packet);
 				mosquitto__free(packet);
 
-				mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
+				mosq->next_msg_out = db->now_s + mosq->keepalive;
 			}
 			if (mosq->state == mosq_cs_disconnect_ws
 					|| mosq->state == mosq_cs_disconnecting

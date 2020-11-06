@@ -44,8 +44,8 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 	context->pollfd_index = -1;
 	mosquitto__set_state(context, mosq_cs_new);
 	context->sock = sock;
-	context->last_msg_in = mosquitto_time();
-	context->next_msg_out = mosquitto_time() + 60;
+	context->last_msg_in = db->now_s;
+	context->next_msg_out = db->now_s + 60;
 	context->keepalive = 60; /* Default to 60s */
 	context->clean_start = true;
 	context->id = NULL;
@@ -172,7 +172,7 @@ void context__send_will(struct mosquitto_db *db, struct mosquitto *ctxt)
 {
 	if(ctxt->state != mosq_cs_disconnecting && ctxt->will){
 		if(ctxt->will_delay_interval > 0){
-			will_delay__add(ctxt);
+			will_delay__add(db, ctxt);
 			return;
 		}
 

@@ -303,9 +303,13 @@ int packet__write(struct mosquitto *mosq)
 		packet__cleanup(packet);
 		mosquitto__free(packet);
 
+#ifdef WITH_BROKER
+		mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
+#else
 		pthread_mutex_lock(&mosq->msgtime_mutex);
 		mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
 		pthread_mutex_unlock(&mosq->msgtime_mutex);
+#endif
 	}
 	pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 	return MOSQ_ERR_SUCCESS;
@@ -466,7 +470,7 @@ int packet__read(struct mosquitto *mosq)
 					 * If a client can't send 1000 bytes in a second it
 					 * probably shouldn't be using a 1 second keep alive. */
 #ifdef WITH_BROKER
-					keepalive__update(mosq);
+					keepalive__update(db, mosq);
 #else
 					pthread_mutex_lock(&mosq->msgtime_mutex);
 					mosq->last_msg_in = mosquitto_time();
@@ -502,8 +506,12 @@ int packet__read(struct mosquitto *mosq)
 	/* Free data and reset values */
 	packet__cleanup(&mosq->in_packet);
 
+#ifdef WITH_BROKER
+	keepalive__update(db, mosq);
+#else
 	pthread_mutex_lock(&mosq->msgtime_mutex);
 	mosq->last_msg_in = mosquitto_time();
 	pthread_mutex_unlock(&mosq->msgtime_mutex);
+#endif
 	return rc;
 }

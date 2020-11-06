@@ -186,6 +186,10 @@ int mux_poll__handle(struct mosquitto_db *db, struct mosquitto__listener_sock *l
 #else
 	fdcount = WSAPoll(pollfds, pollfd_max, 100);
 #endif
+
+	db->now_s = mosquitto_time();
+	db->now_real_s = time(NULL);
+
 	if(fdcount == -1){
 #  ifdef WIN32
 		if(WSAGetLastError() == WSAEINVAL){

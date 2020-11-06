@@ -133,7 +133,6 @@ int mosquitto_main_loop(struct mosquitto_db *db, struct mosquitto__listener_sock
 #ifdef WITH_PERSISTENCE
 	time_t last_backup = mosquitto_time();
 #endif
-	time_t now = 0;
 #ifdef WITH_WEBSOCKETS
 	int i;
 #endif
@@ -143,6 +142,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, struct mosquitto__listener_sock
 #if defined(WITH_WEBSOCKETS) && LWS_LIBRARY_VERSION_NUMBER == 3002000
 	memset(&sul, 0, sizeof(struct lws_sorted_usec_list));
 #endif
+
+	db->now_s = mosquitto_time();
+	db->now_real_s = time(NULL);
 
 	rc = mux__init(db, listensock, listensock_count);
 	if(rc) return rc;
@@ -161,8 +163,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, struct mosquitto__listener_sock
 		}
 #endif
 
-		now = mosquitto_time();
-		keepalive__check(db, now);
+		keepalive__check(db);
 
 #ifdef WITH_BRIDGE
 		bridge_check(db);
@@ -171,9 +172,8 @@ int mosquitto_main_loop(struct mosquitto_db *db, struct mosquitto__listener_sock
 		rc = mux__handle(db, listensock, listensock_count);
 		if(rc) return rc;
 
-		now = time(NULL);
-		session_expiry__check(db, now);
-		will_delay__check(db, now);
+		session_expiry__check(db);
+		will_delay__check(db);
 #ifdef WITH_PERSISTENCE
 		if(db->config->persistence && db->config->autosave_interval){
 			if(db->config->autosave_on_changes){
@@ -182,9 +182,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, struct mosquitto__listener_sock
 					db->persistence_changes = 0;
 				}
 			}else{
-				if(last_backup + db->config->autosave_interval < mosquitto_time()){
+				if(last_backup + db->config->autosave_interval < db->now_s){
 					persist__backup(db, false);
-					last_backup = mosquitto_time();
+					last_backup = db->now_s;
 				}
 			}
 		}

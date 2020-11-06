@@ -63,7 +63,7 @@ int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const ch
 	return 0;
 }
 
-int keepalive__update(struct mosquitto *context)
+int keepalive__update(struct mosquitto_db *db, struct mosquitto *context)
 {
 	return 0;
 }

@@ -160,7 +160,6 @@ static void calc_load(struct mosquitto_db *db, char *buf, const char *topic, boo
 void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 {
 	static time_t last_update = 0;
-	time_t now;
 	time_t uptime;
 	char buf[BUFLEN];
 
@@ -221,10 +220,8 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 	uint32_t len;
 	bool initial_publish;
 
-	now = mosquitto_time();
-
-	if(interval && now - interval > last_update){
-		uptime = now - start_time;
+	if(interval && db->now_s - interval > last_update){
+		uptime = db->now_s - start_time;
 		len = (uint32_t)snprintf(buf, BUFLEN, "%d seconds", (int)uptime);
 		db__messages_easy_queue(db, NULL, "$SYS/broker/uptime", SYS_TREE_QOS, len, buf, 1, 60, NULL);
 
@@ -235,7 +232,7 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 			last_update = 1;
 		}
 		if(last_update > 0){
-			i_mult = 60.0/(double)(now-last_update);
+			i_mult = 60.0/(double)(db->now_s-last_update);
 
 			msgs_received_interval = (double)(g_msgs_received - msgs_received)*i_mult;
 			msgs_sent_interval = (double)(g_msgs_sent - msgs_sent)*i_mult;
@@ -253,7 +250,7 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 			g_connection_count = 0;
 
 			/* 1 minute load */
-			exponent = exp(-1.0*(double)(now-last_update)/60.0);
+			exponent = exp(-1.0*(double)(db->now_s-last_update)/60.0);
 
 			calc_load(db, buf, "$SYS/broker/load/messages/received/1min", initial_publish, exponent, msgs_received_interval, &msgs_received_load1);
 			calc_load(db, buf, "$SYS/broker/load/messages/sent/1min", initial_publish, exponent, msgs_sent_interval, &msgs_sent_load1);
@@ -266,7 +263,7 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 			calc_load(db, buf, "$SYS/broker/load/connections/1min", initial_publish, exponent, connection_interval, &connection_load1);
 
 			/* 5 minute load */
-			exponent = exp(-1.0*(double)(now-last_update)/300.0);
+			exponent = exp(-1.0*(double)(db->now_s-last_update)/300.0);
 
 			calc_load(db, buf, "$SYS/broker/load/messages/received/5min", initial_publish, exponent, msgs_received_interval, &msgs_received_load5);
 			calc_load(db, buf, "$SYS/broker/load/messages/sent/5min", initial_publish, exponent, msgs_sent_interval, &msgs_sent_load5);
@@ -279,7 +276,7 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 			calc_load(db, buf, "$SYS/broker/load/connections/5min", initial_publish, exponent, connection_interval, &connection_load5);
 
 			/* 15 minute load */
-			exponent = exp(-1.0*(double)(now-last_update)/900.0);
+			exponent = exp(-1.0*(double)(db->now_s-last_update)/900.0);
 
 			calc_load(db, buf, "$SYS/broker/load/messages/received/15min", initial_publish, exponent, msgs_received_interval, &msgs_received_load15);
 			calc_load(db, buf, "$SYS/broker/load/messages/sent/15min", initial_publish, exponent, msgs_sent_interval, &msgs_sent_load15);
@@ -381,7 +378,7 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 			db__messages_easy_queue(db, NULL, "$SYS/broker/publish/bytes/sent", SYS_TREE_QOS, len, buf, 1, 60, NULL);
 		}
 
-		last_update = mosquitto_time();
+		last_update = db->now_s;
 	}
 }
 

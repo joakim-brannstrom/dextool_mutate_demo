@@ -191,6 +191,9 @@ int mux_epoll__handle(struct mosquitto_db *db)
 	event_count = epoll_wait(db->epollfd, ep_events, MAX_EVENTS, 100);
 	sigprocmask(SIG_SETMASK, &origsig, NULL);
 
+	db->now_s = mosquitto_time();
+	db->now_real_s = time(NULL);
+
 	switch(event_count){
 	case -1:
 		if(errno != EINTR){

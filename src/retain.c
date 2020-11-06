@@ -122,7 +122,7 @@ int retain__store(struct mosquitto_db *db, const char *topic, struct mosquitto_m
 }
 
 
-static int retain__process(struct mosquitto_db *db, struct mosquitto__retainhier *branch, struct mosquitto *context, uint8_t sub_qos, uint32_t subscription_identifier, time_t now)
+static int retain__process(struct mosquitto_db *db, struct mosquitto__retainhier *branch, struct mosquitto *context, uint8_t sub_qos, uint32_t subscription_identifier)
 {
 	int rc = 0;
 	uint8_t qos;
@@ -130,7 +130,7 @@ static int retain__process(struct mosquitto_db *db, struct mosquitto__retainhier
 	mosquitto_property *properties = NULL;
 	struct mosquitto_msg_store *retained;
 
-	if(branch->retained->message_expiry_time > 0 && now >= branch->retained->message_expiry_time){
+	if(branch->retained->message_expiry_time > 0 && db->now_real_s >= branch->retained->message_expiry_time){
 		db__msg_store_ref_dec(db, &branch->retained);
 		branch->retained = NULL;
 #ifdef WITH_SYS_TREE
@@ -188,7 +188,7 @@ static int retain__process(struct mosquitto_db *db, struct mosquitto__retainhier
 }
 
 
-static int retain__search(struct mosquitto_db *db, struct mosquitto__retainhier *retainhier, char **split_topics, struct mosquitto *context, const char *sub, uint8_t sub_qos, uint32_t subscription_identifier, time_t now, int level)
+static int retain__search(struct mosquitto_db *db, struct mosquitto__retainhier *retainhier, char **split_topics, struct mosquitto *context, const char *sub, uint8_t sub_qos, uint32_t subscription_identifier, int level)
 {
 	struct mosquitto__retainhier *branch, *branch_tmp;
 	int flag = 0;
@@ -201,26 +201,26 @@ static int retain__search(struct mosquitto_db *db, struct mosquitto__retainhier 
 			 */
 			flag = -1;
 			if(branch->retained){
-				retain__process(db, branch, context, sub_qos, subscription_identifier, now);
+				retain__process(db, branch, context, sub_qos, subscription_identifier);
 			}
 			if(branch->children){
-				retain__search(db, branch, split_topics, context, sub, sub_qos, subscription_identifier, now, level+1);
+				retain__search(db, branch, split_topics, context, sub, sub_qos, subscription_identifier, level+1);
 			}
 		}
 	}else{
 		if(!strcmp(split_topics[0], "+")){
 			HASH_ITER(hh, retainhier->children, branch, branch_tmp){
 				if(split_topics[1] != NULL){
-					if(retain__search(db, branch, &(split_topics[1]), context, sub, sub_qos, subscription_identifier, now, level+1) == -1
+					if(retain__search(db, branch, &(split_topics[1]), context, sub, sub_qos, subscription_identifier, level+1) == -1
 							|| (split_topics[1] != NULL && !strcmp(split_topics[1], "#") && level>0)){
 
 						if(branch->retained){
-							retain__process(db, branch, context, sub_qos, subscription_identifier, now);
+							retain__process(db, branch, context, sub_qos, subscription_identifier);
 						}
 					}
 				}else{
 					if(branch->retained){
-						retain__process(db, branch, context, sub_qos, subscription_identifier, now);
+						retain__process(db, branch, context, sub_qos, subscription_identifier);
 					}
 				}
 			}
@@ -228,16 +228,16 @@ static int retain__search(struct mosquitto_db *db, struct mosquitto__retainhier 
 			HASH_FIND(hh, retainhier->children, split_topics[0], strlen(split_topics[0]), branch);
 			if(branch){
 				if(split_topics[1] != NULL){
-					if(retain__search(db, branch, &(split_topics[1]), context, sub, sub_qos, subscription_identifier, now, level+1) == -1
+					if(retain__search(db, branch, &(split_topics[1]), context, sub, sub_qos, subscription_identifier, level+1) == -1
 							|| (split_topics[1] != NULL && !strcmp(split_topics[1], "#") && level>0)){
 
 						if(branch->retained){
-							retain__process(db, branch, context, sub_qos, subscription_identifier, now);
+							retain__process(db, branch, context, sub_qos, subscription_identifier);
 						}
 					}
 				}else{
 					if(branch->retained){
-						retain__process(db, branch, context, sub_qos, subscription_identifier, now);
+						retain__process(db, branch, context, sub_qos, subscription_identifier);
 					}
 				}
 			}
@@ -252,7 +252,6 @@ int retain__queue(struct mosquitto_db *db, struct mosquitto *context, const char
 	struct mosquitto__retainhier *retainhier;
 	char *local_sub;
 	char **split_topics;
-	time_t now;
 	int rc;
 
 	assert(db);
@@ -265,8 +264,7 @@ int retain__queue(struct mosquitto_db *db, struct mosquitto *context, const char
 	HASH_FIND(hh, db->retains, split_topics[0], strlen(split_topics[0]), retainhier);
 
 	if(retainhier){
-		now = time(NULL);
-		retain__search(db, retainhier, split_topics, context, sub, sub_qos, subscription_identifier, now, 0);
+		retain__search(db, retainhier, split_topics, context, sub, sub_qos, subscription_identifier, 0);
 	}
 	mosquitto__free(local_sub);
 	mosquitto__free(split_topics);

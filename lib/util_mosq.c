@@ -65,13 +65,19 @@ int mosquitto__check_keepalive(struct mosquitto *mosq)
 {
 	time_t next_msg_out;
 	time_t last_msg_in;
-	time_t now = mosquitto_time();
+	time_t now;
 #ifndef WITH_BROKER
 	int rc;
 #endif
 	int state;
 
 	assert(mosq);
+#ifdef WITH_BROKER
+	now = db->now_s;
+#else
+	now = mosquitto_time();
+#endif
+
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
 	/* Check if a lazy bridge should be timed out due to idle. */
 	if(mosq->bridge && mosq->bridge->start_type == bst_lazy

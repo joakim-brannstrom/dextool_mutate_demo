@@ -522,6 +522,8 @@ struct mosquitto_db{
 	struct clientid__index_hash *clientid_index_hash;
 	struct mosquitto_msg_store *msg_store;
 	struct mosquitto_msg_store_load *msg_store_load;
+	time_t now_s; /* Monotonic clock, where possible */
+	time_t now_real_s; /* Read clock, for measuring session/message expiry */
 #ifdef WITH_BRIDGE
 	int bridge_count;
 #endif
@@ -710,7 +712,7 @@ int db__message_count(int *count);
 int db__message_delete_outgoing(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_state expect_state, int qos);
 int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, uint8_t qos, bool retain, struct mosquitto_msg_store *stored, mosquitto_property *properties, bool update);
 int db__message_release_incoming(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid);
-int db__message_update_outgoing(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_state state, int qos);
+int db__message_update_outgoing(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_state state, int qos);
 void db__message_dequeue_first(struct mosquitto *context, struct mosquitto_msg_data *msg_data);
 int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context, bool force_free);
 int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, uint8_t qos, uint32_t payloadlen, const void *payload, int retain, uint32_t message_expiry_interval, mosquitto_property **properties);
@@ -829,10 +831,10 @@ void plugin__handle_tick(struct mosquitto_db *db);
  * Property related functions
  * ============================================================ */
 int keepalive__add(struct mosquitto *context);
-void keepalive__check(struct mosquitto_db *db, time_t now);
+void keepalive__check(struct mosquitto_db *db);
 int keepalive__remove(struct mosquitto *context);
 void keepalive__remove_all(void);
-int keepalive__update(struct mosquitto *context);
+int keepalive__update(struct mosquitto_db *db, struct mosquitto *context);
 
 /* ============================================================
  * Property related functions
@@ -879,7 +881,7 @@ void unpwd__free_item(struct mosquitto__unpwd **unpwd, struct mosquitto__unpwd *
 int session_expiry__add(struct mosquitto_db *db, struct mosquitto *context);
 void session_expiry__remove(struct mosquitto *context);
 void session_expiry__remove_all(struct mosquitto_db *db);
-void session_expiry__check(struct mosquitto_db *db, time_t now);
+void session_expiry__check(struct mosquitto_db *db);
 void session_expiry__send_all(struct mosquitto_db *db);
 
 /* ============================================================
@@ -908,8 +910,8 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context, int reaso
 /* ============================================================
  * Will delay
  * ============================================================ */
-int will_delay__add(struct mosquitto *context);
-void will_delay__check(struct mosquitto_db *db, time_t now);
+int will_delay__add(struct mosquitto_db *db, struct mosquitto *context);
+void will_delay__check(struct mosquitto_db *db);
 void will_delay__send_all(struct mosquitto_db *db);
 void will_delay__remove(struct mosquitto *mosq);
 

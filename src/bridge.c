@@ -155,8 +155,8 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 
 	mosquitto__set_state(context, mosq_cs_new);
 	context->sock = INVALID_SOCKET;
-	context->last_msg_in = mosquitto_time();
-	context->next_msg_out = mosquitto_time() + context->bridge->keepalive;
+	context->last_msg_in = db->now_s;
+	context->next_msg_out = db->now_s + context->bridge->keepalive;
 	context->keepalive = context->bridge->keepalive;
 	context->clean_start = context->bridge->clean_start;
 	context->in_packet.payload = NULL;
@@ -297,7 +297,7 @@ int bridge__connect_step3(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(context->bridge->round_robin == false && context->bridge->cur_address != 0){
-		context->bridge->primary_retry = mosquitto_time() + 5;
+		context->bridge->primary_retry = db->now_s + 5;
 	}
 
 	rc = send__connect(context, context->keepalive, context->clean_start, NULL);
@@ -333,8 +333,8 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	mosquitto__set_state(context, mosq_cs_new);
 	context->sock = INVALID_SOCKET;
-	context->last_msg_in = mosquitto_time();
-	context->next_msg_out = mosquitto_time() + context->bridge->keepalive;
+	context->last_msg_in = db->now_s;
+	context->next_msg_out = db->now_s + context->bridge->keepalive;
 	context->keepalive = context->bridge->keepalive;
 	context->clean_start = context->bridge->clean_start;
 	context->in_packet.payload = NULL;
@@ -655,16 +655,13 @@ static void bridge__backoff_reset(struct mosquitto *context)
 void bridge_check(struct mosquitto_db *db)
 {
 	static time_t last_check = 0;
-	time_t now;
 	struct mosquitto *context = NULL;
 	socklen_t len;
 	int i;
 	int rc;
 	int err;
 
-	now = mosquitto_time();
-
-	if(now <= last_check) return;
+	if(db->now_s <= last_check) return;
 
 	for(i=0; i<db->bridge_count; i++){
 		if(!db->bridges[i]) continue;
@@ -679,7 +676,7 @@ void bridge_check(struct mosquitto_db *db)
 			if(context->bridge->round_robin == false
 					&& context->bridge->cur_address != 0
 					&& context->bridge->primary_retry
-					&& now > context->bridge->primary_retry){
+					&& db->now_s > context->bridge->primary_retry){
 
 				if(context->bridge->primary_retry_sock == INVALID_SOCKET){
 					rc = net__try_connect(context->bridge->addresses[0].address,
@@ -706,12 +703,12 @@ void bridge_check(struct mosquitto_db *db)
 						}else{
 							COMPAT_CLOSE(context->bridge->primary_retry_sock);
 							context->bridge->primary_retry_sock = INVALID_SOCKET;
-							context->bridge->primary_retry = now+5;
+							context->bridge->primary_retry = db->now_s+5;
 						}
 					}else{
 						COMPAT_CLOSE(context->bridge->primary_retry_sock);
 						context->bridge->primary_retry_sock = INVALID_SOCKET;
-						context->bridge->primary_retry = now+5;
+						context->bridge->primary_retry = db->now_s+5;
 					}
 				}
 			}
@@ -722,14 +719,14 @@ void bridge_check(struct mosquitto_db *db)
 		if(context->sock == INVALID_SOCKET){
 			/* Want to try to restart the bridge connection */
 			if(!context->bridge->restart_t){
-				context->bridge->restart_t = now+context->bridge->restart_timeout;
+				context->bridge->restart_t = db->now_s+context->bridge->restart_timeout;
 				context->bridge->cur_address++;
 				if(context->bridge->cur_address == context->bridge->address_count){
 					context->bridge->cur_address = 0;
 				}
 			}else{
 				if((context->bridge->start_type == bst_lazy && context->bridge->lazy_reconnect)
-						|| (context->bridge->start_type == bst_automatic && now > context->bridge->restart_t)){
+						|| (context->bridge->start_type == bst_automatic && db->now_s > context->bridge->restart_t)){
 
 #if defined(__GLIBC__) && defined(WITH_ADNS)
 					if(context->adns){
@@ -780,7 +777,7 @@ void bridge_check(struct mosquitto_db *db)
 						context->bridge->restart_t = 0;
 						if(rc == MOSQ_ERR_SUCCESS){
 							if(context->bridge->round_robin == false && context->bridge->cur_address != 0){
-								context->bridge->primary_retry = now + 5;
+								context->bridge->primary_retry = db->now_s + 5;
 							}
 							mux__add_in(db, context);
 							if(context->current_out_packet){

@@ -57,7 +57,7 @@ int session_expiry__add(struct mosquitto_db *db, struct mosquitto *context)
 	if(!item) return MOSQ_ERR_NOMEM;
 
 	item->context = context;
-	item->context->session_expiry_time = time(NULL);
+	item->context->session_expiry_time = db->now_real_s;
 
 	if(db->config->persistent_client_expiration == 0){
 		/* No global expiry, so use the client expiration interval */
@@ -107,17 +107,17 @@ void session_expiry__remove_all(struct mosquitto_db *db)
 	
 }
 
-void session_expiry__check(struct mosquitto_db *db, time_t now)
+void session_expiry__check(struct mosquitto_db *db)
 {
 	struct session_expiry_list *item, *tmp;
 	struct mosquitto *context;
 
-	if(now <= last_check) return;
+	if(db->now_real_s <= last_check) return;
 
-	last_check = now;
+	last_check = db->now_real_s;
 
 	DL_FOREACH_SAFE(expiry_list, item, tmp){
-		if(item->context->session_expiry_time < now){
+		if(item->context->session_expiry_time < db->now_real_s){
 
 			context = item->context;
 			session_expiry__remove(context);

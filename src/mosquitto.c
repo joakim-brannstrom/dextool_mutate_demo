@@ -450,6 +450,8 @@ int main(int argc, char *argv[])
 #endif
 
 	memset(&int_db, 0, sizeof(struct mosquitto_db));
+	int_db.now_s = mosquitto_time();
+	int_db.now_real_s = time(NULL);
 
 	net__broker_init();
 

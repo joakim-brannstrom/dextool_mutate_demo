@@ -331,7 +331,7 @@ int db__message_delete_outgoing(struct mosquitto_db *db, struct mosquitto *conte
 		}
 
 		msg_index++;
-		tail->timestamp = mosquitto_time();
+		tail->timestamp = db->now_s;
 		switch(tail->qos){
 			case 0:
 				tail->state = mosq_ms_publish_qos0;
@@ -476,7 +476,7 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 	msg->store = stored;
 	db__msg_store_ref_inc(msg->store);
 	msg->mid = mid;
-	msg->timestamp = mosquitto_time();
+	msg->timestamp = db->now_s;
 	msg->direction = dir;
 	msg->state = state;
 	msg->dup = false;
@@ -543,7 +543,7 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 	return rc;
 }
 
-int db__message_update_outgoing(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_state state, int qos)
+int db__message_update_outgoing(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_state state, int qos)
 {
 	struct mosquitto_client_msg *tail;
 
@@ -553,7 +553,7 @@ int db__message_update_outgoing(struct mosquitto *context, uint16_t mid, enum mo
 				return MOSQ_ERR_PROTOCOL;
 			}
 			tail->state = state;
-			tail->timestamp = mosquitto_time();
+			tail->timestamp = db->now_s;
 			return MOSQ_ERR_SUCCESS;
 		}
 	}
@@ -686,7 +686,7 @@ int db__message_store(struct mosquitto_db *db, const struct mosquitto *source, s
 	stored->mid = 0;
 	stored->origin = origin;
 	if(message_expiry_interval > 0){
-		stored->message_expiry_time = time(NULL) + message_expiry_interval;
+		stored->message_expiry_time = db->now_real_s + message_expiry_interval;
 	}else{
 		stored->message_expiry_time = 0;
 	}
@@ -921,7 +921,7 @@ int db__message_release_incoming(struct mosquitto_db *db, struct mosquitto *cont
 		}
 
 		msg_index++;
-		tail->timestamp = mosquitto_time();
+		tail->timestamp = db->now_s;
 
 		if(tail->qos == 2){
 			send__pubrec(context, tail->mid, 0, NULL);
@@ -940,7 +940,6 @@ int db__message_write_inflight_in(struct mosquitto_db *db, struct mosquitto *con
 {
 	struct mosquitto_client_msg *tail, *tmp;
 	int rc;
-	time_t now = 0;
 
 	if(context->state != mosq_cs_active){
 		return MOSQ_ERR_SUCCESS;
@@ -948,10 +947,7 @@ int db__message_write_inflight_in(struct mosquitto_db *db, struct mosquitto *con
 
 	DL_FOREACH_SAFE(context->msgs_in.inflight, tail, tmp){
 		if(tail->store->message_expiry_time){
-			if(now == 0){
-				now = time(NULL);
-			}
-			if(now > tail->store->message_expiry_time){
+			if(db->now_real_s > tail->store->message_expiry_time){
 				/* Message is expired, must not send. */
 				db__message_remove(db, &context->msgs_in, tail);
 				if(tail->qos > 0){
@@ -1008,15 +1004,11 @@ static int db__message_write_inflight_out_single(struct mosquitto_db *db, struct
 	uint8_t qos;
 	uint32_t payloadlen;
 	const void *payload;
-	time_t now = 0;
 	uint32_t expiry_interval;
 
 	expiry_interval = 0;
 	if(msg->store->message_expiry_time){
-		if(now == 0){
-			now = time(NULL);
-		}
-		if(now > msg->store->message_expiry_time){
+		if(db->now_real_s > msg->store->message_expiry_time){
 			/* Message is expired, must not send. */
 			if(msg->direction == mosq_md_out && msg->qos > 0){
 				util__increment_send_quota(context);
@@ -1024,7 +1016,7 @@ static int db__message_write_inflight_out_single(struct mosquitto_db *db, struct
 			db__message_remove(db, &context->msgs_out, msg);
 			return MOSQ_ERR_SUCCESS;
 		}else{
-			expiry_interval = (uint32_t)(msg->store->message_expiry_time - now);
+			expiry_interval = (uint32_t)(msg->store->message_expiry_time - db->now_real_s);
 		}
 	}
 	mid = msg->mid;
@@ -1050,7 +1042,7 @@ static int db__message_write_inflight_out_single(struct mosquitto_db *db, struct
 		case mosq_ms_publish_qos1:
 			rc = send__publish(context, mid, topic, payloadlen, payload, qos, retain, retries, cmsg_props, store_props, expiry_interval);
 			if(rc == MOSQ_ERR_SUCCESS){
-				msg->timestamp = mosquitto_time();
+				msg->timestamp = db->now_s;
 				msg->dup = 1; /* Any retry attempts are a duplicate. */
 				msg->state = mosq_ms_wait_for_puback;
 			}else if(rc == MOSQ_ERR_OVERSIZE_PACKET){
@@ -1063,7 +1055,7 @@ static int db__message_write_inflight_out_single(struct mosquitto_db *db, struct
 		case mosq_ms_publish_qos2:
 			rc = send__publish(context, mid, topic, payloadlen, payload, qos, retain, retries, cmsg_props, store_props, expiry_interval);
 			if(rc == MOSQ_ERR_SUCCESS){
-				msg->timestamp = mosquitto_time();
+				msg->timestamp = db->now_s;
 				msg->dup = 1; /* Any retry attempts are a duplicate. */
 				msg->state = mosq_ms_wait_for_pubrec;
 			}else if(rc == MOSQ_ERR_OVERSIZE_PACKET){
