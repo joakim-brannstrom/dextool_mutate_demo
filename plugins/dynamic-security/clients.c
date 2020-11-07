@@ -108,7 +108,7 @@ void dynsec_clients__cleanup(void)
 int dynsec_clients__config_load(cJSON *tree)
 {
 	cJSON *j_clients, *j_client, *jtmp, *j_roles, *j_role;
-	cJSON *j_salt, *j_password;
+	cJSON *j_salt, *j_password, *j_iterations;
 	struct dynsec__client *client;
 	struct dynsec__role *role;
 	unsigned char *buf;
@@ -152,30 +152,24 @@ int dynsec_clients__config_load(cJSON *tree)
 				client->disabled = cJSON_IsTrue(jtmp);
 			}
 
-			/* Hash iterations */
-			jtmp = cJSON_GetObjectItem(j_client, "iterations");
-			if(jtmp == NULL || !cJSON_IsNumber(jtmp)){
-				// FIXME log
-				mosquitto_free(client->username);
-				mosquitto_free(client);
-				continue;
-			}
-			iterations = (int)jtmp->valuedouble;
-			if(iterations < 1){
-				// FIXME log
-				mosquitto_free(client->username);
-				mosquitto_free(client);
-				continue;
-			}else{
-				client->pw.iterations = iterations;
-			}
-
 			/* Salt */
 			j_salt = cJSON_GetObjectItem(j_client, "salt");
 			j_password = cJSON_GetObjectItem(j_client, "password");
+			j_iterations = cJSON_GetObjectItem(j_client, "iterations");
 
 			if(j_salt && cJSON_IsString(j_salt) 
-					&& j_password && cJSON_IsString(j_password)){
+					&& j_password && cJSON_IsString(j_password)
+					&& j_iterations && cJSON_IsNumber(j_iterations)){
+
+				iterations = (int)j_iterations->valuedouble;
+				if(iterations < 1){
+					// FIXME log
+					mosquitto_free(client->username);
+					mosquitto_free(client);
+					continue;
+				}else{
+					client->pw.iterations = iterations;
+				}
 
 				if(dynsec_auth__base64_decode(j_salt->valuestring, &buf, &buf_len) != MOSQ_ERR_SUCCESS
 						|| buf_len != sizeof(client->pw.salt)){
