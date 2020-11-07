@@ -128,6 +128,7 @@ Clients:
 - mosquitto_sub now supports extra format specifiers for field width and
   precision for some parameters.
 - Add `--version` for all clients.
+- Fix description of `-e` and `-t` arguments in mosquitto_rr. Closes #1881.
 
 
 1.6.12 - 2020-08-19
