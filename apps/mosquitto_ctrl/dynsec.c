@@ -38,7 +38,7 @@ void dynsec__print_usage(void)
 	printf("Set group for anonymous clients: setAnonymousGroup   <groupname>\n");
 
 	printf("\nClients\n-------\n");
-	printf("Create a new client:         createClient      <username> [password]\n");
+	printf("Create a new client:         createClient      <username> [-c clientid] [-p password]\n");
 	printf("Delete a client:             deleteClient      <username>\n");
 	printf("Set a client password:       setClientPassword <username> [password]\n");
 	printf("Add a role to a client:      addClientRole     <username> <rolename> [priority]\n");
