@@ -111,6 +111,9 @@ WITH_CJSON:=yes
 # Build mosquitto with support for the $CONTROL topics.
 WITH_CONTROL:=yes
 
+# Build the broker with the jemalloc allocator
+WITH_JEMALLOC:=no
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -299,6 +302,10 @@ endif
 MAKE_ALL:=mosquitto
 ifeq ($(WITH_DOCS),yes)
 	MAKE_ALL:=$(MAKE_ALL) docs
+endif
+
+ifeq ($(WITH_JEMALLOC),yes)
+	BROKER_LDADD:=$(BROKER_LDADD) -ljemalloc
 endif
 
 ifeq ($(WITH_UNIX_SOCKETS),yes)
