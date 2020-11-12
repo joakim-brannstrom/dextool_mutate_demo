@@ -78,6 +78,9 @@ Broker:
 - Add the `bridge_bind_address` option. Closes #1311.
 - Fix crash on Windows if loading a plugin fails. Closes #1866.
 - TLS certificates for the server are now reloaded on SIGHUP.
+- Fix listener not being reassociated with client when reloading a persistence
+  file and `per_listener_settings true` is set and the client did not set a
+  username. Closes #1891.
 
 Client library:
 - Client no longer generates random client ids for v3.1.1 clients, these are

@@ -202,13 +202,13 @@ static int persist__client_chunk_restore(FILE *db_fptr)
 			/* username is not freed here, it is now owned by context */
 			context->username = chunk.username;
 			chunk.username = NULL;
-			/* in per_listener_settings mode, try to find the listener by persisted port */
-			if(db.config->per_listener_settings && !context->listener && chunk.F.listener_port > 0){
-				for(i=0; i < db.config->listener_count; i++){
-					if(db.config->listeners[i].port == chunk.F.listener_port){
-						context->listener = &db.config->listeners[i];
-						break;
-					}
+		}
+		/* in per_listener_settings mode, try to find the listener by persisted port */
+		if(db.config->per_listener_settings && !context->listener && chunk.F.listener_port > 0){
+			for(i=0; i < db.config->listener_count; i++){
+				if(db.config->listeners[i].port == chunk.F.listener_port){
+					context->listener = &db.config->listeners[i];
+					break;
 				}
 			}
 		}
