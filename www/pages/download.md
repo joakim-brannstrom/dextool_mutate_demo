@@ -27,7 +27,7 @@ distributions.
 * [mosquitto-1.6.12-install-windows-x64.exe](https://mosquitto.org/files/binary/win64/mosquitto-1.6.12-install-windows-x64.exe) (~1.4 MB) (64-bit build, Windows Vista and up, built with Visual Studio Community 2019)
 * [mosquitto-1.6.12-install-windows-x32.exe](https://mosquitto.org/files/binary/win32/mosquitto-1.6.12-install-windows-x86.exe) (~1.4 MB) (32-bit build, Windows Vista and up, built with Visual Studio Community 2019)
 
-See also readme-windows.txt after installing.
+See also README-windows.md after installing.
 
 ## Mac
 Mosquitto can be installed from the homebrew project. See
