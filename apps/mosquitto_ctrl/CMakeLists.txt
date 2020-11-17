@@ -24,6 +24,21 @@ if (WITH_TLS AND CJSON_FOUND)
 	else()
 		target_link_libraries(mosquitto_ctrl libmosquitto)
 	endif()
+
+	if (UNIX)
+		if (APPLE)
+			target_link_libraries(mosquitto_ctrl dl)
+		elseif (${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
+			#
+		elseif (${CMAKE_SYSTEM_NAME} MATCHES "NetBSD")
+			#
+		elseif(QNX)
+			#
+		else(APPLE)
+			target_link_libraries(mosquitto_ctrl dl)
+		endif (APPLE)
+	endif (UNIX)
+
 	target_link_libraries(mosquitto_ctrl ${OPENSSL_LIBRARIES} ${CJSON_LIBRARIES})
 
 	install(TARGETS mosquitto_ctrl RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
