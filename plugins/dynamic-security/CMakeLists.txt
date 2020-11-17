@@ -1,6 +1,7 @@
 set( CLIENT_INC ${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/include
-            ${STDBOOL_H_PATH} ${STDINT_H_PATH} ${PTHREAD_INCLUDE_DIR}
-            ${OPENSSL_INCLUDE_DIR})
+	${STDBOOL_H_PATH} ${STDINT_H_PATH} ${PTHREAD_INCLUDE_DIR}
+	${OPENSSL_INCLUDE_DIR} ${mosquitto_SOURCE_DIR}/deps
+	${mosquitto_SOURCE_DIR}/src)
 
 set( CLIENT_DIR ${mosquitto_BINARY_DIR}/lib)
 
