@@ -211,11 +211,12 @@ int mux_poll__handle(struct mosquitto__listener_sock *listensock, int listensock
 				while((sock = net__socket_accept(&listensock[i])) != -1){
 					context = NULL;
 					HASH_FIND(hh_sock, db.contexts_by_sock, &sock, sizeof(mosq_sock_t), context);
-					if(!context) {
+					if(context) {
+						context->pollfd_index = -1;
+						mux__add_in(context);
+					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error in poll accepting: no context");
 					}
-					context->pollfd_index = -1;
-					mux__add_in(context);
 				}
 			}
 		}
