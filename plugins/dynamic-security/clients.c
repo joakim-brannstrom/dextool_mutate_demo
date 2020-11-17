@@ -621,6 +621,10 @@ int dynsec_clients__process_set_password(cJSON *j_responses, struct mosquitto *c
 		client->pw.valid = true;
 		dynsec__config_save();
 		dynsec__command_reply(j_responses, context, "setClientPassword", NULL, correlation_data);
+
+		/* Enforce any changes */
+		mosquitto_kick_client_by_username(username, false);
+
 		return MOSQ_ERR_SUCCESS;
 	}else{
 		client->pw.valid = false;
