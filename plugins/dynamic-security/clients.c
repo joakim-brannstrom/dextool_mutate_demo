@@ -575,10 +575,14 @@ int dynsec_clients__process_set_id(cJSON *j_responses, struct mosquitto *context
 		return MOSQ_ERR_SUCCESS;
 	}
 
-	clientid_heap = mosquitto_strdup(clientid);
-	if(clientid_heap == NULL){
-		dynsec__command_reply(j_responses, context, "setClientId", "Internal error", correlation_data);
-		return MOSQ_ERR_NOMEM;
+	if(clientid != NULL && strlen(clientid) > 0){
+		clientid_heap = mosquitto_strdup(clientid);
+		if(clientid_heap == NULL){
+			dynsec__command_reply(j_responses, context, "setClientId", "Internal error", correlation_data);
+			return MOSQ_ERR_NOMEM;
+		}
+	}else{
+		clientid_heap = NULL;
 	}
 
 	mosquitto_free(client->clientid);
