@@ -41,6 +41,7 @@ void dynsec__print_usage(void)
 	printf("Create a new client:         createClient      <username> [-c clientid] [-p password]\n");
 	printf("Delete a client:             deleteClient      <username>\n");
 	printf("Set a client password:       setClientPassword <username> [password]\n");
+	printf("Set a client id:             setClientId       <username> [clientid]\n");
 	printf("Add a role to a client:      addClientRole     <username> <rolename> [priority]\n");
 	printf("    Higher priority (larger numerical value) roles are evaluated first.\n");
 	printf("Remove role from a client:   removeClientRole  <username> <rolename>\n");
@@ -803,6 +804,8 @@ int dynsec__main(int argc, char *argv[], struct mosq_ctrl *ctrl)
 		rc = dynsec_client__get(argc-1, &argv[1], j_command);
 	}else if(!strcasecmp(argv[0], "listClients")){
 		rc = dynsec_client__list_all(argc-1, &argv[1], j_command);
+	}else if(!strcasecmp(argv[0], "setClientId")){
+		rc = dynsec_client__set_id(argc-1, &argv[1], j_command);
 	}else if(!strcasecmp(argv[0], "setClientPassword")){
 		rc = dynsec_client__set_password(argc-1, &argv[1], j_command);
 	}else if(!strcasecmp(argv[0], "addClientRole")){

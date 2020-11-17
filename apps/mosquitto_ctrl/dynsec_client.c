@@ -117,6 +117,30 @@ int dynsec_client__enable_disable(int argc, char *argv[], cJSON *j_command, cons
 	}
 }
 
+int dynsec_client__set_id(int argc, char *argv[], cJSON *j_command)
+{
+	char *username = NULL, *clientid = NULL;
+
+	if(argc == 2){
+		username = argv[0];
+		clientid = argv[1];
+	}else if(argc == 1){
+		username = argv[0];
+	}else{
+		return MOSQ_ERR_INVAL;
+	}
+
+	if(cJSON_AddStringToObject(j_command, "command", "setClientId") == NULL
+			|| cJSON_AddStringToObject(j_command, "username", username) == NULL
+			|| (clientid && cJSON_AddStringToObject(j_command, "clientid", clientid) == NULL)
+			){
+
+		return MOSQ_ERR_NOMEM;
+	}else{
+		return MOSQ_ERR_SUCCESS;
+	}
+}
+
 int dynsec_client__set_password(int argc, char *argv[], cJSON *j_command)
 {
 	char *username = NULL, *password = NULL;

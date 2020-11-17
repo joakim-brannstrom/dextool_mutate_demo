@@ -539,6 +539,8 @@ int dynsec__handle_control(cJSON *j_responses, struct mosquitto *context, cJSON 
 					rc = dynsec_clients__process_modify(j_responses, context, aiter, correlation_data);
 				}else if(!strcasecmp(command, "setClientPassword")){
 					rc = dynsec_clients__process_set_password(j_responses, context, aiter, correlation_data);
+				}else if(!strcasecmp(command, "setClientId")){
+					rc = dynsec_clients__process_set_id(j_responses, context, aiter, correlation_data);
 				}else if(!strcasecmp(command, "addClientRole")){
 					rc = dynsec_clients__process_add_role(j_responses, context, aiter, correlation_data);
 				}else if(!strcasecmp(command, "removeClientRole")){

@@ -546,6 +546,52 @@ int dynsec_clients__process_enable(cJSON *j_responses, struct mosquitto *context
 }
 
 
+int dynsec_clients__process_set_id(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data)
+{
+	char *username, *clientid, *clientid_heap;
+	struct dynsec__client *client;
+
+	if(json_get_string(command, "username", &username, false) != MOSQ_ERR_SUCCESS){
+		dynsec__command_reply(j_responses, context, "setClientId", "Invalid/missing username", correlation_data);
+		return MOSQ_ERR_INVAL;
+	}
+	if(mosquitto_validate_utf8(username, (int)strlen(username)) != MOSQ_ERR_SUCCESS){
+		dynsec__command_reply(j_responses, context, "setClientId", "Username not valid UTF-8", correlation_data);
+		return MOSQ_ERR_INVAL;
+	}
+
+	if(json_get_string(command, "clientid", &clientid, false) != MOSQ_ERR_SUCCESS){
+		dynsec__command_reply(j_responses, context, "setClientId", "Invalid/missing client ID", correlation_data);
+		return MOSQ_ERR_INVAL;
+	}
+	if(mosquitto_validate_utf8(clientid, (int)strlen(clientid)) != MOSQ_ERR_SUCCESS){
+		dynsec__command_reply(j_responses, context, "setClientId", "Client ID not valid UTF-8", correlation_data);
+		return MOSQ_ERR_INVAL;
+	}
+
+	client = dynsec_clients__find(username);
+	if(client == NULL){
+		dynsec__command_reply(j_responses, context, "setClientId", "Client not found", correlation_data);
+		return MOSQ_ERR_SUCCESS;
+	}
+
+	clientid_heap = mosquitto_strdup(clientid);
+	if(clientid_heap == NULL){
+		dynsec__command_reply(j_responses, context, "setClientId", "Internal error", correlation_data);
+		return MOSQ_ERR_NOMEM;
+	}
+	if(client->clientid){
+		mosquitto_free(client->clientid);
+	}
+	client->clientid = clientid_heap;
+
+	/* Enforce any changes */
+	mosquitto_kick_client_by_username(username, false);
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 int dynsec_clients__process_set_password(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data)
 {
 	char *username, *password;
