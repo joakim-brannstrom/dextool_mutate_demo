@@ -580,9 +580,8 @@ int dynsec_clients__process_set_id(cJSON *j_responses, struct mosquitto *context
 		dynsec__command_reply(j_responses, context, "setClientId", "Internal error", correlation_data);
 		return MOSQ_ERR_NOMEM;
 	}
-	if(client->clientid){
-		mosquitto_free(client->clientid);
-	}
+
+	mosquitto_free(client->clientid);
 	client->clientid = clientid_heap;
 
 	/* Enforce any changes */
@@ -592,10 +591,24 @@ int dynsec_clients__process_set_id(cJSON *j_responses, struct mosquitto *context
 }
 
 
+static int client__set_password(struct dynsec__client *client, const char *password)
+{
+	if(dynsec_auth__pw_hash(client, password, client->pw.password_hash, sizeof(client->pw.password_hash), true) == MOSQ_ERR_SUCCESS){
+		client->pw.valid = true;
+
+		return MOSQ_ERR_SUCCESS;
+	}else{
+		client->pw.valid = false;
+		// FIXME - this should fail safe without modifying the existing password
+		return MOSQ_ERR_NOMEM;
+	}
+}
+
 int dynsec_clients__process_set_password(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data)
 {
 	char *username, *password;
 	struct dynsec__client *client;
+	int rc;
 
 	if(json_get_string(command, "username", &username, false) != MOSQ_ERR_SUCCESS){
 		dynsec__command_reply(j_responses, context, "setClientPassword", "Invalid/missing username", correlation_data);
@@ -616,22 +629,17 @@ int dynsec_clients__process_set_password(cJSON *j_responses, struct mosquitto *c
 		dynsec__command_reply(j_responses, context, "setClientPassword", "Client not found", correlation_data);
 		return MOSQ_ERR_SUCCESS;
 	}
-
-	if(dynsec_auth__pw_hash(client, password, client->pw.password_hash, sizeof(client->pw.password_hash), true) == MOSQ_ERR_SUCCESS){
-		client->pw.valid = true;
+	rc = client__set_password(client, password);
+	if(rc == MOSQ_ERR_SUCCESS){
 		dynsec__config_save();
 		dynsec__command_reply(j_responses, context, "setClientPassword", NULL, correlation_data);
 
 		/* Enforce any changes */
 		mosquitto_kick_client_by_username(username, false);
-
-		return MOSQ_ERR_SUCCESS;
 	}else{
-		client->pw.valid = false;
 		dynsec__command_reply(j_responses, context, "setClientPassword", "Internal error", correlation_data);
-		// FIXME - this should fail safe without modifying the existing password
-		return MOSQ_ERR_NOMEM;
 	}
+	return rc;
 }
 
 
@@ -656,6 +664,8 @@ static void client__remove_all_roles(struct dynsec__client *client)
 int dynsec_clients__process_modify(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data)
 {
 	char *username;
+	char *clientid;
+	char *password;
 	char *text_name, *text_description;
 	struct dynsec__client *client;
 	struct dynsec__rolelist *rolelist = NULL;
@@ -679,10 +689,30 @@ int dynsec_clients__process_modify(cJSON *j_responses, struct mosquitto *context
 		return MOSQ_ERR_INVAL;
 	}
 
+	if(json_get_string(command, "clientid", &clientid, true) == MOSQ_ERR_SUCCESS){
+		str = mosquitto_strdup(clientid);
+		if(str == NULL){
+			dynsec__command_reply(j_responses, context, "modifyClient", "Internal error", correlation_data);
+			return MOSQ_ERR_NOMEM;
+		}
+		mosquitto_free(client->clientid);
+		client->clientid = str;
+	}
+
+	if(json_get_string(command, "password", &password, true) == MOSQ_ERR_SUCCESS){
+		rc = client__set_password(client, password);
+		if(rc != MOSQ_ERR_SUCCESS){
+			dynsec__command_reply(j_responses, context, "modifyClient", "Internal error", correlation_data);
+			mosquitto_kick_client_by_username(username, false);
+			return MOSQ_ERR_NOMEM;
+		}
+	}
+
 	if(json_get_string(command, "textname", &text_name, true) == MOSQ_ERR_SUCCESS){
 		str = mosquitto_strdup(text_name);
 		if(str == NULL){
 			dynsec__command_reply(j_responses, context, "modifyClient", "Internal error", correlation_data);
+			mosquitto_kick_client_by_username(username, false);
 			return MOSQ_ERR_NOMEM;
 		}
 		mosquitto_free(client->text_name);
@@ -693,6 +723,7 @@ int dynsec_clients__process_modify(cJSON *j_responses, struct mosquitto *context
 		str = mosquitto_strdup(text_description);
 		if(str == NULL){
 			dynsec__command_reply(j_responses, context, "modifyClient", "Internal error", correlation_data);
+			mosquitto_kick_client_by_username(username, false);
 			return MOSQ_ERR_NOMEM;
 		}
 		mosquitto_free(client->text_description);
@@ -707,12 +738,14 @@ int dynsec_clients__process_modify(cJSON *j_responses, struct mosquitto *context
 	}else if(rc == MOSQ_ERR_NOT_FOUND){
 		dynsec__command_reply(j_responses, context, "modifyClient", "Role not found", correlation_data);
 		dynsec_rolelists__free_all(&rolelist);
+		mosquitto_kick_client_by_username(username, false);
 		return MOSQ_ERR_INVAL;
 	}else if(rc == ERR_LIST_NOT_FOUND){
 		/* There was no list in the JSON, so no modification */
 	}else{
 		dynsec__command_reply(j_responses, context, "modifyClient", "Internal error", correlation_data);
 		dynsec_rolelists__free_all(&rolelist);
+		mosquitto_kick_client_by_username(username, false);
 		return MOSQ_ERR_INVAL;
 	}
 
