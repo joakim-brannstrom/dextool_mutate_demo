@@ -32,6 +32,9 @@ int dynsec_client__create(int argc, char *argv[], cJSON *j_command)
 	int i;
 	bool request_password = true;
 
+	if(argc == 0){
+		return MOSQ_ERR_INVAL;
+	}
 	username = argv[0];
 
 	for(i=1; i<argc; i++){
