@@ -321,9 +321,5 @@ int mosquitto_callback_unregister(
 			break;
 	}
 
-	if(check_callback_exists(*cb_base, cb_func)){
-		return MOSQ_ERR_ALREADY_EXISTS;
-	}
-
 	return remove_callback(*cb_base, cb_func);
 }
