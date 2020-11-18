@@ -1086,7 +1086,7 @@ int dynsec_roles__process_modify(cJSON *j_responses, struct mosquitto *context, 
 		return MOSQ_ERR_INVAL;
 	}
 
-	if(json_get_string(command, "textname", &text_name, true) == MOSQ_ERR_SUCCESS){
+	if(json_get_string(command, "textname", &text_name, false) == MOSQ_ERR_SUCCESS){
 		str = mosquitto_strdup(text_name);
 		if(str == NULL){
 			dynsec__command_reply(j_responses, context, "modifyRole", "Internal error", correlation_data);
@@ -1096,7 +1096,7 @@ int dynsec_roles__process_modify(cJSON *j_responses, struct mosquitto *context, 
 		role->text_name = str;
 	}
 
-	if(json_get_string(command, "textdescription", &text_description, true) == MOSQ_ERR_SUCCESS){
+	if(json_get_string(command, "textdescription", &text_description, false) == MOSQ_ERR_SUCCESS){
 		str = mosquitto_strdup(text_description);
 		if(str == NULL){
 			dynsec__command_reply(j_responses, context, "modifyRole", "Internal error", correlation_data);

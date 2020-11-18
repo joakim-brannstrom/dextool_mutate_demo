@@ -693,7 +693,7 @@ int dynsec_clients__process_modify(cJSON *j_responses, struct mosquitto *context
 		return MOSQ_ERR_INVAL;
 	}
 
-	if(json_get_string(command, "clientid", &clientid, true) == MOSQ_ERR_SUCCESS){
+	if(json_get_string(command, "clientid", &clientid, false) == MOSQ_ERR_SUCCESS){
 		str = mosquitto_strdup(clientid);
 		if(str == NULL){
 			dynsec__command_reply(j_responses, context, "modifyClient", "Internal error", correlation_data);
@@ -703,7 +703,7 @@ int dynsec_clients__process_modify(cJSON *j_responses, struct mosquitto *context
 		client->clientid = str;
 	}
 
-	if(json_get_string(command, "password", &password, true) == MOSQ_ERR_SUCCESS){
+	if(json_get_string(command, "password", &password, false) == MOSQ_ERR_SUCCESS){
 		rc = client__set_password(client, password);
 		if(rc != MOSQ_ERR_SUCCESS){
 			dynsec__command_reply(j_responses, context, "modifyClient", "Internal error", correlation_data);
@@ -712,7 +712,7 @@ int dynsec_clients__process_modify(cJSON *j_responses, struct mosquitto *context
 		}
 	}
 
-	if(json_get_string(command, "textname", &text_name, true) == MOSQ_ERR_SUCCESS){
+	if(json_get_string(command, "textname", &text_name, false) == MOSQ_ERR_SUCCESS){
 		str = mosquitto_strdup(text_name);
 		if(str == NULL){
 			dynsec__command_reply(j_responses, context, "modifyClient", "Internal error", correlation_data);
@@ -723,7 +723,7 @@ int dynsec_clients__process_modify(cJSON *j_responses, struct mosquitto *context
 		client->text_name = str;
 	}
 
-	if(json_get_string(command, "textdescription", &text_description, true) == MOSQ_ERR_SUCCESS){
+	if(json_get_string(command, "textdescription", &text_description, false) == MOSQ_ERR_SUCCESS){
 		str = mosquitto_strdup(text_description);
 		if(str == NULL){
 			dynsec__command_reply(j_responses, context, "modifyClient", "Internal error", correlation_data);

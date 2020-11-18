@@ -273,7 +273,7 @@ int dynsec_groups__config_load(cJSON *tree)
 			}
 
 			/* Text name */
-			if(json_get_string(j_group, "textname", &str, true) == MOSQ_ERR_SUCCESS){
+			if(json_get_string(j_group, "textname", &str, false) == MOSQ_ERR_SUCCESS){
 				if(str){
 					group->text_name = strdup(str);
 					if(group->text_name == NULL){
@@ -286,7 +286,7 @@ int dynsec_groups__config_load(cJSON *tree)
 			}
 
 			/* Text description */
-			if(json_get_string(j_group, "textdescription", &str, true) == MOSQ_ERR_SUCCESS){
+			if(json_get_string(j_group, "textdescription", &str, false) == MOSQ_ERR_SUCCESS){
 				if(str){
 					group->text_description = strdup(str);
 					if(group->text_description == NULL){
@@ -992,7 +992,7 @@ int dynsec_groups__process_modify(cJSON *j_responses, struct mosquitto *context,
 		return MOSQ_ERR_INVAL;
 	}
 
-	if(json_get_string(command, "textname", &text_name, true) == MOSQ_ERR_SUCCESS){
+	if(json_get_string(command, "textname", &text_name, false) == MOSQ_ERR_SUCCESS){
 		str = mosquitto_strdup(text_name);
 		if(str == NULL){
 			dynsec__command_reply(j_responses, context, "modifyGroup", "Internal error", correlation_data);
@@ -1002,7 +1002,7 @@ int dynsec_groups__process_modify(cJSON *j_responses, struct mosquitto *context,
 		group->text_name = str;
 	}
 
-	if(json_get_string(command, "textdescription", &text_description, true) == MOSQ_ERR_SUCCESS){
+	if(json_get_string(command, "textdescription", &text_description, false) == MOSQ_ERR_SUCCESS){
 		str = mosquitto_strdup(text_description);
 		if(str == NULL){
 			dynsec__command_reply(j_responses, context, "modifyGroup", "Internal error", correlation_data);
