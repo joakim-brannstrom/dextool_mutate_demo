@@ -745,6 +745,16 @@ int dynsec_init(int argc, char *argv[])
 		return -1;
 	}
 
+	printf("The client '%s' has been created in the file '%s'.\n", admin_user, filename);
+	printf("This client is configured to allow you to administer the dynamic security plugin only.\n");
+	printf("It does not have access to publish messages to normal topics.\n");
+	printf("You should create your application clients to do that, for example:\n");
+	printf("   mosquitto_ctrl <connect options> dynsec createClient <username>\n");
+	printf("   mosquitto_ctrl <connect options> dynsec createRole <rolename>\n");
+	printf("   mosquitto_ctrl <connect options> dynsec addRoleACL <rolename> publishClientSend my/topic [priority]\n");
+	printf("   mosquitto_ctrl <connect options> dynsec addClientRole <username> <rolename> [priority]\n");
+	printf("See https://mosquitto.org/documentation/dynamic-security/ for details of all commands.\n");
+
 	return -1; /* Suppress client connection */
 }
 
