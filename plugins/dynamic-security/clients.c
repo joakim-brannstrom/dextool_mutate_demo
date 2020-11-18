@@ -49,14 +49,6 @@ static struct dynsec__client *local_clients = NULL;
  * #
  * ################################################################ */
 
-int dynsec_clientlist__cmp(void *a, void *b)
-{
-	struct dynsec__clientlist *clientlist_a = a;
-	struct dynsec__clientlist *clientlist_b = b;
-
-	return strcmp(clientlist_a->username, clientlist_b->username);
-}
-
 static int client_cmp(void *a, void *b)
 {
 	struct dynsec__client *client_a = a;

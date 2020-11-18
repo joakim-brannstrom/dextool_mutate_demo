@@ -17,6 +17,7 @@ add_library(mosquitto_dynamic_security SHARED
 	acl.c
 	auth.c
 	clients.c
+	clientlist.c
 	dynamic_security.h
 	groups.c
 	json_help.c

@@ -9,6 +9,7 @@ OBJS=	\
 		acl.o \
 		auth.o \
 		clients.o \
+		clientlist.o \
 		groups.o \
 		json_help.o \
 		plugin.o \
@@ -28,6 +29,9 @@ auth.o : auth.c dynamic_security.h
 	${CROSS_COMPILE}${CC} $(LOCAL_CPPFLAGS) $(PLUGIN_CPPFLAGS) $(PLUGIN_CFLAGS) -c $< -o $@
 
 clients.o : clients.c dynamic_security.h
+	${CROSS_COMPILE}${CC} $(LOCAL_CPPFLAGS) $(PLUGIN_CPPFLAGS) $(PLUGIN_CFLAGS) -c $< -o $@
+
+clientlist.o : clientlist.c dynamic_security.h
 	${CROSS_COMPILE}${CC} $(LOCAL_CPPFLAGS) $(PLUGIN_CPPFLAGS) $(PLUGIN_CFLAGS) -c $< -o $@
 
 groups.o : groups.c dynamic_security.h

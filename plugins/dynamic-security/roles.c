@@ -29,6 +29,7 @@ Contributors:
 
 
 static cJSON *add_role_to_json(struct dynsec__role *role, bool verbose);
+static void role__remove_all_clients(struct dynsec__role *role);
 
 /* ################################################################
  * #
@@ -109,7 +110,6 @@ int dynsec_rolelists__client_remove_role(struct dynsec__client *client, struct d
 	HASH_FIND(hh, role->clientlist, client->username, strlen(client->username), found_clientlist);
 	if(found_clientlist){
 		HASH_DELETE(hh, role->clientlist, found_clientlist);
-		mosquitto_free(found_clientlist->username);
 		mosquitto_free(found_clientlist);
 		return MOSQ_ERR_SUCCESS;
 	}else{
@@ -168,7 +168,6 @@ static int dynsec_rolelists__add_role(struct dynsec__rolelist **base_rolelist, s
 int dynsec_rolelists__client_add_role(struct dynsec__client *client, struct dynsec__role *role, int priority)
 {
 	struct dynsec__rolelist *rolelist;
-	struct dynsec__clientlist *clientlist;
 	int rc;
 
 	rc = dynsec_rolelists__add_role(&client->rolelist, role, priority);
@@ -180,22 +179,7 @@ int dynsec_rolelists__client_add_role(struct dynsec__client *client, struct dyns
 		return MOSQ_ERR_UNKNOWN;
 	}
 
-	/* Add client to role clientlist */
-	clientlist = mosquitto_calloc(1, sizeof(struct dynsec__clientlist));
-	if(clientlist == NULL){
-		dynsec_rolelists__remove_role(&client->rolelist, role);
-		return MOSQ_ERR_NOMEM;
-	}
-	clientlist->client = client;
-	clientlist->username = mosquitto_strdup(client->username);
-	if(clientlist->username == NULL){
-		dynsec_rolelists__remove_role(&client->rolelist, role);
-		mosquitto_free(clientlist);
-		return MOSQ_ERR_NOMEM;
-	}
-
-	HASH_ADD_KEYPTR_INORDER(hh, role->clientlist, client->username, strlen(client->username), clientlist, dynsec_clientlist__cmp);
-	return MOSQ_ERR_SUCCESS;
+	return dynsec_clientlist__add(&role->clientlist, client, priority);
 }
 
 
@@ -310,6 +294,7 @@ static void role__free_item(struct dynsec__role *role, bool remove_from_hash)
 	if(remove_from_hash){
 		HASH_DEL(local_roles, role);
 	}
+	dynsec_clientlist__cleanup(&role->clientlist);
 	mosquitto_free(role->text_name);
 	mosquitto_free(role->text_description);
 	mosquitto_free(role->rolename);
@@ -667,7 +652,7 @@ static void role__remove_all_clients(struct dynsec__role *role)
 	struct dynsec__clientlist *clientlist, *clientlist_tmp;
 
 	HASH_ITER(hh, role->clientlist, clientlist, clientlist_tmp){
-		mosquitto_kick_client_by_username(clientlist->username, false);
+		mosquitto_kick_client_by_username(clientlist->client->username, false);
 
 		dynsec_rolelists__client_remove_role(clientlist->client, role);
 	}

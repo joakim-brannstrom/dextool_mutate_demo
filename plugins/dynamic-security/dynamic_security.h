@@ -54,7 +54,6 @@ Contributors:
 
 struct dynsec__clientlist{
 	UT_hash_handle hh;
-	char *username;
 	struct dynsec__client *client;
 	int priority;
 };
@@ -186,10 +185,18 @@ int dynsec_clients__process_set_id(cJSON *j_responses, struct mosquitto *context
 int dynsec_clients__process_set_password(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data);
 struct dynsec__client *dynsec_clients__find(const char *username);
 
-cJSON *dynsec_clientlists__all_to_json(struct dynsec__clientlist *base_clientlist);
-int dynsec_clientlist__cmp(void *a, void *b);
-void dynsec_clientlist__kick_all(struct dynsec__clientlist *base_clientlist);
 
+/* ################################################################
+ * #
+ * # Client List Functions
+ * #
+ * ################################################################ */
+
+cJSON *dynsec_clientlist__all_to_json(struct dynsec__clientlist *base_clientlist);
+int dynsec_clientlist__add(struct dynsec__clientlist **base_clientlist, struct dynsec__client *client, int priority);
+void dynsec_clientlist__cleanup(struct dynsec__clientlist **base_clientlist);
+void dynsec_clientlist__remove(struct dynsec__clientlist **base_clientlist, struct dynsec__client *client);
+void dynsec_clientlist__kick_all(struct dynsec__clientlist *base_clientlist);
 
 
 /* ################################################################
