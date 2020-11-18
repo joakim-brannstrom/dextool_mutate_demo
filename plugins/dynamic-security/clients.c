@@ -410,7 +410,7 @@ int dynsec_clients__process_create(cJSON *j_responses, struct mosquitto *context
 		}
 		client->pw.valid = true;
 	}
-	if(clientid){
+	if(clientid && strlen(clientid) > 0){
 		client->clientid = mosquitto_strdup(clientid);
 		if(client->clientid == NULL){
 			dynsec__command_reply(j_responses, context, "createClient", "Internal error", correlation_data);
