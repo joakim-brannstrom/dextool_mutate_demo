@@ -25,6 +25,7 @@ add_library(mosquitto_dynamic_security SHARED
 	json_help.h
 	plugin.c
 	roles.c
+	rolelist.c
 	sub_matches_sub.c)
 
 set_target_properties(mosquitto_dynamic_security PROPERTIES

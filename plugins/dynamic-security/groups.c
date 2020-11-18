@@ -78,7 +78,7 @@ static void group__free_item(struct dynsec__group *group)
 	mosquitto_free(group->text_name);
 	mosquitto_free(group->text_description);
 	mosquitto_free(group->groupname);
-	dynsec_rolelists__free_all(&group->rolelist);
+	dynsec_rolelist__cleanup(&group->rolelist);
 	mosquitto_free(group);
 }
 
@@ -130,7 +130,7 @@ int dynsec_groups__process_add_role(cJSON *j_responses, struct mosquitto *contex
 		return MOSQ_ERR_SUCCESS;
 	}
 
-	dynsec_rolelists__group_add_role(group, role, priority);
+	dynsec_rolelist__group_add(group, role, priority);
 	dynsec__config_save();
 	dynsec__command_reply(j_responses, context, "addGroupRole", NULL, correlation_data);
 	return MOSQ_ERR_SUCCESS;
@@ -230,7 +230,7 @@ int dynsec_groups__config_load(cJSON *tree)
 						if(j_rolename && cJSON_IsString(j_rolename)){
 							json_get_int(j_role, "priority", &priority, true, -1);
 							role = dynsec_roles__find(j_rolename->valuestring);
-							dynsec_rolelists__group_add_role(group, role, priority);
+							dynsec_rolelist__group_add(group, role, priority);
 						}
 					}
 				}
@@ -290,7 +290,7 @@ static int dynsec__config_add_groups(cJSON *j_groups)
 			return 1;
 		}
 
-		j_roles = dynsec_rolelists__all_to_json(group->rolelist);
+		j_roles = dynsec_rolelist__all_to_json(group->rolelist);
 		if(j_roles == NULL){
 			return 1;
 		}
@@ -389,7 +389,7 @@ int dynsec_groups__process_create(cJSON *j_responses, struct mosquitto *context,
 		}
 	}
 
-	rc = dynsec_rolelists__load_from_json(command, &group->rolelist);
+	rc = dynsec_rolelist__load_from_json(command, &group->rolelist);
 	if(rc == MOSQ_ERR_SUCCESS || rc == ERR_LIST_NOT_FOUND){
 	}else if(rc == MOSQ_ERR_NOT_FOUND){
 		dynsec__command_reply(j_responses, context, "createGroup", "Role not found", correlation_data);
@@ -644,7 +644,7 @@ static cJSON *add_group_to_json(struct dynsec__group *group)
 		cJSON_AddItemToObject(j_client, "username", jtmp);
 	}
 
-	j_rolelist = dynsec_rolelists__all_to_json(group->rolelist);
+	j_rolelist = dynsec_rolelist__all_to_json(group->rolelist);
 	if(j_rolelist == NULL){
 		cJSON_Delete(j_group);
 		return NULL;
@@ -845,7 +845,7 @@ int dynsec_groups__process_remove_role(cJSON *j_responses, struct mosquitto *con
 		return MOSQ_ERR_SUCCESS;
 	}
 
-	dynsec_rolelists__group_remove_role(group, role);
+	dynsec_rolelist__group_remove(group, role);
 	dynsec__config_save();
 	dynsec__command_reply(j_responses, context, "removeGroupRole", NULL, correlation_data);
 
@@ -904,19 +904,19 @@ int dynsec_groups__process_modify(cJSON *j_responses, struct mosquitto *context,
 		group->text_description = str;
 	}
 
-	rc = dynsec_rolelists__load_from_json(command, &rolelist);
+	rc = dynsec_rolelist__load_from_json(command, &rolelist);
 	if(rc == MOSQ_ERR_SUCCESS){
-		dynsec_rolelists__free_all(&group->rolelist);
+		dynsec_rolelist__cleanup(&group->rolelist);
 		group->rolelist = rolelist;
 	}else if(rc == MOSQ_ERR_NOT_FOUND){
 		dynsec__command_reply(j_responses, context, "modifyGroup", "Role not found", correlation_data);
-		dynsec_rolelists__free_all(&rolelist);
+		dynsec_rolelist__cleanup(&rolelist);
 		return MOSQ_ERR_INVAL;
 	}else if(rc == ERR_LIST_NOT_FOUND){
 		/* There was no list in the JSON, so no modification */
 	}else{
 		dynsec__command_reply(j_responses, context, "modifyGroup", "Internal error", correlation_data);
-		dynsec_rolelists__free_all(&rolelist);
+		dynsec_rolelist__cleanup(&rolelist);
 		return MOSQ_ERR_INVAL;
 	}
 

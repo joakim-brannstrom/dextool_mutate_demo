@@ -15,6 +15,7 @@ OBJS=	\
 		json_help.o \
 		plugin.o \
 		roles.o \
+		rolelist.o \
 		sub_matches_sub.o
 
 all : binary
@@ -48,6 +49,9 @@ plugin.o : plugin.c dynamic_security.h
 	${CROSS_COMPILE}${CC} $(LOCAL_CPPFLAGS) $(PLUGIN_CPPFLAGS) $(PLUGIN_CFLAGS) -c $< -o $@
 
 roles.o : roles.c dynamic_security.h
+	${CROSS_COMPILE}${CC} $(LOCAL_CPPFLAGS) $(PLUGIN_CPPFLAGS) $(PLUGIN_CFLAGS) -c $< -o $@
+
+rolelist.o : rolelist.c dynamic_security.h
 	${CROSS_COMPILE}${CC} $(LOCAL_CPPFLAGS) $(PLUGIN_CPPFLAGS) $(PLUGIN_CFLAGS) -c $< -o $@
 
 sub_matches_sub.o : sub_matches_sub.c dynamic_security.h

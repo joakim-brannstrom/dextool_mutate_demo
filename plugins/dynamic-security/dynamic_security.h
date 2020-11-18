@@ -253,12 +253,19 @@ int dynsec_roles__process_modify(cJSON *j_responses, struct mosquitto *context, 
 int dynsec_roles__process_remove_acl(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data);
 struct dynsec__role *dynsec_roles__find(const char *rolename);
 
-int dynsec_rolelists__client_add_role(struct dynsec__client *client, struct dynsec__role *role, int priority);
-int dynsec_rolelists__client_remove_role(struct dynsec__client *client, struct dynsec__role *role);
-int dynsec_rolelists__group_add_role(struct dynsec__group *group, struct dynsec__role *role, int priority);
-void dynsec_rolelists__group_remove_role(struct dynsec__group *group, struct dynsec__role *role);
-int dynsec_rolelists__load_from_json(cJSON *command, struct dynsec__rolelist **rolelist);
-void dynsec_rolelists__free_all(struct dynsec__rolelist **base_rolelist);
-cJSON *dynsec_rolelists__all_to_json(struct dynsec__rolelist *base_rolelist);
+
+/* ################################################################
+ * #
+ * # Role List Functions
+ * #
+ * ################################################################ */
+
+int dynsec_rolelist__client_add(struct dynsec__client *client, struct dynsec__role *role, int priority);
+int dynsec_rolelist__client_remove(struct dynsec__client *client, struct dynsec__role *role);
+int dynsec_rolelist__group_add(struct dynsec__group *group, struct dynsec__role *role, int priority);
+void dynsec_rolelist__group_remove(struct dynsec__group *group, struct dynsec__role *role);
+int dynsec_rolelist__load_from_json(cJSON *command, struct dynsec__rolelist **rolelist);
+void dynsec_rolelist__cleanup(struct dynsec__rolelist **base_rolelist);
+cJSON *dynsec_rolelist__all_to_json(struct dynsec__rolelist *base_rolelist);
 
 #endif
