@@ -118,24 +118,10 @@ int dynsec_rolelists__client_remove_role(struct dynsec__client *client, struct d
 }
 
 
-int dynsec_rolelists__group_remove_role(struct dynsec__group *group, struct dynsec__role *role)
+void dynsec_rolelists__group_remove_role(struct dynsec__group *group, struct dynsec__role *role)
 {
-	int rc;
-	struct dynsec__grouplist *found_grouplist;
-
-	rc = dynsec_rolelists__remove_role(&group->rolelist, role);
-	if(rc) return rc;
-
-	/* Remove group from role grouplist. */
-	HASH_FIND(hh, role->grouplist, group->groupname, strlen(group->groupname), found_grouplist);
-	if(found_grouplist){
-		HASH_DELETE(hh, role->grouplist, found_grouplist);
-		mosquitto_free(found_grouplist->groupname);
-		mosquitto_free(found_grouplist);
-		return MOSQ_ERR_SUCCESS;
-	}else{
-		return MOSQ_ERR_NOT_FOUND;
-	}
+	dynsec_rolelists__remove_role(&group->rolelist, role);
+	dynsec_grouplist__remove(&role->grouplist, group);
 }
 
 
@@ -185,35 +171,12 @@ int dynsec_rolelists__client_add_role(struct dynsec__client *client, struct dyns
 
 int dynsec_rolelists__group_add_role(struct dynsec__group *group, struct dynsec__role *role, int priority)
 {
-	struct dynsec__rolelist *rolelist;
-	struct dynsec__grouplist *grouplist;
 	int rc;
 
 	rc = dynsec_rolelists__add_role(&group->rolelist, role, priority);
 	if(rc) return rc;
 
-	HASH_FIND(hh, group->rolelist, role->rolename, strlen(role->rolename), rolelist);
-	if(rolelist == NULL){
-		/* This should never happen because the above add_role succeeded. */
-		return MOSQ_ERR_UNKNOWN;
-	}
-
-	/* Add group to role grouplist */
-	grouplist = mosquitto_calloc(1, sizeof(struct dynsec__grouplist));
-	if(grouplist == NULL){
-		dynsec_rolelists__remove_role(&group->rolelist, role);
-		return MOSQ_ERR_NOMEM;
-	}
-	grouplist->group = group;
-	grouplist->groupname = mosquitto_strdup(group->groupname);
-	if(grouplist->groupname == NULL){
-		dynsec_rolelists__remove_role(&group->rolelist, role);
-		mosquitto_free(grouplist);
-		return MOSQ_ERR_NOMEM;
-	}
-
-	HASH_ADD_KEYPTR_INORDER(hh, role->grouplist, group->groupname, strlen(group->groupname), grouplist, dynsec_grouplist__cmp);
-	return MOSQ_ERR_SUCCESS;
+	return dynsec_grouplist__add(&role->grouplist, group, priority);
 }
 
 
@@ -295,6 +258,7 @@ static void role__free_item(struct dynsec__role *role, bool remove_from_hash)
 		HASH_DEL(local_roles, role);
 	}
 	dynsec_clientlist__cleanup(&role->clientlist);
+	dynsec_grouplist__cleanup(&role->grouplist);
 	mosquitto_free(role->text_name);
 	mosquitto_free(role->text_description);
 	mosquitto_free(role->rolename);

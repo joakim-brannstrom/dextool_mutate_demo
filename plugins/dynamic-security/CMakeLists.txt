@@ -20,6 +20,7 @@ add_library(mosquitto_dynamic_security SHARED
 	clientlist.c
 	dynamic_security.h
 	groups.c
+	grouplist.c
 	json_help.c
 	json_help.h
 	plugin.c

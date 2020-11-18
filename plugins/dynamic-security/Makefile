@@ -11,6 +11,7 @@ OBJS=	\
 		clients.o \
 		clientlist.o \
 		groups.o \
+		grouplist.o \
 		json_help.o \
 		plugin.o \
 		roles.o \
@@ -35,6 +36,9 @@ clientlist.o : clientlist.c dynamic_security.h
 	${CROSS_COMPILE}${CC} $(LOCAL_CPPFLAGS) $(PLUGIN_CPPFLAGS) $(PLUGIN_CFLAGS) -c $< -o $@
 
 groups.o : groups.c dynamic_security.h
+	${CROSS_COMPILE}${CC} $(LOCAL_CPPFLAGS) $(PLUGIN_CPPFLAGS) $(PLUGIN_CFLAGS) -c $< -o $@
+
+grouplist.o : grouplist.c dynamic_security.h
 	${CROSS_COMPILE}${CC} $(LOCAL_CPPFLAGS) $(PLUGIN_CPPFLAGS) $(PLUGIN_CFLAGS) -c $< -o $@
 
 json_help.o : json_help.c dynamic_security.h

@@ -778,7 +778,7 @@ static int dynsec__remove_client_from_all_groups(const char *username)
 	client = dynsec_clients__find(username);
 	if(client){
 		HASH_ITER(hh, client->grouplist, grouplist, grouplist_tmp){
-			dynsec_groups__remove_client(username, grouplist->groupname, false);
+			dynsec_groups__remove_client(username, grouplist->group->groupname, false);
 		}
 	}
 
@@ -814,7 +814,7 @@ static cJSON *add_client_to_json(struct dynsec__client *client, bool verbose)
 		}
 		cJSON_AddItemToObject(j_client, "roles", j_roles);
 
-		j_groups = dynsec_grouplists__all_to_json(client->grouplist);
+		j_groups = dynsec_grouplist__all_to_json(client->grouplist);
 		if(j_groups == NULL){
 			cJSON_Delete(j_client);
 			return NULL;

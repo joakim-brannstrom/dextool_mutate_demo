@@ -68,47 +68,6 @@ static int group_cmp(void *a, void *b)
 	return strcmp(group_a->groupname, group_b->groupname);
 }
 
-int dynsec_grouplist__cmp(void *a, void *b)
-{
-	int prio;
-	struct dynsec__grouplist *grouplist_a = a;
-	struct dynsec__grouplist *grouplist_b = b;
-
-	prio = grouplist_b->priority - grouplist_a->priority;
-	if(prio == 0){
-		return strcmp(grouplist_a->groupname, grouplist_b->groupname);
-	}else{
-		return prio;
-	}
-}
-
-cJSON *dynsec_grouplists__all_to_json(struct dynsec__grouplist *base_grouplist)
-{
-	struct dynsec__grouplist *grouplist, *grouplist_tmp;
-	cJSON *j_groups, *j_group;
-
-	j_groups = cJSON_CreateArray();
-	if(j_groups == NULL) return NULL;
-
-	HASH_ITER(hh, base_grouplist, grouplist, grouplist_tmp){
-		j_group = cJSON_CreateObject();
-		if(j_group == NULL){
-			cJSON_Delete(j_groups);
-			return NULL;
-		}
-		cJSON_AddItemToArray(j_groups, j_group);
-
-		if(cJSON_AddStringToObject(j_group, "groupname", grouplist->group->groupname) == NULL
-				|| (grouplist->priority != -1 && cJSON_AddIntToObject(j_group, "priority", grouplist->priority) == NULL)
-				){
-
-			cJSON_Delete(j_groups);
-			return NULL;
-		}
-	}
-	return j_groups;
-}
-
 
 static void group__free_item(struct dynsec__group *group)
 {
@@ -489,7 +448,6 @@ int dynsec_groups__add_client(const char *username, const char *groupname, int p
 	struct dynsec__client *client;
 	struct dynsec__clientlist *clientlist;
 	struct dynsec__group *group;
-	struct dynsec__grouplist *grouplist;
 	int rc;
 
 	client = dynsec_clients__find(username);
@@ -512,17 +470,11 @@ int dynsec_groups__add_client(const char *username, const char *groupname, int p
 	if(rc){
 		return rc;
 	}
-	grouplist = mosquitto_malloc(sizeof(struct dynsec__grouplist));
-	if(grouplist == NULL){
+	rc = dynsec_grouplist__add(&client->grouplist, group, priority);
+	if(rc){
 		dynsec_clientlist__remove(&group->clientlist, client);
-		mosquitto_free(grouplist);
-		return MOSQ_ERR_UNKNOWN;
+		return rc;
 	}
-
-	grouplist->groupname = group->groupname;
-	grouplist->group = group;
-	grouplist->priority = priority;
-	HASH_ADD_KEYPTR_INORDER(hh, client->grouplist, grouplist->groupname, strlen(grouplist->groupname), grouplist, dynsec_grouplist__cmp);
 
 	if(update_config){
 		dynsec__config_save();
@@ -576,24 +528,13 @@ int dynsec_groups__process_add_client(cJSON *j_responses, struct mosquitto *cont
 }
 
 
-static void dynsec_grouplists__remove(struct dynsec__grouplist **base_grouplist, const char *groupname)
-{
-	struct dynsec__grouplist *grouplist;
-
-	HASH_FIND(hh, *base_grouplist, groupname, strlen(groupname), grouplist);
-	if(grouplist){
-		HASH_DELETE(hh, *base_grouplist, grouplist);
-		mosquitto_free(grouplist);
-	}
-}
-
 static int dynsec__remove_all_clients_from_group(struct dynsec__group *group)
 {
 	struct dynsec__clientlist *clientlist, *clientlist_tmp;
 
 	HASH_ITER(hh, group->clientlist, clientlist, clientlist_tmp){
 		/* Remove client stored group reference */
-		dynsec_grouplists__remove(&clientlist->client->grouplist, group->groupname);
+		dynsec_grouplist__remove(&clientlist->client->grouplist, group);
 
 		HASH_DELETE(hh, group->clientlist, clientlist);
 		mosquitto_free(clientlist);
@@ -618,7 +559,7 @@ int dynsec_groups__remove_client(const char *username, const char *groupname, bo
 	}
 
 	dynsec_clientlist__remove(&group->clientlist, client);
-	dynsec_grouplists__remove(&client->grouplist, groupname);
+	dynsec_grouplist__remove(&client->grouplist, group);
 
 	if(update_config){
 		dynsec__config_save();

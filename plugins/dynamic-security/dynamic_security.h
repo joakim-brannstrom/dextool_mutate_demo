@@ -60,7 +60,6 @@ struct dynsec__clientlist{
 
 struct dynsec__grouplist{
 	UT_hash_handle hh;
-	char *groupname;
 	struct dynsec__group *group;
 	int priority;
 };
@@ -223,8 +222,18 @@ int dynsec_groups__process_set_anonymous_group(cJSON *j_responses, struct mosqui
 int dynsec_groups__remove_client(const char *username, const char *groupname, bool update_config);
 struct dynsec__group *dynsec_groups__find(const char *groupname);
 
-cJSON *dynsec_grouplists__all_to_json(struct dynsec__grouplist *base_grouplist);
-int dynsec_grouplist__cmp(void *a, void *b);
+
+/* ################################################################
+ * #
+ * # Group List Functions
+ * #
+ * ################################################################ */
+
+cJSON *dynsec_grouplist__all_to_json(struct dynsec__grouplist *base_grouplist);
+int dynsec_grouplist__add(struct dynsec__grouplist **base_grouplist, struct dynsec__group *group, int priority);
+void dynsec_grouplist__cleanup(struct dynsec__grouplist **base_grouplist);
+void dynsec_grouplist__remove(struct dynsec__grouplist **base_grouplist, struct dynsec__group *group);
+
 
 /* ################################################################
  * #
@@ -247,7 +256,7 @@ struct dynsec__role *dynsec_roles__find(const char *rolename);
 int dynsec_rolelists__client_add_role(struct dynsec__client *client, struct dynsec__role *role, int priority);
 int dynsec_rolelists__client_remove_role(struct dynsec__client *client, struct dynsec__role *role);
 int dynsec_rolelists__group_add_role(struct dynsec__group *group, struct dynsec__role *role, int priority);
-int dynsec_rolelists__group_remove_role(struct dynsec__group *group, struct dynsec__role *role);
+void dynsec_rolelists__group_remove_role(struct dynsec__group *group, struct dynsec__role *role);
 int dynsec_rolelists__load_from_json(cJSON *command, struct dynsec__rolelist **rolelist);
 void dynsec_rolelists__free_all(struct dynsec__rolelist **base_rolelist);
 cJSON *dynsec_rolelists__all_to_json(struct dynsec__rolelist *base_rolelist);
