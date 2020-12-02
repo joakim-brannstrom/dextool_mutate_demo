@@ -1,12 +1,16 @@
-add_subdirectory(cpp)
+option(WITH_LIB_CPP "Build C++ library?" ON)
+if (WITH_LIB_CPP)
+	add_subdirectory(cpp)
+endif (WITH_LIB_CPP)
 
 include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/lib
+			${mosquitto_SOURCE_DIR}/include
 			${STDBOOL_H_PATH} ${STDINT_H_PATH}
 			${OPENSSL_INCLUDE_DIR} ${PTHREAD_INCLUDE_DIR})
 link_directories(${mosquitto_SOURCE_DIR}/lib)
 
 if (WITH_BUNDLED_DEPS)
-        include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/src/deps)
+        include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/deps)
 endif (WITH_BUNDLED_DEPS)
 
 set(C_SRC
@@ -29,9 +33,9 @@ set(C_SRC
 	memory_mosq.c memory_mosq.h
 	messages_mosq.c messages_mosq.h
 	misc_mosq.c misc_mosq.h
-	mosquitto.c mosquitto.h
+	mosquitto.c ../include/mosquitto.h
 	mosquitto_internal.h
-	mqtt_protocol.h
+	../include/mqtt_protocol.h
 	net_mosq_ocsp.c net_mosq.c net_mosq.h
 	options.c
 	packet_datatypes.c
@@ -47,6 +51,7 @@ set(C_SRC
 	send_mosq.c send_mosq.h
 	socks_mosq.c
 	srv_mosq.c
+	strings_mosq.c
 	thread_mosq.c
 	time_mosq.c
 	tls_mosq.c
@@ -56,12 +61,12 @@ set(C_SRC
 
 set (LIBRARIES ${OPENSSL_LIBRARIES} ${PTHREAD_LIBRARIES})
 
-if (UNIX AND NOT APPLE)
+if (UNIX AND NOT APPLE AND NOT ANDROID)
 	find_library(LIBRT rt)
 	if (LIBRT)
 		set (LIBRARIES ${LIBRARIES} rt)
 	endif (LIBRT)
-endif (UNIX AND NOT APPLE)
+endif (UNIX AND NOT APPLE AND NOT ANDROID)
 
 if (WIN32)
 	set (LIBRARIES ${LIBRARIES} ws2_32)
@@ -112,4 +117,5 @@ if (WITH_STATIC_LIBRARIES)
 	install(TARGETS libmosquitto_static ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 endif (WITH_STATIC_LIBRARIES)
 
-install(FILES mosquitto.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(FILES ../include/mosquitto.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(FILES ../include/mqtt_protocol.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")

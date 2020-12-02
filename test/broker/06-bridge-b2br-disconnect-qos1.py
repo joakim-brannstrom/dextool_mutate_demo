@@ -4,7 +4,7 @@
 
 from mosq_test_helper import *
 
-def write_config(filename, port1, port2):
+def write_config(filename, port1, port2, protocol_version):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port2))
         f.write("\n")
@@ -13,85 +13,105 @@ def write_config(filename, port1, port2):
         f.write("topic bridge/# both 1\n")
         f.write("notifications false\n")
         f.write("restart_timeout 5\n")
+        f.write("bridge_protocol_version %s\n" % (protocol_version))
 
-(port1, port2) = mosq_test.get_port(2)
-conf_file = os.path.basename(__file__).replace('.py', '.conf')
-write_config(conf_file, port1, port2)
 
-rc = 1
-keepalive = 60
-client_id = socket.gethostname()+".bridge_sample"
-connect_packet = mosq_test.gen_connect(client_id, keepalive=keepalive, clean_session=False, proto_ver=128+4)
-connack_packet = mosq_test.gen_connack(rc=0)
+def do_test(proto_ver):
+    if proto_ver == 4:
+        bridge_protocol = "mqttv311"
+        proto_ver_connect = 128+4
+    else:
+        bridge_protocol = "mqttv50"
+        proto_ver_connect = 5
 
-mid = 1
-subscribe_packet = mosq_test.gen_subscribe(mid, "bridge/#", 1)
-suback_packet = mosq_test.gen_suback(mid, 1)
+    (port1, port2) = mosq_test.get_port(2)
+    conf_file = os.path.basename(__file__).replace('.py', '.conf')
+    write_config(conf_file, port1, port2, bridge_protocol)
 
-mid = 2
-subscribe2_packet = mosq_test.gen_subscribe(mid, "bridge/#", 1)
-suback2_packet = mosq_test.gen_suback(mid, 1)
+    rc = 1
+    keepalive = 60
+    client_id = socket.gethostname()+".bridge_sample"
+    connect_packet = mosq_test.gen_connect(client_id, keepalive=keepalive, clean_session=False, proto_ver=proto_ver_connect)
+    connack_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
 
-mid = 3
-publish_packet = mosq_test.gen_publish("bridge/disconnect/test", qos=1, mid=mid, payload="disconnect-message")
-publish_dup_packet = mosq_test.gen_publish("bridge/disconnect/test", qos=1, mid=mid, payload="disconnect-message", dup=True)
-puback_packet = mosq_test.gen_puback(mid)
+    if proto_ver == 5:
+        opts = mqtt5_opts.MQTT_SUB_OPT_NO_LOCAL | mqtt5_opts.MQTT_SUB_OPT_RETAIN_AS_PUBLISHED
+    else:
+        opts = 0
 
-mid = 20
-publish2_packet = mosq_test.gen_publish("bridge/disconnect/test", qos=1, mid=mid, payload="disconnect-message")
-puback2_packet = mosq_test.gen_puback(mid)
+    mid = 1
+    subscribe_packet = mosq_test.gen_subscribe(mid, "bridge/#", 1 | opts, proto_ver=proto_ver)
+    suback_packet = mosq_test.gen_suback(mid, 1, proto_ver=proto_ver)
 
-ssock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-ssock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-ssock.settimeout(40)
-ssock.bind(('', port1))
-ssock.listen(5)
+    mid = 2
+    subscribe2_packet = mosq_test.gen_subscribe(mid, "bridge/#", 1 | opts, proto_ver=proto_ver)
+    suback2_packet = mosq_test.gen_suback(mid, 1, proto_ver=proto_ver)
 
-broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port2, use_conf=True)
+    mid = 3
+    publish_packet = mosq_test.gen_publish("bridge/disconnect/test", qos=1, mid=mid, payload="disconnect-message", proto_ver=proto_ver)
+    publish_dup_packet = mosq_test.gen_publish("bridge/disconnect/test", qos=1, mid=mid, payload="disconnect-message", dup=True, proto_ver=proto_ver)
+    puback_packet = mosq_test.gen_puback(mid, proto_ver=proto_ver)
 
-try:
-    (bridge, address) = ssock.accept()
-    bridge.settimeout(20)
+    mid = 20
+    publish2_packet = mosq_test.gen_publish("bridge/disconnect/test", qos=1, mid=mid, payload="disconnect-message", proto_ver=proto_ver)
+    puback2_packet = mosq_test.gen_puback(mid, proto_ver=proto_ver)
 
-    if mosq_test.expect_packet(bridge, "connect", connect_packet):
+    ssock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ssock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    ssock.settimeout(40)
+    ssock.bind(('', port1))
+    ssock.listen(5)
+
+    try:
+        broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port2, use_conf=True)
+
+        (bridge, address) = ssock.accept()
+        bridge.settimeout(20)
+
+        mosq_test.expect_packet(bridge, "connect", connect_packet)
         bridge.send(connack_packet)
 
-        if mosq_test.expect_packet(bridge, "subscribe", subscribe_packet):
-            bridge.send(suback_packet)
+        mosq_test.expect_packet(bridge, "subscribe", subscribe_packet)
+        bridge.send(suback_packet)
 
-            bridge.send(publish_packet)
-            # Bridge doesn't have time to respond but should expect us to retry
-            # and so remove PUBACK.
-            bridge.close()
-
-            (bridge, address) = ssock.accept()
-            bridge.settimeout(20)
-
-            if mosq_test.expect_packet(bridge, "connect", connect_packet):
-                bridge.send(connack_packet)
-
-                if mosq_test.expect_packet(bridge, "2nd subscribe", subscribe2_packet):
-                    bridge.send(suback2_packet)
-
-                    # Send a different publish message to make sure the response isn't to the old one.
-                    bridge.send(publish2_packet)
-                    if mosq_test.expect_packet(bridge, "puback", puback2_packet):
-                        rc = 0
-
-    bridge.close()
-finally:
-    os.remove(conf_file)
-    try:
+        bridge.send(publish_packet)
+        # Bridge doesn't have time to respond but should expect us to retry
+        # and so remove PUBACK.
         bridge.close()
-    except NameError:
+
+        (bridge, address) = ssock.accept()
+        bridge.settimeout(20)
+
+        mosq_test.expect_packet(bridge, "connect", connect_packet)
+        bridge.send(connack_packet)
+
+        mosq_test.expect_packet(bridge, "2nd subscribe", subscribe2_packet)
+        bridge.send(suback2_packet)
+
+        # Send a different publish message to make sure the response isn't to the old one.
+        bridge.send(publish2_packet)
+        mosq_test.expect_packet(bridge, "puback", puback2_packet)
+        rc = 0
+
+        bridge.close()
+    except mosq_test.TestError:
         pass
+    finally:
+        os.remove(conf_file)
+        try:
+            bridge.close()
+        except NameError:
+            pass
 
-    broker.terminate()
-    broker.wait()
-    (stdo, stde) = broker.communicate()
-    if rc:
-        print(stde.decode('utf-8'))
-    ssock.close()
+        broker.terminate()
+        broker.wait()
+        (stdo, stde) = broker.communicate()
+        ssock.close()
+        if rc:
+            print(stde.decode('utf-8'))
+            exit(rc)
 
-exit(rc)
+do_test(proto_ver=4)
+do_test(proto_ver=5)
 
+exit(0)

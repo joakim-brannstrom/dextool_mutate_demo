@@ -5,9 +5,24 @@
 
 from mosq_test_helper import *
 
-def len_test(test, pubrec_packet, pubcomp_packet):
-    port = mosq_test.get_port()
+def helper(port):
+    connect_packet = mosq_test.gen_connect("test-helper", keepalive=60)
+    connack_packet = mosq_test.gen_connack(rc=0)
 
+    mid = 1
+    publish_packet = mosq_test.gen_publish("qos2/len/test", qos=2, mid=mid, payload="len-message")
+    pubrec_packet = mosq_test.gen_pubrec(mid)
+    pubrel_packet = mosq_test.gen_pubrel(mid)
+    pubcomp_packet = mosq_test.gen_pubcomp(mid)
+
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet, connack_error="helper connack", port=port)
+
+    mosq_test.do_send_receive(sock, publish_packet, pubrec_packet, "helper pubrec")
+    mosq_test.do_send_receive(sock, pubrel_packet, pubcomp_packet, "helper pubcomp")
+    sock.close()
+
+
+def len_test(test, pubrec_packet, pubcomp_packet):
     rc = 1
     mid = 3265
     keepalive = 60
@@ -21,6 +36,7 @@ def len_test(test, pubrec_packet, pubcomp_packet):
     publish_packet = mosq_test.gen_publish("qos2/len/test", qos=2, mid=mid, payload="len-message", proto_ver=5)
     pubrel_packet = mosq_test.gen_pubrel(mid)
 
+    port = mosq_test.get_port()
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
     try:
@@ -28,19 +44,19 @@ def len_test(test, pubrec_packet, pubcomp_packet):
 
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-        pub = subprocess.Popen(['./03-publish-b2c-qos2-len-helper.py', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        pub.wait()
-        (stdo, stde) = pub.communicate()
+        helper(port)
         # Should have now received a publish command
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            mosq_test.do_send_receive(sock, pubrec_packet, pubrel_packet, "pubrel")
-            sock.send(pubcomp_packet)
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        mosq_test.do_send_receive(sock, pubrec_packet, pubrel_packet, "pubrel")
+        sock.send(pubcomp_packet)
 
-            mosq_test.do_ping(sock)
-            rc = 0
+        mosq_test.do_ping(sock)
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

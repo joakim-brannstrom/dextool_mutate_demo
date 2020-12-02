@@ -10,10 +10,12 @@ from mosq_test_helper import *
 def write_config(filename, port1, port2, per_listener, allow_zero):
     with open(filename, 'w') as f:
         f.write("per_listener_settings %s\n" % (per_listener))
-        f.write("port %d\n" % (port2))
+        f.write("listener %d\n" % (port2))
+        f.write("allow_anonymous true\n")
         if allow_zero != "":
             f.write("allow_zero_length_clientid %s\n" % (allow_zero))
         f.write("listener %d\n" % (port1))
+        f.write("allow_anonymous true\n")
         if allow_zero != "":
             f.write("allow_zero_length_clientid %s\n" % (allow_zero))
 
@@ -39,7 +41,7 @@ def do_test(per_listener, proto_ver, clean_start, allow_zero, client_port, expec
             # Remove the "xxxx" part - this means the front part of the packet
             # is correct (so remaining length etc. is correct), but we don't
             # need to match against the random id.
-            connack_packet = connack_packet[:-36]
+            connack_packet = connack_packet[:-39]
 
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port1, use_conf=True)
 
@@ -47,6 +49,8 @@ def do_test(per_listener, proto_ver, clean_start, allow_zero, client_port, expec
         sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=client_port)
         sock.close()
         rc = 0
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

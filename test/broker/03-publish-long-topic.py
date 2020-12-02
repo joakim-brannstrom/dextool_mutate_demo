@@ -7,31 +7,43 @@
 
 from mosq_test_helper import *
 
-rc = 1
-mid = 19
-keepalive = 60
-connect_packet = mosq_test.gen_connect("pub-qos1-test", keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=0)
+def do_test(proto_ver):
+    rc = 1
+    mid = 19
+    keepalive = 60
+    connect_packet = mosq_test.gen_connect("pub-qos1-test", keepalive=keepalive, proto_ver=proto_ver)
+    connack_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
 
-publish_packet = mosq_test.gen_publish("/"*65535, qos=1, mid=mid, payload="message")
-puback_packet = mosq_test.gen_puback(mid)
+    publish_packet = mosq_test.gen_publish("/"*65535, qos=1, mid=mid, payload="message", proto_ver=proto_ver)
+    puback_packet = mosq_test.gen_puback(mid, proto_ver=proto_ver)
 
-port = mosq_test.get_port()
-broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
+    port = mosq_test.get_port()
+    broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
-try:
-    sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-    mosq_test.do_send_receive(sock, publish_packet, b"", "puback")
+    try:
+        sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
+        if proto_ver == 4:
+            mosq_test.do_send_receive(sock, publish_packet, b"", "puback")
+        else:
+            disconnect_packet = mosq_test.gen_disconnect(proto_ver=5, reason_code=mqtt5_rc.MQTT_RC_PROTOCOL_ERROR)
+            mosq_test.do_send_receive(sock, publish_packet, disconnect_packet, "puback")
 
-    rc = 0
+        rc = 0
 
-    sock.close()
-finally:
-    broker.terminate()
-    broker.wait()
-    (stdo, stde) = broker.communicate()
-    if rc:
-        print(stde.decode('utf-8'))
+        sock.close()
+    except mosq_test.TestError:
+        pass
+    finally:
+        broker.terminate()
+        broker.wait()
+        (stdo, stde) = broker.communicate()
+        if rc:
+            print(stde.decode('utf-8'))
+            print("proto_ver=%d" % (proto_ver))
+            exit(rc)
 
-exit(rc)
+
+do_test(proto_ver=4)
+do_test(proto_ver=5)
+exit(0)
 

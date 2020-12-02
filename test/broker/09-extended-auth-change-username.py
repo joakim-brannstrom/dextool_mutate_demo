@@ -8,6 +8,7 @@ def write_config(filename, acl_file, port, per_listener):
     with open(filename, 'w') as f:
         f.write("per_listener_settings %s\n" % (per_listener))
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("acl_file %s\n" % (acl_file))
         f.write("auth_plugin c/auth_plugin_extended_single.so\n")
 
@@ -61,13 +62,15 @@ def do_test(per_listener):
 
         sock = mosq_test.do_client_connect(connect2_packet, connack2_packet, timeout=20, port=port)
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback2")
-        mosq_test.do_send_receive(sock, publish2s_packet, puback2s_packet, "puback2")
-        if mosq_test.expect_packet(sock, "publish2", publish2r_packet):
-            mosq_test.do_ping(sock)
-            rc = 0
+        sock.send(publish2s_packet)
+        mosq_test.receive_unordered(sock, puback2s_packet, publish2r_packet, "puback2/publish2")
+        mosq_test.do_ping(sock)
+        rc = 0
 
         sock.close()
 
+    except mosq_test.TestError:
+        pass
     finally:
         os.remove(conf_file)
         os.remove(acl_file)

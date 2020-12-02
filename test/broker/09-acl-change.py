@@ -9,6 +9,7 @@ def write_config(filename, port, per_listener):
     with open(filename, 'w') as f:
         f.write("per_listener_settings %s\n" % (per_listener))
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("acl_file %s\n" % (filename.replace('.conf', '.acl')))
 
 def write_acl(filename, en):
@@ -98,8 +99,8 @@ try:
     sock.settimeout(10)
     mosq_test.expect_packet(sock, "publish1r", publish1r_packet)
     # We don't expect messages to topic/two any more, so we don't expect the queued one
-    mosq_test.do_send_receive(sock, publish3s_packet, puback3s_packet, "puback3")
-    mosq_test.expect_packet(sock, "publish3r", publish3r_packet)
+    sock.send(publish3s_packet)
+    mosq_test.receive_unordered(sock, puback3s_packet, publish3r_packet, "puback3/publish3r")
 
     # Send this, don't expect it to succeed
     mosq_test.do_send_receive(sock, publish4s_packet, puback4s_packet, "puback4")
@@ -110,6 +111,8 @@ try:
     sock.close()
     rc = 0
 
+except mosq_test.TestError:
+    pass
 finally:
     os.remove(conf_file)
     os.remove(acl_file)

@@ -2,14 +2,16 @@
 Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
  
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -38,7 +40,7 @@ Contributors:
 #include "util_mosq.h"
 
 
-int persist__chunk_header_read_v56(FILE *db_fptr, int *chunk, int *length)
+int persist__chunk_header_read_v56(FILE *db_fptr, uint32_t *chunk, uint32_t *length)
 {
 	size_t rlen;
 	struct PF_header header;
@@ -64,7 +66,7 @@ int persist__chunk_cfg_read_v56(FILE *db_fptr, struct PF_cfg *chunk)
 }
 
 
-int persist__chunk_client_read_v56(FILE *db_fptr, struct P_client *chunk, int db_version)
+int persist__chunk_client_read_v56(FILE *db_fptr, struct P_client *chunk, uint32_t db_version)
 {
 	int rc;
 
@@ -84,8 +86,10 @@ int persist__chunk_client_read_v56(FILE *db_fptr, struct P_client *chunk, int db
 
 
 	rc = persist__read_string_len(db_fptr, &chunk->client_id, chunk->F.id_len);
-	if(rc || !chunk->client_id){
+	if(rc){
 		return 1;
+	}else if(chunk->client_id == NULL){
+		return -1;
 	}
 
 	if(chunk->F.username_len > 0){
@@ -113,7 +117,7 @@ int persist__chunk_client_msg_read_v56(FILE *db_fptr, struct P_client_msg *chunk
 	chunk->F.mid = ntohs(chunk->F.mid);
 	chunk->F.id_len = ntohs(chunk->F.id_len);
 
-	length -= (sizeof(struct PF_client_msg) + chunk->F.id_len);
+	length -= (uint32_t)(sizeof(struct PF_client_msg) + chunk->F.id_len);
 
 	rc = persist__read_string_len(db_fptr, &chunk->client_id, chunk->F.id_len);
 	if(rc){
@@ -162,7 +166,7 @@ int persist__chunk_msg_store_read_v56(FILE *db_fptr, struct P_msg_store *chunk, 
 	chunk->F.topic_len = ntohs(chunk->F.topic_len);
 	chunk->F.source_port = ntohs(chunk->F.source_port);
 
-	length -= (sizeof(struct PF_msg_store) + chunk->F.payloadlen + chunk->F.source_id_len + chunk->F.source_username_len + chunk->F.topic_len);
+	length -= (uint32_t)(sizeof(struct PF_msg_store) + chunk->F.payloadlen + chunk->F.source_id_len + chunk->F.source_username_len + chunk->F.topic_len);
 
 	if(chunk->F.source_id_len){
 		rc = persist__read_string_len(db_fptr, &chunk->source.id, chunk->F.source_id_len);
@@ -188,7 +192,8 @@ int persist__chunk_msg_store_read_v56(FILE *db_fptr, struct P_msg_store *chunk, 
 	}
 
 	if(chunk->F.payloadlen > 0){
-		if(UHPA_ALLOC(chunk->payload, chunk->F.payloadlen) == 0){
+		chunk->payload = mosquitto__malloc(chunk->F.payloadlen+1);
+		if(chunk->payload == NULL){
 			mosquitto__free(chunk->source.id);
 			mosquitto__free(chunk->source.username);
 			mosquitto__free(chunk->topic);
@@ -198,7 +203,9 @@ int persist__chunk_msg_store_read_v56(FILE *db_fptr, struct P_msg_store *chunk, 
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
-		read_e(db_fptr, UHPA_ACCESS(chunk->payload, chunk->F.payloadlen), chunk->F.payloadlen);
+		/* Ensure zero terminated regardless of contents */
+		((uint8_t *)chunk->payload)[chunk->F.payloadlen] = 0;
+		read_e(db_fptr, chunk->payload, chunk->F.payloadlen);
 	}
 
 	if(length > 0){

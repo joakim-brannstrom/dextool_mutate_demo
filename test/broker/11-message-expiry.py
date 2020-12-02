@@ -14,6 +14,7 @@ from mosq_test_helper import *
 def write_config(filename, port):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("persistence true\n")
         f.write("persistence_file mosquitto-%d.db\n" % (port))
 
@@ -24,8 +25,7 @@ write_config(conf_file, port)
 
 rc = 1
 keepalive = 60
-props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_SESSION_EXPIRY_INTERVAL, 60)
-connect_packet = mosq_test.gen_connect("subpub-qos0-test", keepalive=keepalive, proto_ver=5, clean_session=False, properties=props)
+connect_packet = mosq_test.gen_connect("subpub-qos0-test", keepalive=keepalive, proto_ver=5, clean_session=False, session_expiry=60)
 connack1_packet = mosq_test.gen_connack(rc=0, proto_ver=5)
 connack2_packet = mosq_test.gen_connack(rc=0, proto_ver=5, flags=1)
 
@@ -88,6 +88,8 @@ try:
             break
 
     sock.close()
+except mosq_test.TestError:
+    pass
 finally:
     os.remove(conf_file)
     broker.terminate()

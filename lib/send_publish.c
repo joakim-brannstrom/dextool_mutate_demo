@@ -2,13 +2,15 @@
 Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
 
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
+
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -37,7 +39,7 @@ Contributors:
 #include "send_mosq.h"
 
 
-int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup, const mosquitto_property *cmsg_props, const mosquitto_property *store_props, uint32_t expiry_interval)
+int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, uint8_t qos, bool retain, bool dup, const mosquitto_property *cmsg_props, const mosquitto_property *store_props, uint32_t expiry_interval)
 {
 #ifdef WITH_BROKER
 	size_t len;
@@ -58,16 +60,11 @@ int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint3
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 #endif
 
-#ifdef WITH_BROKER
-	if(mosq->listener && mosq->listener->mount_point){
-		len = strlen(mosq->listener->mount_point);
-		if(len < strlen(topic)){
-			topic += len;
-		}else{
-			/* Invalid topic string. Should never happen, but silently swallow the message anyway. */
-			return MOSQ_ERR_SUCCESS;
-		}
+	if(!mosq->retain_available){
+		retain = false;
 	}
+
+#ifdef WITH_BROKER
 #ifdef WITH_BRIDGE
 	if(mosq->bridge && mosq->bridge->topics && mosq->bridge->topic_remapping){
 		for(i=0; i<mosq->bridge->topic_count; i++){
@@ -128,18 +125,18 @@ int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint3
 }
 
 
-int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup, const mosquitto_property *cmsg_props, const mosquitto_property *store_props, uint32_t expiry_interval)
+int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, uint8_t qos, bool retain, bool dup, const mosquitto_property *cmsg_props, const mosquitto_property *store_props, uint32_t expiry_interval)
 {
 	struct mosquitto__packet *packet = NULL;
-	int packetlen;
-	int proplen = 0, varbytes;
+	unsigned int packetlen;
+	unsigned int proplen = 0, varbytes;
 	int rc;
 	mosquitto_property expiry_prop;
 
 	assert(mosq);
 
 	if(topic){
-		packetlen = 2+strlen(topic) + payloadlen;
+		packetlen = 2+(unsigned int)strlen(topic) + payloadlen;
 	}else{
 		packetlen = 2 + payloadlen;
 	}
@@ -180,7 +177,7 @@ int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, 
 	if(!packet) return MOSQ_ERR_NOMEM;
 
 	packet->mid = mid;
-	packet->command = CMD_PUBLISH | ((dup&0x1)<<3) | (qos<<1) | retain;
+	packet->command = (uint8_t)(CMD_PUBLISH | (uint8_t)((dup&0x1)<<3) | (uint8_t)(qos<<1) | retain);
 	packet->remaining_length = packetlen;
 	rc = packet__alloc(packet);
 	if(rc){
@@ -189,7 +186,7 @@ int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, 
 	}
 	/* Variable header (topic string) */
 	if(topic){
-		packet__write_string(packet, topic, strlen(topic));
+		packet__write_string(packet, topic, (uint16_t)strlen(topic));
 	}else{
 		packet__write_uint16(packet, 0);
 	}

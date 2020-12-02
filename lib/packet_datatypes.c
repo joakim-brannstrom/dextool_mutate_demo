@@ -2,13 +2,15 @@
 Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
 
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
+
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -88,7 +90,7 @@ void packet__write_bytes(struct mosquitto__packet *packet, const void *bytes, ui
 }
 
 
-int packet__read_binary(struct mosquitto__packet *packet, uint8_t **data, int *length)
+int packet__read_binary(struct mosquitto__packet *packet, uint8_t **data, uint16_t *length)
 {
 	uint16_t slen;
 	int rc;
@@ -105,7 +107,7 @@ int packet__read_binary(struct mosquitto__packet *packet, uint8_t **data, int *l
 
 	if(packet->pos+slen > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
 
-	*data = mosquitto__malloc(slen+1);
+	*data = mosquitto__malloc(slen+1U);
 	if(*data){
 		memcpy(*data, &(packet->payload[packet->pos]), slen);
 		((uint8_t *)(*data))[slen] = '\0';
@@ -119,7 +121,7 @@ int packet__read_binary(struct mosquitto__packet *packet, uint8_t **data, int *l
 }
 
 
-int packet__read_string(struct mosquitto__packet *packet, char **str, int *length)
+int packet__read_string(struct mosquitto__packet *packet, char **str, uint16_t *length)
 {
 	int rc;
 
@@ -130,7 +132,7 @@ int packet__read_string(struct mosquitto__packet *packet, char **str, int *lengt
 	if(mosquitto_validate_utf8(*str, *length)){
 		mosquitto__free(*str);
 		*str = NULL;
-		*length = -1;
+		*length = 0;
 		return MOSQ_ERR_MALFORMED_UTF8;
 	}
 
@@ -158,7 +160,7 @@ int packet__read_uint16(struct mosquitto__packet *packet, uint16_t *word)
 	lsb = packet->payload[packet->pos];
 	packet->pos++;
 
-	*word = (msb<<8) + lsb;
+	*word = (uint16_t)((msb<<8) + lsb);
 
 	return MOSQ_ERR_SUCCESS;
 }
@@ -192,19 +194,19 @@ int packet__read_uint32(struct mosquitto__packet *packet, uint32_t *word)
 
 void packet__write_uint32(struct mosquitto__packet *packet, uint32_t word)
 {
-	packet__write_byte(packet, (word & 0xFF000000) >> 24);
-	packet__write_byte(packet, (word & 0x00FF0000) >> 16);
-	packet__write_byte(packet, (word & 0x0000FF00) >> 8);
-	packet__write_byte(packet, (word & 0x000000FF));
+	packet__write_byte(packet, (uint8_t)((word & 0xFF000000) >> 24));
+	packet__write_byte(packet, (uint8_t)((word & 0x00FF0000) >> 16));
+	packet__write_byte(packet, (uint8_t)((word & 0x0000FF00) >> 8));
+	packet__write_byte(packet, (uint8_t)((word & 0x000000FF)));
 }
 
 
-int packet__read_varint(struct mosquitto__packet *packet, int32_t *word, int8_t *bytes)
+int packet__read_varint(struct mosquitto__packet *packet, uint32_t *word, uint8_t *bytes)
 {
 	int i;
 	uint8_t byte;
-	int remaining_mult = 1;
-	int32_t lword = 0;
+	unsigned int remaining_mult = 1;
+	uint32_t lword = 0;
 	uint8_t lbytes = 0;
 
 	for(i=0; i<4; i++){
@@ -232,13 +234,13 @@ int packet__read_varint(struct mosquitto__packet *packet, int32_t *word, int8_t 
 }
 
 
-int packet__write_varint(struct mosquitto__packet *packet, int32_t word)
+int packet__write_varint(struct mosquitto__packet *packet, uint32_t word)
 {
 	uint8_t byte;
 	int count = 0;
 
 	do{
-		byte = word % 128;
+		byte = (uint8_t)(word % 128);
 		word = word / 128;
 		/* If there are more digits to encode, set the top bit of this digit */
 		if(word > 0){
@@ -255,7 +257,7 @@ int packet__write_varint(struct mosquitto__packet *packet, int32_t word)
 }
 
 
-int packet__varint_bytes(int32_t word)
+unsigned int packet__varint_bytes(uint32_t word)
 {
 	if(word < 128){
 		return 1;

@@ -29,6 +29,8 @@ def do_test(proto_ver):
         rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()
@@ -39,3 +41,4 @@ def do_test(proto_ver):
 
 do_test(4)
 do_test(5)
+exit(0)

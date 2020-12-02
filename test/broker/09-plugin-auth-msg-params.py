@@ -36,12 +36,14 @@ broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=Tr
 try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20, port=port)
     mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
-    mosq_test.do_send_receive(sock, publish_packet, puback_packet, "puback")
+    sock.send(publish_packet)
+    mosq_test.receive_unordered(sock, puback_packet, publish_packet_recv, "puback/publish_receive")
 
-    if mosq_test.expect_packet(sock, "publish receive", publish_packet_recv):
-        rc = 0
+    rc = 0
 
     sock.close()
+except mosq_test.TestError:
+    pass
 finally:
     os.remove(conf_file)
     broker.terminate()

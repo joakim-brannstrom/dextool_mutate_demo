@@ -2,14 +2,16 @@
 Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
  
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -22,6 +24,10 @@ Contributors:
 #ifndef WIN32
 #include <sys/time.h>
 #include <strings.h>
+#endif
+
+#if defined(__APPLE__)
+#  include <mach/mach_time.h>
 #endif
 
 #include "logging_mosq.h"
@@ -52,12 +58,12 @@ int mosquitto_lib_init(void)
 
 	if (init_refcount == 0) {
 #ifdef WIN32
-		srand(GetTickCount64());
+		srand((unsigned int)GetTickCount64());
 #elif _POSIX_TIMERS>0 && defined(_POSIX_MONOTONIC_CLOCK)
 		struct timespec tp;
 
 		clock_gettime(CLOCK_MONOTONIC, &tp);
-		srand(tp.tv_nsec);
+		srand((unsigned int)tp.tv_nsec);
 #elif defined(__APPLE__)
 		uint64_t ticks;
 
@@ -110,13 +116,11 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_start, void *userdata
 	mosq = (struct mosquitto *)mosquitto__calloc(1, sizeof(struct mosquitto));
 	if(mosq){
 		mosq->sock = INVALID_SOCKET;
-		if(net__socketpair(&mosq->sockpairR, &mosq->sockpairW)){
-			log__printf(mosq, MOSQ_LOG_WARNING,
-					"Warning: Unable to open socket pair, outgoing publish commands may be delayed.");
-		}
 #ifdef WITH_THREADING
 		mosq->thread_id = pthread_self();
 #endif
+		mosq->sockpairR = INVALID_SOCKET;
+		mosq->sockpairW = INVALID_SOCKET;
 		rc = mosquitto_reinitialise(mosq, id, clean_start, userdata);
 		if(rc){
 			mosquitto_destroy(mosq);
@@ -157,7 +161,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_st
 		if(STREMPTY(id)){
 			return MOSQ_ERR_INVAL;
 		}
-		if(mosquitto_validate_utf8(id, strlen(id))){
+		if(mosquitto_validate_utf8(id, (int)strlen(id))){
 			return MOSQ_ERR_MALFORMED_UTF8;
 		}
 		mosq->id = mosquitto__strdup(id);
@@ -171,7 +175,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_st
 	mosq->ping_t = 0;
 	mosq->last_mid = 0;
 	mosq->state = mosq_cs_new;
-	mosq->maximum_qos = 2;
+	mosq->max_qos = 2;
 	mosq->msgs_in.inflight_maximum = 20;
 	mosq->msgs_out.inflight_maximum = 20;
 	mosq->msgs_in.inflight_quota = 20;
@@ -222,7 +226,6 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_st
 
 void mosquitto__destroy(struct mosquitto *mosq)
 {
-	struct mosquitto__packet *packet;
 	if(!mosq) return;
 
 #ifdef WITH_THREADING
@@ -291,22 +294,9 @@ void mosquitto__destroy(struct mosquitto *mosq)
 	mosquitto__free(mosq->bind_address);
 	mosq->bind_address = NULL;
 
-	/* Out packet cleanup */
-	if(mosq->out_packet && !mosq->current_out_packet){
-		mosq->current_out_packet = mosq->out_packet;
-		mosq->out_packet = mosq->out_packet->next;
-	}
-	while(mosq->current_out_packet){
-		packet = mosq->current_out_packet;
-		/* Free data and reset values */
-		mosq->current_out_packet = mosq->out_packet;
-		if(mosq->out_packet){
-			mosq->out_packet = mosq->out_packet->next;
-		}
+	mosquitto_property_free_all(&mosq->connect_properties);
 
-		packet__cleanup(packet);
-		mosquitto__free(packet);
-	}
+	packet__cleanup_all_no_locks(mosq);
 
 	packet__cleanup(&mosq->in_packet);
 	if(mosq->sockpairR != INVALID_SOCKET){
@@ -353,225 +343,14 @@ bool mosquitto_want_write(struct mosquitto *mosq)
 }
 
 
-const char *mosquitto_strerror(int mosq_errno)
-{
-	switch(mosq_errno){
-		case MOSQ_ERR_AUTH_CONTINUE:
-			return "Continue with authentication.";
-		case MOSQ_ERR_NO_SUBSCRIBERS:
-			return "No subscribers.";
-		case MOSQ_ERR_SUB_EXISTS:
-			return "Subscription already exists.";
-		case MOSQ_ERR_CONN_PENDING:
-			return "Connection pending.";
-		case MOSQ_ERR_SUCCESS:
-			return "No error.";
-		case MOSQ_ERR_NOMEM:
-			return "Out of memory.";
-		case MOSQ_ERR_PROTOCOL:
-			return "A network protocol error occurred when communicating with the broker.";
-		case MOSQ_ERR_INVAL:
-			return "Invalid function arguments provided.";
-		case MOSQ_ERR_NO_CONN:
-			return "The client is not currently connected.";
-		case MOSQ_ERR_CONN_REFUSED:
-			return "The connection was refused.";
-		case MOSQ_ERR_NOT_FOUND:
-			return "Message not found (internal error).";
-		case MOSQ_ERR_CONN_LOST:
-			return "The connection was lost.";
-		case MOSQ_ERR_TLS:
-			return "A TLS error occurred.";
-		case MOSQ_ERR_PAYLOAD_SIZE:
-			return "Payload too large.";
-		case MOSQ_ERR_NOT_SUPPORTED:
-			return "This feature is not supported.";
-		case MOSQ_ERR_AUTH:
-			return "Authorisation failed.";
-		case MOSQ_ERR_ACL_DENIED:
-			return "Access denied by ACL.";
-		case MOSQ_ERR_UNKNOWN:
-			return "Unknown error.";
-		case MOSQ_ERR_ERRNO:
-			return strerror(errno);
-		case MOSQ_ERR_EAI:
-			return "Lookup error.";
-		case MOSQ_ERR_PROXY:
-			return "Proxy error.";
-		case MOSQ_ERR_MALFORMED_UTF8:
-			return "Malformed UTF-8";
-		case MOSQ_ERR_DUPLICATE_PROPERTY:
-			return "Duplicate property in property list";
-		case MOSQ_ERR_TLS_HANDSHAKE:
-			return "TLS handshake failed.";
-		case MOSQ_ERR_QOS_NOT_SUPPORTED:
-			return "Requested QoS not supported on server.";
-		case MOSQ_ERR_OVERSIZE_PACKET:
-			return "Packet larger than supported by the server.";
-		case MOSQ_ERR_OCSP:
-			return "OCSP error.";
-		default:
-			return "Unknown error.";
-	}
-}
-
-const char *mosquitto_connack_string(int connack_code)
-{
-	switch(connack_code){
-		case 0:
-			return "Connection Accepted.";
-		case 1:
-			return "Connection Refused: unacceptable protocol version.";
-		case 2:
-			return "Connection Refused: identifier rejected.";
-		case 3:
-			return "Connection Refused: broker unavailable.";
-		case 4:
-			return "Connection Refused: bad user name or password.";
-		case 5:
-			return "Connection Refused: not authorised.";
-		default:
-			return "Connection Refused: unknown reason.";
-	}
-}
-
-const char *mosquitto_reason_string(int reason_code)
-{
-	switch(reason_code){
-		case MQTT_RC_SUCCESS:
-			return "Success";
-		case MQTT_RC_GRANTED_QOS1:
-			return "Granted QoS 1";
-		case MQTT_RC_GRANTED_QOS2:
-			return "Granted QoS 2";
-		case MQTT_RC_DISCONNECT_WITH_WILL_MSG:
-			return "Disconnect with Will Message";
-		case MQTT_RC_NO_MATCHING_SUBSCRIBERS:
-			return "No matching subscribers";
-		case MQTT_RC_NO_SUBSCRIPTION_EXISTED:
-			return "No subscription existed";
-		case MQTT_RC_CONTINUE_AUTHENTICATION:
-			return "Continue authentication";
-		case MQTT_RC_REAUTHENTICATE:
-			return "Re-authenticate";
-
-		case MQTT_RC_UNSPECIFIED:
-			return "Unspecified error";
-		case MQTT_RC_MALFORMED_PACKET:
-			return "Malformed Packet";
-		case MQTT_RC_PROTOCOL_ERROR:
-			return "Protocol Error";
-		case MQTT_RC_IMPLEMENTATION_SPECIFIC:
-			return "Implementation specific error";
-		case MQTT_RC_UNSUPPORTED_PROTOCOL_VERSION:
-			return "Unsupported Protocol Version";
-		case MQTT_RC_CLIENTID_NOT_VALID:
-			return "Client Identifier not valid";
-		case MQTT_RC_BAD_USERNAME_OR_PASSWORD:
-			return "Bad User Name or Password";
-		case MQTT_RC_NOT_AUTHORIZED:
-			return "Not authorized";
-		case MQTT_RC_SERVER_UNAVAILABLE:
-			return "Server unavailable";
-		case MQTT_RC_SERVER_BUSY:
-			return "Server busy";
-		case MQTT_RC_BANNED:
-			return "Banned";
-		case MQTT_RC_SERVER_SHUTTING_DOWN:
-			return "Server shutting down";
-		case MQTT_RC_BAD_AUTHENTICATION_METHOD:
-			return "Bad authentication method";
-		case MQTT_RC_KEEP_ALIVE_TIMEOUT:
-			return "Keep Alive timeout";
-		case MQTT_RC_SESSION_TAKEN_OVER:
-			return "Session taken over";
-		case MQTT_RC_TOPIC_FILTER_INVALID:
-			return "Topic Filter invalid";
-		case MQTT_RC_TOPIC_NAME_INVALID:
-			return "Topic Name invalid";
-		case MQTT_RC_PACKET_ID_IN_USE:
-			return "Packet Identifier in use";
-		case MQTT_RC_PACKET_ID_NOT_FOUND:
-			return "Packet Identifier not found";
-		case MQTT_RC_RECEIVE_MAXIMUM_EXCEEDED:
-			return "Receive Maximum exceeded";
-		case MQTT_RC_TOPIC_ALIAS_INVALID:
-			return "Topic Alias invalid";
-		case MQTT_RC_PACKET_TOO_LARGE:
-			return "Packet too large";
-		case MQTT_RC_MESSAGE_RATE_TOO_HIGH:
-			return "Message rate too high";
-		case MQTT_RC_QUOTA_EXCEEDED:
-			return "Quota exceeded";
-		case MQTT_RC_ADMINISTRATIVE_ACTION:
-			return "Administrative action";
-		case MQTT_RC_PAYLOAD_FORMAT_INVALID:
-			return "Payload format invalid";
-		case MQTT_RC_RETAIN_NOT_SUPPORTED:
-			return "Retain not supported";
-		case MQTT_RC_QOS_NOT_SUPPORTED:
-			return "QoS not supported";
-		case MQTT_RC_USE_ANOTHER_SERVER:
-			return "Use another server";
-		case MQTT_RC_SERVER_MOVED:
-			return "Server moved";
-		case MQTT_RC_SHARED_SUBS_NOT_SUPPORTED:
-			return "Shared Subscriptions not supported";
-		case MQTT_RC_CONNECTION_RATE_EXCEEDED:
-			return "Connection rate exceeded";
-		case MQTT_RC_MAXIMUM_CONNECT_TIME:
-			return "Maximum connect time";
-		case MQTT_RC_SUBSCRIPTION_IDS_NOT_SUPPORTED:
-			return "Subscription identifiers not supported";
-		case MQTT_RC_WILDCARD_SUBS_NOT_SUPPORTED:
-			return "Wildcard Subscriptions not supported";
-		default:
-			return "Unknown reason";
-	}
-}
-
-
-int mosquitto_string_to_command(const char *str, int *cmd)
-{
-	if(!strcasecmp(str, "connect")){
-		*cmd = CMD_CONNECT;
-	}else if(!strcasecmp(str, "connack")){
-		*cmd = CMD_CONNACK;
-	}else if(!strcasecmp(str, "publish")){
-		*cmd = CMD_PUBLISH;
-	}else if(!strcasecmp(str, "puback")){
-		*cmd = CMD_PUBACK;
-	}else if(!strcasecmp(str, "pubrec")){
-		*cmd = CMD_PUBREC;
-	}else if(!strcasecmp(str, "pubrel")){
-		*cmd = CMD_PUBREL;
-	}else if(!strcasecmp(str, "pubcomp")){
-		*cmd = CMD_PUBCOMP;
-	}else if(!strcasecmp(str, "subscribe")){
-		*cmd = CMD_SUBSCRIBE;
-	}else if(!strcasecmp(str, "unsubscribe")){
-		*cmd = CMD_UNSUBSCRIBE;
-	}else if(!strcasecmp(str, "disconnect")){
-		*cmd = CMD_DISCONNECT;
-	}else if(!strcasecmp(str, "auth")){
-		*cmd = CMD_AUTH;
-	}else if(!strcasecmp(str, "will")){
-		*cmd = CMD_WILL;
-	}else{
-		return MOSQ_ERR_INVAL;
-	}
-	return MOSQ_ERR_SUCCESS;
-}
-
-
 int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *count)
 {
-	int len;
-	int hier_count = 1;
-	int start, stop;
-	int hier;
-	int tlen;
-	int i, j;
+	size_t len;
+	size_t hier_count = 1;
+	size_t start, stop;
+	size_t hier;
+	size_t tlen;
+	size_t i, j;
 
 	if(!subtopic || !topics || !count) return MOSQ_ERR_INVAL;
 
@@ -615,7 +394,7 @@ int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *coun
 		}
 	}
 
-	*count = hier_count;
+	*count = (int)hier_count;
 
 	return MOSQ_ERR_SUCCESS;
 }

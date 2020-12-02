@@ -2,14 +2,16 @@
 Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
  
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -66,7 +68,7 @@ int persist__chunk_client_write_v6(FILE *db_fptr, struct P_client *chunk)
 	chunk->F.listener_port = htons(chunk->F.listener_port);
 
 	header.chunk = htonl(DB_CHUNK_CLIENT);
-	header.length = htonl(sizeof(struct PF_client)+id_len+username_len);
+	header.length = htonl((uint32_t)sizeof(struct PF_client)+id_len+username_len);
 
 	write_e(db_fptr, &header, sizeof(struct PF_header));
 	write_e(db_fptr, &chunk->F, sizeof(struct PF_client));
@@ -93,15 +95,14 @@ int persist__chunk_client_msg_write_v6(FILE *db_fptr, struct P_client_msg *chunk
 
 	memset(&prop_packet, 0, sizeof(struct mosquitto__packet));
 	if(chunk->properties){
-		proplen = property__get_length_all(chunk->properties);
-		proplen += packet__varint_bytes(proplen);
+		proplen += property__get_remaining_length(chunk->properties);
 	}
 
 	chunk->F.mid = htons(chunk->F.mid);
 	chunk->F.id_len = htons(chunk->F.id_len);
 
 	header.chunk = htonl(DB_CHUNK_CLIENT_MSG);
-	header.length = htonl(sizeof(struct PF_client_msg) + id_len + proplen);
+	header.length = htonl((uint32_t)sizeof(struct PF_client_msg) + id_len + proplen);
 
 	write_e(db_fptr, &header, sizeof(struct PF_header));
 	write_e(db_fptr, &chunk->F, sizeof(struct PF_client_msg));
@@ -145,8 +146,7 @@ int persist__chunk_message_store_write_v6(FILE *db_fptr, struct P_msg_store *chu
 
 	memset(&prop_packet, 0, sizeof(struct mosquitto__packet));
 	if(chunk->properties){
-		proplen = property__get_length_all(chunk->properties);
-		proplen += packet__varint_bytes(proplen);
+		proplen += property__get_remaining_length(chunk->properties);
 	}
 
 	chunk->F.payloadlen = htonl(chunk->F.payloadlen);
@@ -157,7 +157,7 @@ int persist__chunk_message_store_write_v6(FILE *db_fptr, struct P_msg_store *chu
 	chunk->F.source_port = htons(chunk->F.source_port);
 
 	header.chunk = htonl(DB_CHUNK_MSG_STORE);
-	header.length = htonl(sizeof(struct PF_msg_store) +
+	header.length = htonl((uint32_t)sizeof(struct PF_msg_store) +
 			topic_len + payloadlen +
 			source_id_len + source_username_len + proplen);
 
@@ -171,7 +171,7 @@ int persist__chunk_message_store_write_v6(FILE *db_fptr, struct P_msg_store *chu
 	}
 	write_e(db_fptr, chunk->topic, topic_len);
 	if(payloadlen){
-		write_e(db_fptr, UHPA_ACCESS(chunk->payload, payloadlen), (unsigned int)payloadlen);
+		write_e(db_fptr, chunk->payload, (unsigned int)payloadlen);
 	}
 	if(chunk->properties){
 		if(proplen > 0){
@@ -205,7 +205,7 @@ int persist__chunk_retain_write_v6(FILE *db_fptr, struct P_retain *chunk)
 	struct PF_header header;
 
 	header.chunk = htonl(DB_CHUNK_RETAIN);
-	header.length = htonl(sizeof(struct PF_retain));
+	header.length = htonl((uint32_t)sizeof(struct PF_retain));
 
 	write_e(db_fptr, &header, sizeof(struct PF_header));
 	write_e(db_fptr, &chunk->F, sizeof(struct PF_retain));
@@ -228,7 +228,7 @@ int persist__chunk_sub_write_v6(FILE *db_fptr, struct P_sub *chunk)
 	chunk->F.topic_len = htons(chunk->F.topic_len);
 
 	header.chunk = htonl(DB_CHUNK_SUB);
-	header.length = htonl(sizeof(struct PF_sub) +
+	header.length = htonl((uint32_t)sizeof(struct PF_sub) +
 			id_len + topic_len);
 
 	write_e(db_fptr, &header, sizeof(struct PF_header));

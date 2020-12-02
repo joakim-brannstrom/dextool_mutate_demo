@@ -2,13 +2,15 @@
 Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
 
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
+
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -40,23 +42,26 @@ int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const cha
 	uint16_t local_mid;
 	int rc;
 	int i;
-	int proplen, varbytes;
+	size_t tlen;
 
 	assert(mosq);
 	assert(topic);
 
+	packetlen = 2;
+	if(mosq->protocol == mosq_p_mqtt5){
+		packetlen += property__get_remaining_length(properties);
+	}
+	for(i=0; i<topic_count; i++){
+		tlen = strlen(topic[i]);
+		if(tlen > UINT16_MAX){
+			return MOSQ_ERR_INVAL;
+		}
+		packetlen += 2U+(uint16_t)tlen + 1U;
+	}
+
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
-	packetlen = 2;
-	if(mosq->protocol == mosq_p_mqtt5){
-		proplen = property__get_length_all(properties);
-		varbytes = packet__varint_bytes(proplen);
-		packetlen += proplen + varbytes;
-	}
-	for(i=0; i<topic_count; i++){
-		packetlen += 2+strlen(topic[i]) + 1;
-	}
 
 	packet->command = CMD_SUBSCRIBE | (1<<1);
 	packet->remaining_length = packetlen;
@@ -77,8 +82,8 @@ int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const cha
 
 	/* Payload */
 	for(i=0; i<topic_count; i++){
-		packet__write_string(packet, topic[i], strlen(topic[i]));
-		packet__write_byte(packet, topic_qos);
+		packet__write_string(packet, topic[i], (uint16_t)strlen(topic[i]));
+		packet__write_byte(packet, (uint8_t)topic_qos);
 	}
 
 #ifdef WITH_BROKER

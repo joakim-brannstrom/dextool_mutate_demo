@@ -2,14 +2,16 @@
 Copyright (c) 2013-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
  
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -67,6 +69,10 @@ int mosquitto_connect_srv(struct mosquitto *mosq, const char *host, int keepaliv
 	int rc;
 	if(!mosq) return MOSQ_ERR_INVAL;
 
+	if(keepalive < 0 || keepalive > UINT16_MAX){
+		return MOSQ_ERR_INVAL;
+	}
+
 	rc = ares_init(&mosq->achan);
 	if(rc != ARES_SUCCESS){
 		return MOSQ_ERR_UNKNOWN;
@@ -94,7 +100,7 @@ int mosquitto_connect_srv(struct mosquitto *mosq, const char *host, int keepaliv
 
 	mosquitto__set_state(mosq, mosq_cs_connect_srv);
 
-	mosq->keepalive = keepalive;
+	mosq->keepalive = (uint16_t)keepalive;
 
 	return MOSQ_ERR_SUCCESS;
 

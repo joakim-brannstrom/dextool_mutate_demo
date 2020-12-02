@@ -8,7 +8,7 @@ from mosq_test_helper import *
 
 rc = 1
 
-keepalive = 10
+keepalive = 5
 props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_MAXIMUM_PACKET_SIZE, 2)
 connect_packet = mosq_test.gen_connect("test", proto_ver=5, keepalive=keepalive, properties=props)
 
@@ -19,6 +19,8 @@ try:
     sock = mosq_test.do_client_connect(connect_packet, b"", port=port)
     # Exception occurs if connack packet returned
     rc = 0
+except mosq_test.TestError:
+    pass
 finally:
     broker.terminate()
     broker.wait()

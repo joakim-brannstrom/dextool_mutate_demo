@@ -6,37 +6,47 @@
 
 from mosq_test_helper import *
 
-rc = 1
-keepalive = 600
-connect_packet = mosq_test.gen_connect("pub-qos2-timeout-test", keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=0)
 
-mid = 1926
-publish_packet = mosq_test.gen_publish("pub/qos2/test", qos=2, mid=mid, payload="timeout-message")
-pubrec_packet = mosq_test.gen_pubrec(mid)
-pubrel_packet = mosq_test.gen_pubrel(mid)
-pubcomp_packet = mosq_test.gen_pubcomp(mid)
+def do_test(port):
+    rc = 1
+    keepalive = 600
+    connect_packet = mosq_test.gen_connect("pub-qos2-timeout-test", keepalive=keepalive, proto_ver=proto_ver)
+    connack_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
 
-broker = mosq_test.start_broker(filename=os.path.basename(__file__))
+    mid = 1926
+    publish_packet = mosq_test.gen_publish("pub/qos2/test", qos=2, mid=mid, payload="timeout-message", proto_ver=proto_ver)
+    pubrec_packet = mosq_test.gen_pubrec(mid, proto_ver=proto_ver)
+    pubrel_packet = mosq_test.gen_pubrel(mid, proto_ver=proto_ver)
+    pubcomp_packet = mosq_test.gen_pubcomp(mid, proto_ver=proto_ver)
 
-try:
-    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
-    mosq_test.do_send_receive(sock, publish_packet, pubrec_packet, "pubrec")
+    port = mosq_test.get_port()
+    broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
-    # Timeout is 8 seconds which means the broker should repeat the PUBREC.
+    try:
+        sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+        mosq_test.do_send_receive(sock, publish_packet, pubrec_packet, "pubrec")
 
-    if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
+        # Timeout is 8 seconds which means the broker should repeat the PUBREC.
+
+        mosq_test.expect_packet(sock, "pubrec", pubrec_packet)
         mosq_test.do_send_receive(sock, pubrel_packet, pubcomp_packet, "pubcomp")
 
         rc = 0
 
-    sock.close()
-finally:
-    broker.terminate()
-    broker.wait()
-    (stdo, stde) = broker.communicate()
-    if rc:
-        print(stde.decode('utf-8'))
+        sock.close()
+    except mosq_test.TestError:
+        pass
+    finally:
+        broker.terminate()
+        broker.wait()
+        (stdo, stde) = broker.communicate()
+        if rc:
+            print(stde.decode('utf-8'))
+            print("proto_ver=%d" % (proto_ver))
+            exit(rc)
 
-exit(rc)
+
+do_test(proto_ver=4)
+do_test(proto_ver=5)
+exit(0)
 

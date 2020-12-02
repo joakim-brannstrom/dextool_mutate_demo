@@ -10,6 +10,7 @@ def write_config(filename, port, per_listener):
         f.write("per_listener_settings %s\n" % (per_listener))
         f.write("check_retain_source true\n")
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("acl_file %s\n" % (filename.replace('.conf', '.acl')))
         f.write("persistence true\n")
         f.write("persistence_file %s\n" % (filename.replace('.conf', '.db')))
@@ -27,7 +28,7 @@ def write_acl_2(filename, username):
         f.write('topic read test/topic\n')
 
 
-def do_test(per_listener, username):
+def do_test(proto_ver, per_listener, username):
     conf_file = os.path.basename(__file__).replace('.py', '.conf')
     write_config(conf_file, port, per_listener)
 
@@ -43,13 +44,13 @@ def do_test(per_listener, username):
 
     rc = 1
     keepalive = 60
-    connect_packet = mosq_test.gen_connect("retain-check", keepalive=keepalive, username=username)
-    connack_packet = mosq_test.gen_connack(rc=0)
+    connect_packet = mosq_test.gen_connect("retain-check", keepalive=keepalive, username=username, proto_ver=proto_ver)
+    connack_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
 
     mid = 1
-    publish_packet = mosq_test.gen_publish("test/topic", qos=0, payload="retained message", retain=True)
-    subscribe_packet = mosq_test.gen_subscribe(mid, "test/topic", 0)
-    suback_packet = mosq_test.gen_suback(mid, 0)
+    publish_packet = mosq_test.gen_publish("test/topic", qos=0, payload="retained message", retain=True, proto_ver=proto_ver)
+    subscribe_packet = mosq_test.gen_subscribe(mid, "test/topic", 0, proto_ver=proto_ver)
+    suback_packet = mosq_test.gen_suback(mid, 0, proto_ver=proto_ver)
 
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
@@ -61,23 +62,25 @@ def do_test(per_listener, username):
         sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback 1")
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            sock.close()
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        sock.close()
 
-            # Remove "write" ability
-            write_acl_2(acl_file, username)
-            broker.terminate()
-            broker.wait()
+        # Remove "write" ability
+        write_acl_2(acl_file, username)
+        broker.terminate()
+        broker.wait()
 
-            broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
+        broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
-            sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-            mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback 2")
-            # If we receive the retained message here, it is a failure.
-            mosq_test.do_ping(sock)
-            rc = 0
+        sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
+        mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback 2")
+        # If we receive the retained message here, it is a failure.
+        mosq_test.do_ping(sock)
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()
@@ -91,7 +94,12 @@ def do_test(per_listener, username):
 
 
 port = mosq_test.get_port()
-do_test("true", username=None)
-do_test("true", username="test")
-do_test("false", username=None)
-do_test("false", username="test")
+do_test(proto_ver=4, per_listener="true", username=None)
+do_test(proto_ver=4, per_listener="true", username="test")
+do_test(proto_ver=4, per_listener="false", username=None)
+do_test(proto_ver=4, per_listener="false", username="test")
+
+do_test(proto_ver=5, per_listener="true", username=None)
+do_test(proto_ver=5, per_listener="true", username="test")
+do_test(proto_ver=5, per_listener="false", username=None)
+do_test(proto_ver=5, per_listener="false", username="test")

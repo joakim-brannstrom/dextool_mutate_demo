@@ -12,12 +12,7 @@ def do_test(proto_ver, clean_session):
     connect1_packet = mosq_test.gen_connect("will-qos0-test", keepalive=keepalive, proto_ver=proto_ver)
     connack1_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
 
-    if proto_ver == 5:
-        props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_SESSION_EXPIRY_INTERVAL, 100)
-    else:
-        props = None
-
-    connect2_packet = mosq_test.gen_connect("test-helper", keepalive=keepalive, will_topic="will/qos0/test", will_payload=b"will-message", clean_session=clean_session, proto_ver=proto_ver, properties=props)
+    connect2_packet = mosq_test.gen_connect("test-helper", keepalive=keepalive, will_topic="will/qos0/test", will_payload=b"will-message", clean_session=clean_session, proto_ver=proto_ver, session_expiry=60)
     connack2_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
 
     subscribe_packet = mosq_test.gen_subscribe(mid, "will/qos0/test", 0, proto_ver=proto_ver)
@@ -35,12 +30,12 @@ def do_test(proto_ver, clean_session):
         sock2 = mosq_test.do_client_connect(connect2_packet, connack2_packet, port=port, timeout=5)
         sock2.close()
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            rc = 0
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        rc = 0
 
         sock.close()
-    except Exception as e:
-        print(e)
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

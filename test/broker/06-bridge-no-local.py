@@ -5,8 +5,6 @@
 
 from mosq_test_helper import *
 
-port = mosq_test.get_port()
-
 def do_test(proto_ver_connect, proto_ver_msgs, sub_opts):
     rc = 1
     keepalive = 60
@@ -32,6 +30,8 @@ def do_test(proto_ver_connect, proto_ver_msgs, sub_opts):
         rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

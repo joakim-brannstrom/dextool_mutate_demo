@@ -2,13 +2,15 @@
 Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
 
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
+
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -40,13 +42,13 @@ Contributors:
 static char nibble_to_hex(uint8_t value)
 {
 	if(value < 0x0A){
-		return '0'+value;
+		return (char)('0'+value);
 	}else{
-		return 'A'+value-0x0A;
+		return (char)(65 /*'A'*/ +value-10);
 	}
 }
 
-static char *client_id_gen(int *idlen, const char *auto_id_prefix, int auto_id_prefix_len)
+static char *client_id_gen(uint16_t *idlen, const char *auto_id_prefix, uint16_t auto_id_prefix_len)
 {
 	char *client_id;
 	uint8_t rnd[16];
@@ -55,9 +57,9 @@ static char *client_id_gen(int *idlen, const char *auto_id_prefix, int auto_id_p
 
 	if(util__random_bytes(rnd, 16)) return NULL;
 
-	*idlen = 36 + auto_id_prefix_len;
+	*idlen = (uint16_t)(auto_id_prefix_len + 36);
 
-	client_id = (char *)mosquitto__calloc((*idlen) + 1, sizeof(char));
+	client_id = (char *)mosquitto__calloc((size_t)(*idlen) + 1, sizeof(char));
 	if(!client_id){
 		return NULL;
 	}
@@ -81,18 +83,18 @@ static char *client_id_gen(int *idlen, const char *auto_id_prefix, int auto_id_p
 
 /* Remove any queued messages that are no longer allowed through ACL,
  * assuming a possible change of username. */
-void connection_check_acl(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_client_msg **head)
+void connection_check_acl(struct mosquitto *context, struct mosquitto_client_msg **head)
 {
 	struct mosquitto_client_msg *msg_tail, *tmp;
 
 	DL_FOREACH_SAFE((*head), msg_tail, tmp){
 		if(msg_tail->direction == mosq_md_out){
-			if(mosquitto_acl_check(db, context, msg_tail->store->topic,
-								   msg_tail->store->payloadlen, UHPA_ACCESS(msg_tail->store->payload, msg_tail->store->payloadlen),
+			if(mosquitto_acl_check(context, msg_tail->store->topic,
+								   msg_tail->store->payloadlen, msg_tail->store->payload,
 								   msg_tail->store->qos, msg_tail->store->retain, MOSQ_ACL_READ) != MOSQ_ERR_SUCCESS){
 
 				DL_DELETE((*head), msg_tail);
-				db__msg_store_ref_dec(db, &msg_tail->store);
+				db__msg_store_ref_dec(&msg_tail->store);
 				mosquitto_property_free_all(&msg_tail->properties);
 				mosquitto__free(msg_tail);
 			}
@@ -101,7 +103,7 @@ void connection_check_acl(struct mosquitto_db *db, struct mosquitto *context, st
 }
 
 
-int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, void *auth_data_out, uint16_t auth_data_out_len)
+int connect__on_authorised(struct mosquitto *context, void *auth_data_out, uint16_t auth_data_out_len)
 {
 	struct mosquitto *found_context;
 	struct mosquitto__subleaf *leaf;
@@ -111,7 +113,7 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 	int rc;
 
 	/* Find if this client already has an entry. This must be done *after* any security checks. */
-	HASH_FIND(hh_id, db->contexts_by_id, context->id, strlen(context->id), found_context);
+	HASH_FIND(hh_id, db.contexts_by_id, context->id, strlen(context->id), found_context);
 	if(found_context){
 		/* Found a matching client */
 		if(found_context->sock == INVALID_SOCKET){
@@ -120,7 +122,7 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 		}else{
 			/* Client is already connected, disconnect old version. This is
 			 * done in context__cleanup() below. */
-			if(db->config->connection_messages == true){
+			if(db.config->connection_messages == true){
 				log__printf(NULL, MOSQ_LOG_ERR, "Client %s already connected, closing old connection.", context->id);
 			}
 		}
@@ -139,7 +141,7 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 				memset(&found_context->msgs_in, 0, sizeof(struct mosquitto_msg_data));
 				memset(&found_context->msgs_out, 0, sizeof(struct mosquitto_msg_data));
 
-				db__message_reconnect_reset(db, context);
+				db__message_reconnect_reset(context);
 			}
 			context->subs = found_context->subs;
 			found_context->subs = NULL;
@@ -161,7 +163,7 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 		}
 
 		if(context->clean_start == true){
-			sub__clean_session(db, found_context);
+			sub__clean_session(found_context);
 		}
 		session_expiry__remove(found_context);
 		will_delay__remove(found_context);
@@ -170,31 +172,31 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 		found_context->clean_start = true;
 		found_context->session_expiry_interval = 0;
 		mosquitto__set_state(found_context, mosq_cs_duplicate);
-		do_disconnect(db, found_context, MOSQ_ERR_SUCCESS);
+		do_disconnect(found_context, MOSQ_ERR_SUCCESS);
 	}
 
-	rc = acl__find_acls(db, context);
+	rc = acl__find_acls(context);
 	if(rc){
 		free(auth_data_out);
 		return rc;
 	}
 
-	if(db->config->connection_messages == true){
+	if(db.config->connection_messages == true){
 		if(context->is_bridge){
 			if(context->username){
-				log__printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (p%d, c%d, k%d, u'%s').",
-						context->address, context->id, context->protocol, context->clean_start, context->keepalive, context->username);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s:%d as %s (p%d, c%d, k%d, u'%s').",
+						context->address, context->remote_port, context->id, context->protocol, context->clean_start, context->keepalive, context->username);
 			}else{
-				log__printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (p%d, c%d, k%d).",
-						context->address, context->id, context->protocol, context->clean_start, context->keepalive);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s:%d as %s (p%d, c%d, k%d).",
+						context->address, context->remote_port, context->id, context->protocol, context->clean_start, context->keepalive);
 			}
 		}else{
 			if(context->username){
-				log__printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (p%d, c%d, k%d, u'%s').",
-						context->address, context->id, context->protocol, context->clean_start, context->keepalive, context->username);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s:%d as %s (p%d, c%d, k%d, u'%s').",
+						context->address, context->remote_port, context->id, context->protocol, context->clean_start, context->keepalive, context->username);
 			}else{
-				log__printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (p%d, c%d, k%d).",
-						context->address, context->id, context->protocol, context->clean_start, context->keepalive);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s:%d as %s (p%d, c%d, k%d).",
+						context->address, context->remote_port, context->id, context->protocol, context->clean_start, context->keepalive);
 			}
 		}
 
@@ -213,35 +215,29 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 	context->ping_t = 0;
 	context->is_dropping = false;
 
-	connection_check_acl(db, context, &context->msgs_in.inflight);
-	connection_check_acl(db, context, &context->msgs_in.queued);
-	connection_check_acl(db, context, &context->msgs_out.inflight);
-	connection_check_acl(db, context, &context->msgs_out.queued);
+	connection_check_acl(context, &context->msgs_in.inflight);
+	connection_check_acl(context, &context->msgs_in.queued);
+	connection_check_acl(context, &context->msgs_out.inflight);
+	connection_check_acl(context, &context->msgs_out.queued);
 
-	HASH_ADD_KEYPTR(hh_id, db->contexts_by_id, context->id, strlen(context->id), context);
+	HASH_ADD_KEYPTR(hh_id, db.contexts_by_id, context->id, strlen(context->id), context);
 
 #ifdef WITH_PERSISTENCE
 	if(!context->clean_start){
-		db->persistence_changes++;
+		db.persistence_changes++;
 	}
 #endif
-	context->maximum_qos = context->listener->maximum_qos;
+	context->max_qos = context->listener->max_qos;
 
 	if(context->protocol == mosq_p_mqtt5){
-		if(context->maximum_qos != 2){
-			if(mosquitto_property_add_byte(&connack_props, MQTT_PROP_MAXIMUM_QOS, context->maximum_qos)){
-				rc = MOSQ_ERR_NOMEM;
-				goto error;
-			}
-		}
 		if(context->listener->max_topic_alias > 0){
 			if(mosquitto_property_add_int16(&connack_props, MQTT_PROP_TOPIC_ALIAS_MAXIMUM, context->listener->max_topic_alias)){
 				rc = MOSQ_ERR_NOMEM;
 				goto error;
 			}
 		}
-		if(context->keepalive > db->config->max_keepalive){
-			context->keepalive = db->config->max_keepalive;
+		if(context->keepalive > db.config->max_keepalive){
+			context->keepalive = db.config->max_keepalive;
 			if(mosquitto_property_add_int16(&connack_props, MQTT_PROP_SERVER_KEEP_ALIVE, context->keepalive)){
 				rc = MOSQ_ERR_NOMEM;
 				goto error;
@@ -268,10 +264,17 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 		}
 	}
 	free(auth_data_out);
+	auth_data_out = NULL;
+
+	keepalive__add(context);
 
 	mosquitto__set_state(context, mosq_cs_active);
-	rc = send__connack(db, context, connect_ack, CONNACK_ACCEPTED, connack_props);
+	rc = send__connack(context, connect_ack, CONNACK_ACCEPTED, connack_props);
 	mosquitto_property_free_all(&connack_props);
+	if(rc) return rc;
+	rc = db__message_write_queued_out(context);
+	if(rc) return rc;
+	rc = db__message_write_inflight_out_all(context);
 	return rc;
 error:
 	free(auth_data_out);
@@ -283,7 +286,8 @@ error:
 static int will__read(struct mosquitto *context, struct mosquitto_message_all **will, uint8_t will_qos, int will_retain)
 {
 	int rc = MOSQ_ERR_SUCCESS;
-	int slen;
+	size_t slen;
+	uint16_t tlen;
 	struct mosquitto_message_all *will_struct = NULL;
 	char *will_topic_mount = NULL;
 	uint16_t payloadlen;
@@ -302,9 +306,9 @@ static int will__read(struct mosquitto *context, struct mosquitto_message_all **
 		mosquitto_property_free_all(&properties);
 		if(rc) goto error_cleanup;
 	}
-	rc = packet__read_string(&context->in_packet, &will_struct->msg.topic, &slen);
+	rc = packet__read_string(&context->in_packet, &will_struct->msg.topic, &tlen);
 	if(rc) goto error_cleanup;
-	if(!slen){
+	if(!tlen){
 		rc = MOSQ_ERR_PROTOCOL;
 		goto error_cleanup;
 	}
@@ -332,13 +336,13 @@ static int will__read(struct mosquitto *context, struct mosquitto_message_all **
 
 	will_struct->msg.payloadlen = payloadlen;
 	if(will_struct->msg.payloadlen > 0){
-		will_struct->msg.payload = mosquitto__malloc(will_struct->msg.payloadlen);
+		will_struct->msg.payload = mosquitto__malloc((size_t)will_struct->msg.payloadlen);
 		if(!will_struct->msg.payload){
 			rc = MOSQ_ERR_NOMEM;
 			goto error_cleanup;
 		}
 
-		rc = packet__read_bytes(&context->in_packet, will_struct->msg.payload, will_struct->msg.payloadlen);
+		rc = packet__read_bytes(&context->in_packet, will_struct->msg.payload, (uint32_t)will_struct->msg.payloadlen);
 		if(rc) goto error_cleanup;
 	}
 
@@ -360,7 +364,7 @@ error_cleanup:
 
 
 
-int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
+int handle__connect(struct mosquitto *context)
 {
 	char protocol_name[7];
 	uint8_t protocol_version;
@@ -371,8 +375,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	uint8_t username_flag, password_flag;
 	char *username = NULL, *password = NULL;
 	int rc;
-	int slen;
-	uint16_t slen16;
+	uint16_t slen;
 	mosquitto_property *properties = NULL;
 	void *auth_data = NULL;
 	uint16_t auth_data_len = 0;
@@ -407,11 +410,10 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	/* Read protocol name as length then bytes rather than with read_string
 	 * because the length is fixed and we can check that. Removes the need
 	 * for another malloc as well. */
-	if(packet__read_uint16(&context->in_packet, &slen16)){
-		rc = 1;
+	if(packet__read_uint16(&context->in_packet, &slen)){
+		rc = MOSQ_ERR_PROTOCOL;
 		goto handle_connect_error;
 	}
-	slen = slen16;
 	if(slen != 4 /* MQTT */ && slen != 6 /* MQIsdp */){
 		rc = MOSQ_ERR_PROTOCOL;
 		goto handle_connect_error;
@@ -423,16 +425,16 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	protocol_name[slen] = '\0';
 
 	if(packet__read_byte(&context->in_packet, &protocol_version)){
-		rc = 1;
+		rc = MOSQ_ERR_PROTOCOL;
 		goto handle_connect_error;
 	}
 	if(!strcmp(protocol_name, PROTOCOL_NAME_v31)){
 		if((protocol_version&0x7F) != PROTOCOL_VERSION_v31){
-			if(db->config->connection_messages == true){
+			if(db.config->connection_messages == true){
 				log__printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
 						protocol_version, context->address);
 			}
-			send__connack(db, context, 0, CONNACK_REFUSED_PROTOCOL_VERSION, NULL);
+			send__connack(context, 0, CONNACK_REFUSED_PROTOCOL_VERSION, NULL);
 			rc = MOSQ_ERR_PROTOCOL;
 			goto handle_connect_error;
 		}
@@ -450,11 +452,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		}else if((protocol_version&0x7F) == PROTOCOL_VERSION_v5){
 			context->protocol = mosq_p_mqtt5;
 		}else{
-			if(db->config->connection_messages == true){
+			if(db.config->connection_messages == true){
 				log__printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
 						protocol_version, context->address);
 			}
-			send__connack(db, context, 0, CONNACK_REFUSED_PROTOCOL_VERSION, NULL);
+			send__connack(context, 0, CONNACK_REFUSED_PROTOCOL_VERSION, NULL);
 			rc = MOSQ_ERR_PROTOCOL;
 			goto handle_connect_error;
 		}
@@ -464,7 +466,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			goto handle_connect_error;
 		}
 	}else{
-		if(db->config->connection_messages == true){
+		if(db.config->connection_messages == true){
 			log__printf(NULL, MOSQ_LOG_INFO, "Invalid protocol \"%s\" in CONNECT from %s.",
 					protocol_name, context->address);
 		}
@@ -473,7 +475,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(packet__read_byte(&context->in_packet, &connect_flags)){
-		rc = 1;
+		rc = MOSQ_ERR_PROTOCOL;
 		goto handle_connect_error;
 	}
 	if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt5){
@@ -503,16 +505,16 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	password_flag = connect_flags & 0x40;
 	username_flag = connect_flags & 0x80;
 
-	if(will && will_retain && db->config->retain_available == false){
+	if(will && will_retain && db.config->retain_available == false){
 		if(protocol_version == mosq_p_mqtt5){
-			send__connack(db, context, 0, MQTT_RC_RETAIN_NOT_SUPPORTED, NULL);
+			send__connack(context, 0, MQTT_RC_RETAIN_NOT_SUPPORTED, NULL);
 		}
-		rc = 1;
+		rc = MOSQ_ERR_NOT_SUPPORTED;
 		goto handle_connect_error;
 	}
 
 	if(packet__read_uint16(&context->in_packet, &(context->keepalive))){
-		rc = 1;
+		rc = MOSQ_ERR_PROTOCOL;
 		goto handle_connect_error;
 	}
 
@@ -522,6 +524,14 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	property__process_connect(context, &properties);
 
+	if(will && will_qos > context->listener->max_qos){
+		if(protocol_version == mosq_p_mqtt5){
+			send__connack(context, 0, MQTT_RC_QOS_NOT_SUPPORTED, NULL);
+		}
+		rc = MOSQ_ERR_NOT_SUPPORTED;
+		goto handle_connect_error;
+	}
+
 	if(mosquitto_property_read_string(properties, MQTT_PROP_AUTHENTICATION_METHOD, &context->auth_method, false)){
 		mosquitto_property_read_binary(properties, MQTT_PROP_AUTHENTICATION_DATA, &auth_data, &auth_data_len, false);
 	}
@@ -529,37 +539,37 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	if(packet__read_string(&context->in_packet, &client_id, &slen)){
-		rc = 1;
+		rc = MOSQ_ERR_PROTOCOL;
 		goto handle_connect_error;
 	}
 
 	if(slen == 0){
 		if(context->protocol == mosq_p_mqtt31){
-			send__connack(db, context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED, NULL);
+			send__connack(context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED, NULL);
 			rc = MOSQ_ERR_PROTOCOL;
 			goto handle_connect_error;
 		}else{ /* mqtt311/mqtt5 */
 			mosquitto__free(client_id);
 			client_id = NULL;
 
-			if(db->config->per_listener_settings){
+			if(db.config->per_listener_settings){
 				allow_zero_length_clientid = context->listener->security_options.allow_zero_length_clientid;
 			}else{
-				allow_zero_length_clientid = db->config->security_options.allow_zero_length_clientid;
+				allow_zero_length_clientid = db.config->security_options.allow_zero_length_clientid;
 			}
 			if((context->protocol == mosq_p_mqtt311 && clean_start == 0) || allow_zero_length_clientid == false){
 				if(context->protocol == mosq_p_mqtt311){
-					send__connack(db, context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED, NULL);
+					send__connack(context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED, NULL);
 				}else{
-					send__connack(db, context, 0, MQTT_RC_UNSPECIFIED, NULL);
+					send__connack(context, 0, MQTT_RC_UNSPECIFIED, NULL);
 				}
 				rc = MOSQ_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}else{
-				if(db->config->per_listener_settings){
+				if(db.config->per_listener_settings){
 					client_id = client_id_gen(&slen, context->listener->security_options.auto_id_prefix, context->listener->security_options.auto_id_prefix_len);
 				}else{
-					client_id = client_id_gen(&slen, db->config->security_options.auto_id_prefix, db->config->security_options.auto_id_prefix_len);
+					client_id = client_id_gen(&slen, db.config->security_options.auto_id_prefix, db.config->security_options.auto_id_prefix_len);
 				}
 				if(!client_id){
 					rc = MOSQ_ERR_NOMEM;
@@ -571,14 +581,14 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	/* clientid_prefixes check */
-	if(db->config->clientid_prefixes){
-		if(strncmp(db->config->clientid_prefixes, client_id, strlen(db->config->clientid_prefixes))){
+	if(db.config->clientid_prefixes){
+		if(strncmp(db.config->clientid_prefixes, client_id, strlen(db.config->clientid_prefixes))){
 			if(context->protocol == mosq_p_mqtt5){
-				send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
+				send__connack(context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
 			}else{
-				send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
+				send__connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
 			}
-			rc = 1;
+			rc = MOSQ_ERR_AUTH;
 			goto handle_connect_error;
 		}
 	}
@@ -640,6 +650,12 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		goto handle_connect_error;
 	}
 
+	/* Once context->id is set, if we return from this function with an error
+	 * we must make sure that context->id is freed and set to NULL, so that the
+	 * client isn't erroneously removed from the by_id hash table. */
+	context->id = client_id;
+	client_id = NULL;
+
 #ifdef WITH_TLS
 	if(context->listener->ssl_ctx && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
 		/* Don't need the username or password if provided */
@@ -650,11 +666,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 		if(!context->ssl){
 			if(context->protocol == mosq_p_mqtt5){
-				send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+				send__connack(context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
 			}else{
-				send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+				send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
 			}
-			rc = 1;
+			rc = MOSQ_ERR_AUTH;
 			goto handle_connect_error;
 		}
 #ifdef FINAL_WITH_TLS_PSK
@@ -662,11 +678,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			/* Client should have provided an identity to get this far. */
 			if(!context->username){
 				if(context->protocol == mosq_p_mqtt5){
-					send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+					send__connack(context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
 				}else{
-					send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+					send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
 				}
-				rc = 1;
+				rc = MOSQ_ERR_AUTH;
 				goto handle_connect_error;
 			}
 		}else{
@@ -674,32 +690,32 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			client_cert = SSL_get_peer_certificate(context->ssl);
 			if(!client_cert){
 				if(context->protocol == mosq_p_mqtt5){
-					send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+					send__connack(context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
 				}else{
-					send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+					send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
 				}
-				rc = 1;
+				rc = MOSQ_ERR_AUTH;
 				goto handle_connect_error;
 			}
 			name = X509_get_subject_name(client_cert);
 			if(!name){
 				if(context->protocol == mosq_p_mqtt5){
-					send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+					send__connack(context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
 				}else{
-					send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+					send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
 				}
-				rc = 1;
+				rc = MOSQ_ERR_AUTH;
 				goto handle_connect_error;
 			}
 			if (context->listener->use_identity_as_username) { /* use_identity_as_username */
 				i = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
 				if(i == -1){
 					if(context->protocol == mosq_p_mqtt5){
-						send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+						send__connack(context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
 					}else{
-						send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+						send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
 					}
-					rc = 1;
+					rc = MOSQ_ERR_AUTH;
 					goto handle_connect_error;
 				}
 				name_entry = X509_NAME_get_entry(name, i);
@@ -707,11 +723,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 					name_asn1 = X509_NAME_ENTRY_get_data(name_entry);
 					if (name_asn1 == NULL) {
 						if(context->protocol == mosq_p_mqtt5){
-							send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+							send__connack(context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
 						}else{
-							send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+							send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
 						}
-						rc = 1;
+						rc = MOSQ_ERR_AUTH;
 						goto handle_connect_error;
 					}
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
@@ -721,9 +737,9 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 #endif
 					if(!context->username){
 						if(context->protocol == mosq_p_mqtt5){
-							send__connack(db, context, 0, MQTT_RC_SERVER_UNAVAILABLE, NULL);
+							send__connack(context, 0, MQTT_RC_SERVER_UNAVAILABLE, NULL);
 						}else{
-							send__connack(db, context, 0, CONNACK_REFUSED_SERVER_UNAVAILABLE, NULL);
+							send__connack(context, 0, CONNACK_REFUSED_SERVER_UNAVAILABLE, NULL);
 						}
 						rc = MOSQ_ERR_NOMEM;
 						goto handle_connect_error;
@@ -731,11 +747,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 					/* Make sure there isn't an embedded NUL character in the CN */
 					if ((size_t)ASN1_STRING_length(name_asn1) != strlen(context->username)) {
 						if(context->protocol == mosq_p_mqtt5){
-							send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+							send__connack(context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
 						}else{
-							send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+							send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
 						}
-						rc = 1;
+						rc = MOSQ_ERR_AUTH;
 						goto handle_connect_error;
 					}
 				}
@@ -744,19 +760,19 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 				X509_NAME_print_ex(subject_bio, X509_get_subject_name(client_cert), 0, XN_FLAG_RFC2253);
 				data_start = NULL;
 				name_length = BIO_get_mem_data(subject_bio, &data_start);
-				subject = mosquitto__malloc(sizeof(char)*name_length+1);
+				subject = mosquitto__malloc(sizeof(char)*(size_t)(name_length+1));
 				if(!subject){
 					BIO_free(subject_bio);
 					rc = MOSQ_ERR_NOMEM;
 					goto handle_connect_error;
 				}
-				memcpy(subject, data_start, name_length);
+				memcpy(subject, data_start, (size_t)name_length);
 				subject[name_length] = '\0';
 				BIO_free(subject_bio);
 				context->username = subject;
 			}
 			if(!context->username){
-				rc = 1;
+				rc = MOSQ_ERR_AUTH;
 				goto handle_connect_error;
 			}
 			X509_free(client_cert);
@@ -764,99 +780,60 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 #ifdef FINAL_WITH_TLS_PSK
 		}
 #endif /* FINAL_WITH_TLS_PSK */
-	}else{
+	}else
 #endif /* WITH_TLS */
-		if(username_flag || password_flag){
-			/* FIXME - these ensure the mosquitto_client_id() and
-			 * mosquitto_client_username() functions work, but is hacky */
-			context->id = client_id;
-			context->username = username;
-			rc = mosquitto_unpwd_check(db, context, username, password);
-			context->username = NULL;
-			context->id = NULL;
-			switch(rc){
-				case MOSQ_ERR_SUCCESS:
-					break;
-				case MOSQ_ERR_AUTH:
-					if(context->protocol == mosq_p_mqtt5){
-						send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
-					}else{
-						send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
-					}
-					context__disconnect(db, context);
-					rc = 1;
-					goto handle_connect_error;
-					break;
-				default:
-					context__disconnect(db, context);
-					rc = 1;
-					goto handle_connect_error;
-					break;
-			}
-			context->username = username;
-			context->password = password;
-			username = NULL; /* Avoid free() in error: below. */
-			password = NULL;
-		}else{
-			if((db->config->per_listener_settings && context->listener->security_options.allow_anonymous == false)
-					|| (!db->config->per_listener_settings && db->config->security_options.allow_anonymous == false)){
-
-				if(context->protocol == mosq_p_mqtt5){
-					send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
-				}else{
-					send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
-				}
-				rc = 1;
-				goto handle_connect_error;
-			}
-		}
-#ifdef WITH_TLS
+	{
+		/* FIXME - these ensure the mosquitto_client_id() and
+		 * mosquitto_client_username() functions work, but is hacky */
+		context->username = username;
+		context->password = password;
+		username = NULL; /* Avoid free() in error: below. */
+		password = NULL;
 	}
-#endif
 
 	if(context->listener->use_username_as_clientid){
 		if(context->username){
-			mosquitto__free(client_id);
-			client_id = mosquitto__strdup(context->username);
-			if(!client_id){
+			mosquitto__free(context->id);
+			context->id = mosquitto__strdup(context->username);
+			if(!context->id){
 				rc = MOSQ_ERR_NOMEM;
 				goto handle_connect_error;
 			}
 		}else{
 			if(context->protocol == mosq_p_mqtt5){
-				send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
+				send__connack(context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
 			}else{
-				send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
+				send__connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
 			}
-			rc = 1;
+			rc = MOSQ_ERR_AUTH;
 			goto handle_connect_error;
 		}
 	}
 	context->clean_start = clean_start;
-	context->id = client_id;
 	context->will = will_struct;
+	will_struct = NULL;
 
 	if(context->auth_method){
-		rc = mosquitto_security_auth_start(db, context, false, auth_data, auth_data_len, &auth_data_out, &auth_data_out_len);
+		rc = mosquitto_security_auth_start(context, false, auth_data, auth_data_len, &auth_data_out, &auth_data_out_len);
 		mosquitto__free(auth_data);
 		if(rc == MOSQ_ERR_SUCCESS){
-			return connect__on_authorised(db, context, auth_data_out, auth_data_out_len);
+			return connect__on_authorised(context, auth_data_out, auth_data_out_len);
 		}else if(rc == MOSQ_ERR_AUTH_CONTINUE){
 			mosquitto__set_state(context, mosq_cs_authenticating);
-			rc = send__auth(db, context, MQTT_RC_CONTINUE_AUTHENTICATION, auth_data_out, auth_data_out_len);
+			rc = send__auth(context, MQTT_RC_CONTINUE_AUTHENTICATION, auth_data_out, auth_data_out_len);
 			free(auth_data_out);
 			return rc;
 		}else{
 			free(auth_data_out);
 			will__clear(context);
 			if(rc == MOSQ_ERR_AUTH){
-				send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
+				send__connack(context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
 				mosquitto__free(context->id);
 				context->id = NULL;
 				return MOSQ_ERR_PROTOCOL;
 			}else if(rc == MOSQ_ERR_NOT_SUPPORTED){
 				/* Client has requested extended authentication, but we don't support it. */
-				send__connack(db, context, 0, MQTT_RC_BAD_AUTHENTICATION_METHOD, NULL);
+				send__connack(context, 0, MQTT_RC_BAD_AUTHENTICATION_METHOD, NULL);
 				mosquitto__free(context->id);
 				context->id = NULL;
 				return MOSQ_ERR_PROTOCOL;
@@ -867,7 +844,39 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 	}else{
-		return connect__on_authorised(db, context, NULL, 0);
+#ifdef WITH_TLS
+		if(context->listener->ssl_ctx && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
+			/* Authentication assumed to be cleared */
+		}else
+#endif
+		{
+			rc = mosquitto_unpwd_check(context);
+			if(rc != MOSQ_ERR_SUCCESS){
+				/* We must have context->id == NULL here so we don't later try and
+				* remove the client from the by_id hash table */
+				mosquitto__free(context->id);
+				context->id = NULL;
+			}
+			switch(rc){
+				case MOSQ_ERR_SUCCESS:
+					break;
+				case MOSQ_ERR_AUTH:
+					if(context->protocol == mosq_p_mqtt5){
+						send__connack(context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
+					}else{
+						send__connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
+					}
+					context__disconnect(context);
+					rc = MOSQ_ERR_AUTH;
+					goto handle_connect_error;
+					break;
+				default:
+					context__disconnect(context);
+					goto handle_connect_error;
+					break;
+			}
+		}
+		return connect__on_authorised(context, NULL, 0);
 	}
 
 

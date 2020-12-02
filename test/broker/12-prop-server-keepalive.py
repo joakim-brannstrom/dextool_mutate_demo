@@ -8,6 +8,7 @@ from mosq_test_helper import *
 def write_config(filename, port):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("\n")
         f.write("max_keepalive 60\n")
 
@@ -30,6 +31,8 @@ try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
     sock.close()
     rc = 0
+except mosq_test.TestError:
+    pass
 finally:
     os.remove(conf_file)
     broker.terminate()

@@ -6,8 +6,6 @@
 from mosq_test_helper import *
 
 def len_test(test, pubrel_packet):
-    port = mosq_test.get_port()
-
     rc = 1
     mid = 3265
     keepalive = 60
@@ -19,6 +17,7 @@ def len_test(test, pubrel_packet):
     pubrec_packet = mosq_test.gen_pubrec(mid)
     pubcomp_packet = mosq_test.gen_pubcomp(mid)
 
+    port = mosq_test.get_port()
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
     try:
@@ -31,6 +30,8 @@ def len_test(test, pubrel_packet):
         rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

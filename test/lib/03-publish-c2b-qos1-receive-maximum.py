@@ -12,7 +12,7 @@ keepalive = 60
 connect_packet = mosq_test.gen_connect("publish-qos1-test", keepalive=keepalive, proto_ver=5)
 
 props = mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_RECEIVE_MAXIMUM, 3)
-connack_packet = mosq_test.gen_connack(rc=0, proto_ver=5, properties=props)
+connack_packet = mosq_test.gen_connack(rc=0, proto_ver=5, properties=props, property_helper=False)
 
 disconnect_packet = mosq_test.gen_disconnect(proto_ver=5)
 
@@ -63,26 +63,27 @@ try:
     (conn, address) = sock.accept()
     conn.settimeout(10)
 
-    if mosq_test.expect_packet(conn, "connect", connect_packet):
-        conn.send(connack_packet)
+    mosq_test.do_receive_send(conn, connect_packet, connack_packet, "connect")
 
-        if mosq_test.expect_packet(conn, "publish 1", publish_1_packet):
-            if mosq_test.expect_packet(conn, "publish 2", publish_2_packet):
-                if mosq_test.expect_packet(conn, "publish 3", publish_3_packet):
-                    conn.send(puback_1_packet)
-                    conn.send(puback_2_packet)
+    mosq_test.expect_packet(conn, "publish 1", publish_1_packet)
+    mosq_test.expect_packet(conn, "publish 2", publish_2_packet)
+    mosq_test.expect_packet(conn, "publish 3", publish_3_packet)
+    conn.send(puback_1_packet)
+    conn.send(puback_2_packet)
 
-                    if mosq_test.expect_packet(conn, "publish 4", publish_4_packet):
-                        if mosq_test.expect_packet(conn, "publish 5", publish_5_packet):
-                            conn.send(puback_3_packet)
+    mosq_test.expect_packet(conn, "publish 4", publish_4_packet)
+    mosq_test.expect_packet(conn, "publish 5", publish_5_packet)
+    conn.send(puback_3_packet)
 
-                            if mosq_test.expect_packet(conn, "publish 6", publish_6_packet):
-                                conn.send(puback_4_packet)
-                                conn.send(puback_5_packet)
-                                conn.send(puback_6_packet)
-                                rc = 0
+    mosq_test.expect_packet(conn, "publish 6", publish_6_packet)
+    conn.send(puback_4_packet)
+    conn.send(puback_5_packet)
+    conn.send(puback_6_packet)
+    rc = 0
 
     conn.close()
+except mosq_test.TestError:
+    pass
 finally:
     for i in range(0, 5):
         if client.returncode != None:

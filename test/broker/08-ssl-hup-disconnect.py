@@ -56,6 +56,8 @@ def do_test(option):
         rc = 0
 
         ssock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         os.remove(conf_file)
         os.remove(pw_file)

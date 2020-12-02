@@ -7,6 +7,7 @@ from mosq_test_helper import *
 def write_config(filename, port):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("persistence true\n")
         f.write("persistence_file mosquitto-%d.db\n" % (port))
 
@@ -47,21 +48,23 @@ try:
     mosq_test.do_send_receive(sock, publish_packet, puback_packet, "puback")
     mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-    if mosq_test.expect_packet(sock, "publish2", publish2_packet):
+    mosq_test.expect_packet(sock, "publish2", publish2_packet)
 
-        broker.terminate()
-        broker.wait()
-        (stdo1, stde1) = broker.communicate()
-        sock.close()
-        broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
+    broker.terminate()
+    broker.wait()
+    (stdo1, stde1) = broker.communicate()
+    sock.close()
+    broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
-        sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20, port=port)
-        mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20, port=port)
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-        if mosq_test.expect_packet(sock, "publish2", publish2_packet):
-            rc = 0
+    mosq_test.expect_packet(sock, "publish2", publish2_packet)
+    rc = 0
 
     sock.close()
+except mosq_test.TestError:
+    pass
 finally:
     os.remove(conf_file)
     broker.terminate()

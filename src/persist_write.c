@@ -2,14 +2,16 @@
 Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
  
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -36,13 +38,12 @@ Contributors:
 #include "misc_mosq.h"
 #include "util_mosq.h"
 
-static int persist__client_messages_save(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto *context, struct mosquitto_client_msg *queue)
+static int persist__client_messages_save(FILE *db_fptr, struct mosquitto *context, struct mosquitto_client_msg *queue)
 {
 	struct P_client_msg chunk;
 	struct mosquitto_client_msg *cmsg;
 	int rc;
 
-	assert(db);
 	assert(db_fptr);
 	assert(context);
 
@@ -62,11 +63,11 @@ static int persist__client_messages_save(struct mosquitto_db *db, FILE *db_fptr,
 
 		chunk.F.store_id = cmsg->store->db_id;
 		chunk.F.mid = cmsg->mid;
-		chunk.F.id_len = strlen(context->id);
+		chunk.F.id_len = (uint16_t)strlen(context->id);
 		chunk.F.qos = cmsg->qos;
-		chunk.F.retain_dup = (cmsg->retain&0x0F)<<4 | (cmsg->dup&0x0F);
-		chunk.F.direction = cmsg->direction;
-		chunk.F.state = cmsg->state;
+		chunk.F.retain_dup = (uint8_t)((cmsg->retain&0x0F)<<4 | (cmsg->dup&0x0F));
+		chunk.F.direction = (uint8_t)cmsg->direction;
+		chunk.F.state = (uint8_t)cmsg->state;
 		chunk.client_id = context->id;
 		chunk.properties = cmsg->properties;
 
@@ -82,18 +83,17 @@ static int persist__client_messages_save(struct mosquitto_db *db, FILE *db_fptr,
 }
 
 
-static int persist__message_store_save(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__message_store_save(FILE *db_fptr)
 {
 	struct P_msg_store chunk;
 	struct mosquitto_msg_store *stored;
 	int rc;
 
-	assert(db);
 	assert(db_fptr);
 
 	memset(&chunk, 0, sizeof(struct P_msg_store));
 
-	stored = db->msg_store;
+	stored = db.msg_store;
 	while(stored){
 		if(stored->ref_count < 1 || stored->topic == NULL){
 			stored = stored->next;
@@ -120,21 +120,21 @@ static int persist__message_store_save(struct mosquitto_db *db, FILE *db_fptr)
 		chunk.F.payloadlen = stored->payloadlen;
 		chunk.F.source_mid = stored->source_mid;
 		if(stored->source_id){
-			chunk.F.source_id_len = strlen(stored->source_id);
+			chunk.F.source_id_len = (uint16_t)strlen(stored->source_id);
 			chunk.source.id = stored->source_id;
 		}else{
 			chunk.F.source_id_len = 0;
 			chunk.source.id = NULL;
 		}
 		if(stored->source_username){
-			chunk.F.source_username_len = strlen(stored->source_username);
+			chunk.F.source_username_len = (uint16_t)strlen(stored->source_username);
 			chunk.source.username = stored->source_username;
 		}else{
 			chunk.F.source_username_len = 0;
 			chunk.source.username = NULL;
 		}
 
-		chunk.F.topic_len = strlen(stored->topic);
+		chunk.F.topic_len = (uint16_t)strlen(stored->topic);
 		chunk.topic = stored->topic;
 
 		if(stored->source_listener){
@@ -156,30 +156,35 @@ static int persist__message_store_save(struct mosquitto_db *db, FILE *db_fptr)
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int persist__client_save(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__client_save(FILE *db_fptr)
 {
 	struct mosquitto *context, *ctxt_tmp;
 	struct P_client chunk;
 	int rc;
 
-	assert(db);
 	assert(db_fptr);
 
 	memset(&chunk, 0, sizeof(struct P_client));
 
-	HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
+	HASH_ITER(hh_id, db.contexts_by_id, context, ctxt_tmp){
 		if(context && context->clean_start == false){
 			chunk.F.session_expiry_time = context->session_expiry_time;
 			chunk.F.session_expiry_interval = context->session_expiry_interval;
 			chunk.F.last_mid = context->last_mid;
-			chunk.F.id_len = strlen(context->id);
+			chunk.F.id_len = (uint16_t)strlen(context->id);
 			chunk.client_id = context->id;
 			if(context->username){
-				chunk.F.username_len = strlen(context->username);
+				chunk.F.username_len = (uint16_t)strlen(context->username);
 				chunk.username = context->username;
-				if(context->listener){
-					chunk.F.listener_port = context->listener->port;
-				}
+			}
+			if(context->listener){
+				chunk.F.listener_port = context->listener->port;
+			}
+
+			if(chunk.F.id_len == 0){
+				/* This should never happen, but in case we have a client with
+				 * zero length ID, don't persist them. */
+				continue;
 			}
 
 			rc = persist__chunk_client_write_v6(db_fptr, &chunk);
@@ -187,10 +192,10 @@ static int persist__client_save(struct mosquitto_db *db, FILE *db_fptr)
 				return rc;
 			}
 
-			if(persist__client_messages_save(db, db_fptr, context, context->msgs_in.inflight)) return 1;
-			if(persist__client_messages_save(db, db_fptr, context, context->msgs_in.queued)) return 1;
-			if(persist__client_messages_save(db, db_fptr, context, context->msgs_out.inflight)) return 1;
-			if(persist__client_messages_save(db, db_fptr, context, context->msgs_out.queued)) return 1;
+			if(persist__client_messages_save(db_fptr, context, context->msgs_in.inflight)) return 1;
+			if(persist__client_messages_save(db_fptr, context, context->msgs_in.queued)) return 1;
+			if(persist__client_messages_save(db_fptr, context, context->msgs_out.inflight)) return 1;
+			if(persist__client_messages_save(db_fptr, context, context->msgs_out.queued)) return 1;
 		}
 	}
 
@@ -198,17 +203,15 @@ static int persist__client_save(struct mosquitto_db *db, FILE *db_fptr)
 }
 
 
-static int persist__subs_retain_save(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto__subhier *node, const char *topic, int level)
+static int persist__subs_save(FILE *db_fptr, struct mosquitto__subhier *node, const char *topic, int level)
 {
 	struct mosquitto__subhier *subhier, *subhier_tmp;
 	struct mosquitto__subleaf *sub;
-	struct P_retain retain_chunk;
 	struct P_sub sub_chunk;
 	char *thistopic;
 	size_t slen;
 	int rc;
 
-	memset(&retain_chunk, 0, sizeof(struct P_retain));
 	memset(&sub_chunk, 0, sizeof(struct P_sub));
 
 	slen = strlen(topic) + node->topic_len + 2;
@@ -224,10 +227,10 @@ static int persist__subs_retain_save(struct mosquitto_db *db, FILE *db_fptr, str
 	while(sub){
 		if(sub->context->clean_start == false && sub->context->id){
 			sub_chunk.F.identifier = sub->identifier;
-			sub_chunk.F.id_len = strlen(sub->context->id);
-			sub_chunk.F.topic_len = strlen(thistopic);
+			sub_chunk.F.id_len = (uint16_t)strlen(sub->context->id);
+			sub_chunk.F.topic_len = (uint16_t)strlen(thistopic);
 			sub_chunk.F.qos = (uint8_t)sub->qos;
-			sub_chunk.F.options = sub->no_local<<2 | sub->retain_as_published<<3;
+			sub_chunk.F.options = (uint8_t)(sub->no_local<<2 | sub->retain_as_published<<3);
 			sub_chunk.client_id = sub->context->id;
 			sub_chunk.topic = thistopic;
 
@@ -239,39 +242,64 @@ static int persist__subs_retain_save(struct mosquitto_db *db, FILE *db_fptr, str
 		}
 		sub = sub->next;
 	}
-	if(node->retained){
-		if(strncmp(node->retained->topic, "$SYS", 4)){
-			/* Don't save $SYS messages. */
-			retain_chunk.F.store_id = node->retained->db_id;
-			rc = persist__chunk_retain_write_v6(db_fptr, &retain_chunk);
-			if(rc){
-				mosquitto__free(thistopic);
-				return rc;
-			}
-		}
-	}
 
 	HASH_ITER(hh, node->children, subhier, subhier_tmp){
-		persist__subs_retain_save(db, db_fptr, subhier, thistopic, level+1);
+		persist__subs_save(db_fptr, subhier, thistopic, level+1);
 	}
 	mosquitto__free(thistopic);
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int persist__subs_retain_save_all(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__subs_save_all(FILE *db_fptr)
 {
 	struct mosquitto__subhier *subhier, *subhier_tmp;
 
-	HASH_ITER(hh, db->subs, subhier, subhier_tmp){
+	HASH_ITER(hh, db.subs, subhier, subhier_tmp){
 		if(subhier->children){
-			persist__subs_retain_save(db, db_fptr, subhier->children, "", 0);
+			persist__subs_save(db_fptr, subhier->children, "", 0);
+		}
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+static int persist__retain_save(FILE *db_fptr, struct mosquitto__retainhier *node, int level)
+{
+	struct mosquitto__retainhier *retainhier, *retainhier_tmp;
+	struct P_retain retain_chunk;
+	int rc;
+
+	memset(&retain_chunk, 0, sizeof(struct P_retain));
+
+	if(node->retained && strncmp(node->retained->topic, "$SYS", 4)){
+		/* Don't save $SYS messages. */
+		retain_chunk.F.store_id = node->retained->db_id;
+		rc = persist__chunk_retain_write_v6(db_fptr, &retain_chunk);
+		if(rc){
+			return rc;
+		}
+	}
+
+	HASH_ITER(hh, node->children, retainhier, retainhier_tmp){
+		persist__retain_save(db_fptr, retainhier, level+1);
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+static int persist__retain_save_all(FILE *db_fptr)
+{
+	struct mosquitto__retainhier *retainhier, *retainhier_tmp;
+
+	HASH_ITER(hh, db.retains, retainhier, retainhier_tmp){
+		if(retainhier->children){
+			persist__retain_save(db_fptr, retainhier->children, 0);
 		}
 	}
 	
 	return MOSQ_ERR_SUCCESS;
 }
 
-int persist__backup(struct mosquitto_db *db, bool shutdown)
+int persist__backup(bool shutdown)
 {
 	int rc = 0;
 	FILE *db_fptr = NULL;
@@ -279,21 +307,22 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 	uint32_t crc = 0;
 	char *err;
 	char *outfile = NULL;
-	int len;
+	size_t len;
 	struct PF_cfg cfg_chunk;
 
-	if(!db || !db->config || !db->config->persistence_filepath) return MOSQ_ERR_INVAL;
-	if(db->config->persistence == false) return MOSQ_ERR_SUCCESS;
+	if(db.config == NULL) return MOSQ_ERR_INVAL;
+	if(db.config->persistence == false) return MOSQ_ERR_SUCCESS;
+	if(db.config->persistence_filepath == NULL) return MOSQ_ERR_INVAL;
 
-	log__printf(NULL, MOSQ_LOG_INFO, "Saving in-memory database to %s.", db->config->persistence_filepath);
+	log__printf(NULL, MOSQ_LOG_INFO, "Saving in-memory database to %s.", db.config->persistence_filepath);
 
-	len = strlen(db->config->persistence_filepath)+5;
+	len = strlen(db.config->persistence_filepath)+5;
 	outfile = mosquitto__malloc(len+1);
 	if(!outfile){
 		log__printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
-	snprintf(outfile, len, "%s.new", db->config->persistence_filepath);
+	snprintf(outfile, len, "%s.new", db.config->persistence_filepath);
 	outfile[len] = '\0';
 
 #ifndef WIN32
@@ -338,19 +367,20 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 	write_e(db_fptr, &db_version_w, sizeof(uint32_t));
 
 	memset(&cfg_chunk, 0, sizeof(struct PF_cfg));
-	cfg_chunk.last_db_id = db->last_db_id;
+	cfg_chunk.last_db_id = db.last_db_id;
 	cfg_chunk.shutdown = shutdown;
 	cfg_chunk.dbid_size = sizeof(dbid_t);
 	if(persist__chunk_cfg_write_v6(db_fptr, &cfg_chunk)){
 		goto error;
 	}
 
-	if(persist__message_store_save(db, db_fptr)){
+	if(persist__message_store_save(db_fptr)){
 		goto error;
 	}
 
-	persist__client_save(db, db_fptr);
-	persist__subs_retain_save_all(db, db_fptr);
+	persist__client_save(db_fptr);
+	persist__subs_save_all(db_fptr);
+	persist__retain_save_all(db_fptr);
 
 #ifndef WIN32
 	/**
@@ -381,13 +411,13 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 	fclose(db_fptr);
 
 #ifdef WIN32
-	if(remove(db->config->persistence_filepath) != 0){
+	if(remove(db.config->persistence_filepath) != 0){
 		if(errno != ENOENT){
 			goto error;
 		}
 	}
 #endif
-	if(rename(outfile, db->config->persistence_filepath) != 0){
+	if(rename(outfile, db.config->persistence_filepath) != 0){
 		goto error;
 	}
 	mosquitto__free(outfile);

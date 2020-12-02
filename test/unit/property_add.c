@@ -573,6 +573,39 @@ static void TEST_add_all_connack(void)
 	mosquitto_property_free_all(&proplist);
 }
 
+
+static void TEST_check_length(void)
+{
+	mosquitto_property *proplist = NULL;
+	int rc;
+	unsigned int len;
+	int varbytes;
+	int i;
+
+	len = property__get_remaining_length(proplist);
+	CU_ASSERT_EQUAL(len, 1);
+
+	for(i=1; i<10000; i++){
+		rc = mosquitto_property_add_byte(&proplist, MQTT_PROP_SHARED_SUB_AVAILABLE, 0);
+		CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+		CU_ASSERT_PTR_NOT_NULL(proplist);
+		if(proplist){
+			len = property__get_remaining_length(proplist);
+			if(i < 64){
+				varbytes = 1;
+			}else if(i < 8192){
+				varbytes = 2;
+			}else{
+				varbytes = 3;
+			}
+			CU_ASSERT_EQUAL(len, varbytes+2*i);
+		}else{
+			break;
+		}
+	}
+	mosquitto_property_free_all(&proplist);
+}
+
 /* ========================================================================
  * TEST SUITE SETUP
  * ======================================================================== */
@@ -588,6 +621,7 @@ int init_property_add_tests(void)
 	}
 
 	if(0
+			|| !CU_add_test(test_suite, "Add nothing, check length", TEST_check_length)
 			|| !CU_add_test(test_suite, "Add bad byte", TEST_add_bad_byte)
 			|| !CU_add_test(test_suite, "Add bad int16", TEST_add_bad_int16)
 			|| !CU_add_test(test_suite, "Add bad int32", TEST_add_bad_int32)

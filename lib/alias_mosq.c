@@ -2,14 +2,16 @@
 Copyright (c) 2019-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
  
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -20,7 +22,7 @@ Contributors:
 #include "alias_mosq.h"
 #include "memory_mosq.h"
 
-int alias__add(struct mosquitto *mosq, const char *topic, int alias)
+int alias__add(struct mosquitto *mosq, const char *topic, uint16_t alias)
 {
 	int i;
 	struct mosquitto__alias *aliases;
@@ -39,7 +41,7 @@ int alias__add(struct mosquitto *mosq, const char *topic, int alias)
 	}
 
 	/* New alias */
-	aliases = mosquitto__realloc(mosq->aliases, sizeof(struct mosquitto__alias)*(mosq->alias_count+1));
+	aliases = mosquitto__realloc(mosq->aliases, sizeof(struct mosquitto__alias)*(size_t)(mosq->alias_count+1));
 	if(!aliases) return MOSQ_ERR_NOMEM;
 
 	mosq->aliases = aliases;
@@ -54,7 +56,7 @@ int alias__add(struct mosquitto *mosq, const char *topic, int alias)
 }
 
 
-int alias__find(struct mosquitto *mosq, char **topic, int alias)
+int alias__find(struct mosquitto *mosq, char **topic, uint16_t alias)
 {
 	int i;
 

@@ -8,10 +8,12 @@ set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
 project(mosquitto)
 
-cmake_minimum_required(VERSION 2.8)
-# Only for version 3 and up. cmake_policy(SET CMP0042 NEW)
+cmake_minimum_required(VERSION 3.0)
+cmake_policy(SET CMP0042 NEW)
 
-set (VERSION 1.6.12)
+set (VERSION 2.0.0)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 add_definitions (-DCMAKE -DVERSION=\"${VERSION}\")
 
@@ -19,6 +21,10 @@ if (WIN32)
 	add_definitions("-D_CRT_SECURE_NO_WARNINGS")
 	add_definitions("-D_CRT_NONSTDC_NO_DEPRECATE")
 endif (WIN32)
+
+if(APPLE)
+	set(CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS} -undefined dynamic_lookup")
+endif(APPLE)
 
 include(GNUInstallDirs)
 
@@ -44,6 +50,12 @@ else (WITH_TLS)
 	set (OPENSSL_INCLUDE_DIR "")
 endif (WITH_TLS)
 
+
+option(WITH_UNIX_SOCKETS "Include Unix Domain Socket support?" ON)
+if (WITH_UNIX_SOCKETS AND NOT WIN32)
+	add_definitions("-DWITH_UNIX_SOCKETS")
+endif (WITH_UNIX_SOCKETS AND NOT WIN32)
+
 option(WITH_SOCKS "Include SOCKS5 support?" ON)
 if (WITH_SOCKS)
 	add_definitions("-DWITH_SOCKS")
@@ -64,6 +76,9 @@ if (WITH_THREADING)
 			set (PTHREAD_LIBRARIES C:\\pthreads\\Pre-built.2\\lib\\x86\\pthreadVC2.lib)
 		endif (CMAKE_CL_64)
 		set (PTHREAD_INCLUDE_DIR C:\\pthreads\\Pre-built.2\\include)
+	elseif (ANDROID)
+		set (PTHREAD_LIBRARIES "")
+		set (PTHREAD_INCLUDE_DIR "")
 	else (WIN32)
 		find_library(LIBPTHREAD pthread)
 		if (LIBPTHREAD)
@@ -78,8 +93,6 @@ else (WITH_THREADING)
 	set (PTHREAD_INCLUDE_DIR "")
 endif (WITH_THREADING)
 
-option(DOCUMENTATION "Build documentation?" ON)
-
 option(WITH_DLT "Include DLT support?" OFF)
 message(STATUS "WITH_DLT = ${WITH_DLT}")
 if (WITH_DLT)
@@ -89,13 +102,40 @@ if (WITH_DLT)
 	add_definitions("-DWITH_DLT")
 endif (WITH_DLT)
 
+FIND_PACKAGE(cJSON)
+if (CJSON_FOUND)
+	message(STATUS ${CJSON_FOUND})
+else (CJSON_FOUND)
+	message(STATUS "Optional dependency cJSON not found. Some features will be disabled.")
+endif(CJSON_FOUND)
+
 # ========================================
 # Include projects
 # ========================================
 
+option(WITH_CLIENTS "Build clients?" ON)
+option(WITH_BROKER "Build broker?" ON)
+option(WITH_APPS "Build apps?" ON)
+option(WITH_PLUGINS "Build plugins?" ON)
+option(DOCUMENTATION "Build documentation?" ON)
+
 add_subdirectory(lib)
-add_subdirectory(client)
-add_subdirectory(src)
+if (WITH_CLIENTS)
+	add_subdirectory(client)
+endif (WITH_CLIENTS)
+
+if (WITH_BROKER)
+	add_subdirectory(src)
+endif (WITH_BROKER)
+
+if (WITH_APPS)
+	add_subdirectory(apps)
+endif (WITH_APPS)
+
+if (WITH_PLUGINS)
+	add_subdirectory(plugins)
+endif (WITH_PLUGINS)
+
 if (DOCUMENTATION)
 	add_subdirectory(man)
 endif (DOCUMENTATION)
@@ -104,8 +144,9 @@ endif (DOCUMENTATION)
 # Install config file
 # ========================================
 
-install(FILES mosquitto.conf aclfile.example pskfile.example pwfile.example DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/mosquitto")
-
+if (WITH_BROKER)
+	install(FILES mosquitto.conf aclfile.example pskfile.example pwfile.example DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/mosquitto")
+endif (WITH_BROKER)
 
 # ========================================
 # Install pkg-config files

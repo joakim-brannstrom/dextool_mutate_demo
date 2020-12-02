@@ -19,6 +19,8 @@ except socket.error as e:
     if e.errno == errno.ECONNRESET:
         # Connection has been closed by peer, this is the expected behaviour
         rc = 0
+except mosq_test.TestError:
+    pass
 finally:
     broker.terminate()
     broker.wait()

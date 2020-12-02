@@ -15,6 +15,10 @@ vg_index = 1
 vg_logfiles = []
 
 
+class TestError(Exception):
+    def __init__(self, message="Mismatched packets"):
+        self.message = message
+
 def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False):
     global vg_index
     global vg_logfiles
@@ -34,7 +38,7 @@ def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False):
             cmd = ['../../src/mosquitto', '-v', '-c', filename.replace('.py', '.conf')]
         elif cmd is not None and port == 0:
             port = 1888
-            
+
     if os.environ.get('MOSQ_USE_VALGRIND') is not None:
         logfile = filename+'.'+str(vg_index)+'.vglog'
         cmd = ['valgrind', '-q', '--trace-children=yes', '--leak-check=full', '--show-leak-kinds=all', '--log-file='+logfile] + cmd
@@ -60,6 +64,8 @@ def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False):
             return broker
 
     if expect_fail == False:
+        outs, errs = broker.communicate(timeout=1)
+        print("FAIL: unable to start broker: %s" % errs)
         raise IOError
     else:
         return None
@@ -81,7 +87,10 @@ def expect_packet(sock, name, expected):
         rlen = 1
 
     packet_recvd = sock.recv(rlen)
-    return packet_matches(name, packet_recvd, expected)
+    if packet_matches(name, packet_recvd, expected):
+        return True
+    else:
+        raise TestError
 
 
 def packet_matches(name, recvd, expected):
@@ -91,18 +100,31 @@ def packet_matches(name, recvd, expected):
             print("Received: "+to_string(recvd))
         except struct.error:
             print("Received (not decoded, len=%d): %s" % (len(recvd), recvd))
-            for i in range(0, len(recvd)):
-                print('%c'%(recvd[i]),)
         try:
             print("Expected: "+to_string(expected))
         except struct.error:
             print("Expected (not decoded, len=%d): %s" % (len(expected), expected))
-            for i in range(0, len(expected)):
-                print('%c'%(expected[i]),)
 
-        return 0
+        return False
     else:
-        return 1
+        return True
+
+
+def receive_unordered(sock, recv1_packet, recv2_packet, error_string):
+    expected1 = recv1_packet + recv2_packet
+    expected2 = recv2_packet + recv1_packet
+    recvd = b''
+    while len(recvd) < len(expected1):
+        r = sock.recv(1)
+        if len(r) == 0:
+            raise ValueError(error_string)
+        recvd += r
+
+    if recvd == expected1 or recvd == expected2:
+        return
+    else:
+        packet_matches(error_string, recvd, expected2)
+        raise ValueError(error_string)
 
 
 def do_send_receive(sock, send_packet, receive_packet, error_string="send receive error"):
@@ -121,7 +143,23 @@ def do_send_receive(sock, send_packet, receive_packet, error_string="send receiv
         raise ValueError
 
 
-def do_client_connect(connect_packet, connack_packet, hostname="localhost", port=1888, timeout=60, connack_error="connack"):
+# Useful for mocking a client receiving (with ack) a qos1 publish
+def do_receive_send(sock, receive_packet, send_packet, error_string="receive send error"):
+    if expect_packet(sock, error_string, receive_packet):
+        size = len(send_packet)
+        total_sent = 0
+        while total_sent < size:
+            sent = sock.send(send_packet[total_sent:])
+            if sent == 0:
+                raise RuntimeError("socket connection broken")
+            total_sent += sent
+        return sock
+    else:
+        sock.close()
+        raise ValueError
+
+
+def do_client_connect(connect_packet, connack_packet, hostname="localhost", port=1888, timeout=10, connack_error="connack"):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(timeout)
     sock.connect((hostname, port))
@@ -163,7 +201,7 @@ def to_string(packet):
     if len(packet) == 0:
         return ""
 
-    packet0 = struct.unpack("!B", bytes(packet[0]))
+    packet0 = struct.unpack("!B%ds" % (len(packet)-1), bytes(packet))
     packet0 = packet0[0]
     cmd = packet0 & 0xF0
     if cmd == 0x00:
@@ -176,7 +214,7 @@ def to_string(packet):
         (slen, packet) = struct.unpack(pack_format, packet)
         pack_format = "!" + str(slen)+'sBBH' + str(len(packet)-slen-4) + 's'
         (protocol, proto_ver, flags, keepalive, packet) = struct.unpack(pack_format, packet)
-        s = "CONNECT, proto="+protocol+str(proto_ver)+", keepalive="+str(keepalive)
+        s = "CONNECT, proto="+str(protocol)+str(proto_ver)+", keepalive="+str(keepalive)
         if flags&2:
             s = s+", clean-session"
         else:
@@ -186,14 +224,14 @@ def to_string(packet):
         (slen, packet) = struct.unpack(pack_format, packet)
         pack_format = "!" + str(slen)+'s' + str(len(packet)-slen) + 's'
         (client_id, packet) = struct.unpack(pack_format, packet)
-        s = s+", id="+client_id
+        s = s+", id="+str(client_id)
 
         if flags&4:
             pack_format = "!H" + str(len(packet)-2) + 's'
             (slen, packet) = struct.unpack(pack_format, packet)
             pack_format = "!" + str(slen)+'s' + str(len(packet)-slen) + 's'
             (will_topic, packet) = struct.unpack(pack_format, packet)
-            s = s+", will-topic="+will_topic
+            s = s+", will-topic="+str(will_topic)
 
             pack_format = "!H" + str(len(packet)-2) + 's'
             (slen, packet) = struct.unpack(pack_format, packet)
@@ -209,14 +247,14 @@ def to_string(packet):
             (slen, packet) = struct.unpack(pack_format, packet)
             pack_format = "!" + str(slen)+'s' + str(len(packet)-slen) + 's'
             (username, packet) = struct.unpack(pack_format, packet)
-            s = s+", username="+username
+            s = s+", username="+str(username)
 
         if flags&64:
             pack_format = "!H" + str(len(packet)-2) + 's'
             (slen, packet) = struct.unpack(pack_format, packet)
             pack_format = "!" + str(slen)+'s' + str(len(packet)-slen) + 's'
             (password, packet) = struct.unpack(pack_format, packet)
-            s = s+", password="+password
+            s = s+", password="+str(password)
 
         if flags&1:
             s = s+", reserved=1"
@@ -236,13 +274,13 @@ def to_string(packet):
         (tlen, packet) = struct.unpack(pack_format, packet)
         pack_format = "!" + str(tlen)+'s' + str(len(packet)-tlen) + 's'
         (topic, packet) = struct.unpack(pack_format, packet)
-        s = "PUBLISH, rl="+str(rl)+", topic="+topic+", qos="+str(qos)+", retain="+str(retain)+", dup="+str(dup)
+        s = "PUBLISH, rl="+str(rl)+", topic="+str(topic)+", qos="+str(qos)+", retain="+str(retain)+", dup="+str(dup)
         if qos > 0:
             pack_format = "!H" + str(len(packet)-2) + 's'
             (mid, packet) = struct.unpack(pack_format, packet)
             s = s + ", mid="+str(mid)
 
-        s = s + ", payload="+packet
+        s = s + ", payload="+str(packet)
         return s
     elif cmd == 0x40:
         # PUBACK
@@ -273,7 +311,7 @@ def to_string(packet):
             (tlen, packet) = struct.unpack(pack_format, packet)
             pack_format = "!" + str(tlen)+'sB' + str(len(packet)-tlen-1) + 's'
             (topic, qos, packet) = struct.unpack(pack_format, packet)
-            s = s + ", topic"+str(topic_index)+"="+topic+","+str(qos)
+            s = s + ", topic"+str(topic_index)+"="+str(topic)+","+str(qos)
         return s
     elif cmd == 0x90:
         # SUBACK
@@ -299,7 +337,7 @@ def to_string(packet):
             (tlen, packet) = struct.unpack(pack_format, packet)
             pack_format = "!" + str(tlen)+'s' + str(len(packet)-tlen) + 's'
             (topic, packet) = struct.unpack(pack_format, packet)
-            s = s + ", topic"+str(topic_index)+"="+topic
+            s = s + ", topic"+str(topic_index)+"="+str(topic)
         return s
     elif cmd == 0xB0:
         # UNSUBACK
@@ -322,7 +360,52 @@ def to_string(packet):
         (cmd, rl) = struct.unpack('!BB', packet)
         return "AUTH, rl="+str(rl)
 
-def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload=b"", proto_ver=4, connect_reserved=False, properties=b"", will_properties=b""):
+
+def read_varint(sock, rl):
+    varint = 0
+    multiplier = 1
+    while True:
+        byte = sock.recv(1)
+        byte, = struct.unpack("!B", byte)
+        varint += (byte & 127)*multiplier
+        multiplier *= 128
+        rl -= 1
+        if byte & 128 == 0x00:
+            return (varint, rl)
+
+
+def mqtt_read_string(sock, rl):
+    slen = sock.recv(2)
+    slen, = struct.unpack("!H", slen)
+    payload = sock.recv(slen)
+    payload, = struct.unpack("!%ds" % (slen), payload)
+    rl -= (2 + slen)
+    return (payload, rl)
+
+
+def read_publish(sock, proto_ver=4):
+    cmd, = struct.unpack("!B", sock.recv(1))
+    if cmd & 0xF0 != 0x30:
+        raise ValueError
+
+    qos = (cmd & 0x06) >> 1
+    rl, t = read_varint(sock, 0)
+    topic, rl = mqtt_read_string(sock, rl)
+
+    if qos > 0:
+        sock.recv(2)
+        rl -= 1
+
+    if proto_ver == 5:
+        proplen, rl = read_varint(sock, rl)
+        sock.recv(proplen)
+        rl -= proplen
+
+    payload = sock.recv(rl).decode('utf-8')
+    return payload
+
+
+def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload=b"", proto_ver=4, connect_reserved=False, properties=b"", will_properties=b"", session_expiry=-1):
     if (proto_ver&0x7F) == 3 or proto_ver == 0:
         remaining_length = 12
     elif (proto_ver&0x7F) == 4 or proto_ver == 5:
@@ -347,6 +430,10 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
     if proto_ver == 5:
         if properties == b"":
             properties += mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_RECEIVE_MAXIMUM, 20)
+
+        if session_expiry != -1:
+            properties += mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_SESSION_EXPIRY_INTERVAL, session_expiry)
+
         properties = mqtt5_props.prop_finalise(properties)
         remaining_length += len(properties)
 
@@ -398,12 +485,14 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
             packet = packet + struct.pack("!H"+str(len(password))+"s", len(password), password)
     return packet
 
-def gen_connack(flags=0, rc=0, proto_ver=4, properties=b""):
+def gen_connack(flags=0, rc=0, proto_ver=4, properties=b"", property_helper=True):
     if proto_ver == 5:
-        if properties is not None:
-            properties = mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_TOPIC_ALIAS_MAXIMUM, 10) + properties
-        else:
-            properties = b""
+        if property_helper == True:
+            if properties is not None:
+                properties = mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_TOPIC_ALIAS_MAXIMUM, 10) \
+                    + properties + mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_RECEIVE_MAXIMUM, 20)
+            else:
+                properties = b""
         properties = mqtt5_props.prop_finalise(properties)
 
         packet = struct.pack('!BBBB', 32, 2+len(properties), flags, rc) + properties
@@ -485,9 +574,9 @@ def gen_pubcomp(mid, proto_ver=4, reason_code=-1, properties=None):
     return _gen_command_with_mid(112, mid, proto_ver, reason_code, properties)
 
 
-def gen_subscribe(mid, topic, qos, proto_ver=4, properties=b""):
+def gen_subscribe(mid, topic, qos, cmd=130, proto_ver=4, properties=b""):
     topic = topic.encode("utf-8")
-    packet = struct.pack("!B", 130)
+    packet = struct.pack("!B", cmd)
     if proto_ver == 5:
         if properties == b"":
             packet += pack_remaining_length(2+1+2+len(topic)+1)
@@ -510,14 +599,23 @@ def gen_suback(mid, qos, proto_ver=4):
     else:
         return struct.pack('!BBHB', 144, 2+1, mid, qos)
 
-def gen_unsubscribe(mid, topic, proto_ver=4):
+def gen_unsubscribe(mid, topic, cmd=162, proto_ver=4, properties=b""):
     topic = topic.encode("utf-8")
     if proto_ver == 5:
-        pack_format = "!BBHBH"+str(len(topic))+"s"
-        return struct.pack(pack_format, 162, 2+2+len(topic)+1, mid, 0, len(topic), topic)
+        if properties == b"":
+            pack_format = "!BBHBH"+str(len(topic))+"s"
+            return struct.pack(pack_format, cmd, 2+2+len(topic)+1, mid, 0, len(topic), topic)
+        else:
+            properties = mqtt5_props.prop_finalise(properties)
+            packet = struct.pack("!B", cmd)
+            l = 2+2+len(topic)+1+len(properties)
+            packet += pack_remaining_length(l)
+            pack_format = "!HB"+str(len(properties))+"sH"+str(len(topic))+"s"
+            packet += struct.pack(pack_format, mid, len(properties), properties, len(topic), topic)
+            return packet
     else:
         pack_format = "!BBHH"+str(len(topic))+"s"
-        return struct.pack(pack_format, 162, 2+2+len(topic), mid, len(topic), topic)
+        return struct.pack(pack_format, cmd, 2+2+len(topic), mid, len(topic), topic)
 
 def gen_unsubscribe_multiple(mid, topics, proto_ver=4):
     packet = b""
@@ -536,7 +634,7 @@ def gen_unsubscribe_multiple(mid, topics, proto_ver=4):
 
         return struct.pack("!BBH", 162, remaining_length, mid) + packet
 
-def gen_unsuback(mid, proto_ver=4, reason_code=0):
+def gen_unsuback(mid, reason_code=0, proto_ver=4):
     if proto_ver == 5:
         if isinstance(reason_code, list):
             reason_code_count = len(reason_code)

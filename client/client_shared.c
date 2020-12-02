@@ -2,14 +2,16 @@
 Copyright (c) 2014-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
  
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -55,18 +57,73 @@ static int check_format(const char *str)
 				fprintf(stderr, "Error: Incomplete format specifier.\n");
 				return 1;
 			}else{
+				if(str[i+1] == '0' || str[i+1] == '-'){
+					/* Flag characters */
+					i++;
+					if(i == len-1){
+						// error
+						fprintf(stderr, "Error: Incomplete format specifier.\n");
+						return 1;
+					}
+				}
+
+				/* Field width */
+				while(str[i+1] >= '0' && str[i+1] <= '9'){
+					i++;
+					if(i == len-1){
+						// error
+						fprintf(stderr, "Error: Incomplete format specifier.\n");
+						return 1;
+					}
+				}
+
+				if(str[i+1] == '.'){
+					/* Precision specifier */
+					i++;
+					if(i == len-1){
+						// error
+						fprintf(stderr, "Error: Incomplete format specifier.\n");
+						return 1;
+					}
+					/* Precision */
+					while(str[i+1] >= '0' && str[i+1] <= '9'){
+						i++;
+						if(i == len-1){
+							// error
+							fprintf(stderr, "Error: Incomplete format specifier.\n");
+							return 1;
+						}
+					}
+				}
+
 				if(str[i+1] == '%'){
 					// Print %, ignore
+				}else if(str[i+1] == 'A'){
+					// MQTT v5 property topic-alias
+				}else if(str[i+1] == 'C'){
+					// MQTT v5 property content-type
+				}else if(str[i+1] == 'D'){
+					// MQTT v5 property correlation-data
+				}else if(str[i+1] == 'E'){
+					// MQTT v5 property message-expiry-interval
+				}else if(str[i+1] == 'F'){
+					// MQTT v5 property payload-format-indicator
 				}else if(str[i+1] == 'I'){
 					// ISO 8601 date+time
 				}else if(str[i+1] == 'l'){
 					// payload length
 				}else if(str[i+1] == 'm'){
 					// mid
+				}else if(str[i+1] == 'P'){
+					// MQTT v5 property user-property
 				}else if(str[i+1] == 'p'){
 					// payload
 				}else if(str[i+1] == 'q'){
 					// qos
+				}else if(str[i+1] == 'R'){
+					// MQTT v5 property response-topic
+				}else if(str[i+1] == 'S'){
+					// MQTT v5 property subscription-identifier
 				}else if(str[i+1] == 'r'){
 					// retain
 				}else if(str[i+1] == 't'){
@@ -77,6 +134,10 @@ static int check_format(const char *str)
 					// JSON output, assuming JSON payload
 				}else if(str[i+1] == 'U'){
 					// Unix time+nanoseconds
+#ifdef WIN32
+					fprintf(stderr, "Error: The %%U format option is not supported on Windows.\n");
+					return 1;
+#endif
 				}else if(str[i+1] == 'x' || str[i+1] == 'X'){
 					// payload in hex
 				}else{
@@ -125,7 +186,7 @@ static int check_format(const char *str)
 void init_config(struct mosq_config *cfg, int pub_or_sub)
 {
 	memset(cfg, 0, sizeof(*cfg));
-	cfg->port = -1;
+	cfg->port = PORT_UNDEFINED;
 	cfg->max_inflight = 20;
 	cfg->keepalive = 60;
 	cfg->clean_session = true;
@@ -133,6 +194,7 @@ void init_config(struct mosq_config *cfg, int pub_or_sub)
 	cfg->repeat_count = 1;
 	cfg->repeat_delay.tv_sec = 0;
 	cfg->repeat_delay.tv_usec = 0;
+	cfg->random_filter = 10000;
 	if(pub_or_sub == CLIENT_RR){
 		cfg->protocol_version = MQTT_PROTOCOL_V5;
 		cfg->msg_count = 1;
@@ -633,8 +695,8 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}else{
 				cfg->keepalive = atoi(argv[i+1]);
-				if(cfg->keepalive>65535){
-					fprintf(stderr, "Error: Invalid keepalive given: %d\n", cfg->keepalive);
+				if(cfg->keepalive<5 || cfg->keepalive>UINT16_MAX){
+					fprintf(stderr, "Error: Invalid keepalive given, it must be between 5 and 65535 inclusive.\n\n");
 					return 1;
 				}
 			}
@@ -670,8 +732,14 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 					url += 7;
 					cfg->port = 1883;
 				} else if(!strncasecmp(url, "mqtts://", 8)) {
+#ifdef WITH_TLS
 					url += 8;
 					cfg->port = 8883;
+					cfg->tls_use_os_certs = true;
+#else
+					fprintf(stderr, "Error: TLS support not available.\n\n");
+					return 1;
+#endif
 				} else {
 					fprintf(stderr, "Error: unsupported URL scheme.\n\n");
 					return 1;
@@ -756,6 +824,8 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->max_inflight = (unsigned int )tmpi;
 			}
 			i++;
+		}else if(!strcmp(argv[i], "--nodelay")){
+			cfg->tcp_nodelay = true;
 		}else if(!strcmp(argv[i], "-n") || !strcmp(argv[i], "--null-message")){
 			if(pub_or_sub == CLIENT_SUB){
 				goto unknown_option;
@@ -777,12 +847,17 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}else{
 				cfg->port = atoi(argv[i+1]);
-				if(cfg->port<1 || cfg->port>65535){
+				if(cfg->port<0 || cfg->port>65535){
 					fprintf(stderr, "Error: Invalid port given: %d\n", cfg->port);
 					return 1;
 				}
 			}
 			i++;
+		}else if(!strcmp(argv[i], "--pretty")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			cfg->pretty = true;
 		}else if(!strcmp(argv[i], "-P") || !strcmp(argv[i], "--pw")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -P argument given but no password specified.\n\n");
@@ -846,6 +921,21 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 			cfg->no_retain = true;
 			cfg->sub_opts |= MQTT_SUB_OPT_SEND_RETAIN_NEVER;
+		}else if(!strcmp(argv[i], "--random-filter")){
+			if(pub_or_sub != CLIENT_SUB){
+				goto unknown_option;
+			}
+			if(i==argc-1){
+				fprintf(stderr, "Error: --random-filter argument given but no chance specified.\n\n");
+				return 1;
+			}else{
+				cfg->random_filter = (int)(10.0*atof(argv[i+1]));
+				if(cfg->random_filter > 10000 || cfg->random_filter < 1){
+					fprintf(stderr, "Error: --random-filter chance must be between 0.1-100.0\n\n");
+					return 1;
+				}
+			}
+			i++;
 		}else if(!strcmp(argv[i], "--remove-retained")){
 			if(pub_or_sub != CLIENT_SUB){
 				goto unknown_option;
@@ -967,6 +1057,8 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->tls_engine_kpass_sha1 = strdup(argv[i+1]);
 			}
 			i++;
+		}else if(!strcmp(argv[i], "--tls-use-os-certs")){
+			cfg->tls_use_os_certs = true;
 		}else if(!strcmp(argv[i], "--tls-version")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --tls-version argument given but no version specified.\n\n");
@@ -1009,6 +1101,15 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->username = strdup(argv[i+1]);
 			}
 			i++;
+		}else if(!strcmp(argv[i], "--unix")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --unix argument given but no socket path specified.\n\n");
+				return 1;
+			}else{
+				cfg->host = strdup(argv[i+1]);
+				cfg->port = 0;
+			}
+			i++;
 		}else if(!strcmp(argv[i], "-V") || !strcmp(argv[i], "--protocol-version")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --protocol-version argument given but no version specified.\n\n");
@@ -1031,6 +1132,8 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				goto unknown_option;
 			}
 			cfg->verbose = 1;
+		}else if(!strcmp(argv[i], "--version")){
+			return 3;
 		}else if(!strcmp(argv[i], "-W")){
 			if(pub_or_sub == CLIENT_PUB){
 				goto unknown_option;
@@ -1087,6 +1190,32 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->will_topic = strdup(argv[i+1]);
 			}
 			i++;
+		}else if(!strcmp(argv[i], "-x")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: -x argument given but no session expiry interval specified.\n\n");
+				return 1;
+			}else{
+				if(!strcmp(argv[i+1], "∞")){
+					cfg->session_expiry_interval = UINT32_MAX;
+				}else{
+					char *endptr = NULL;
+					cfg->session_expiry_interval = strtol(argv[i+1], &endptr, 0);
+					if(endptr == argv[i+1] || endptr[0] != '\0'){
+						/* Entirety of argument wasn't a number */
+						fprintf(stderr, "Error: session-expiry-interval not a number.\n\n");
+						return 1;
+					}
+					if(cfg->session_expiry_interval > UINT32_MAX || cfg->session_expiry_interval < -1){
+						fprintf(stderr, "Error: session-expiry-interval out of range.\n\n");
+						return 1;
+					}
+					if(cfg->session_expiry_interval == -1){
+						/* Convenience value for infinity. */
+						cfg->session_expiry_interval = UINT32_MAX;
+					}
+				}
+			}
+			i++;
 		}else{
 			goto unknown_option;
 		}
@@ -1134,7 +1263,13 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 			mosquitto_lib_cleanup();
 			return 1;
 		}
+	}else if(cfg->port == 8883){
+		mosquitto_int_option(mosq, MOSQ_OPT_TLS_USE_OS_CERTS, 1);
 	}
+	if(cfg->tls_use_os_certs){
+		mosquitto_int_option(mosq, MOSQ_OPT_TLS_USE_OS_CERTS, 1);
+	}
+
 	if(cfg->insecure && mosquitto_tls_insecure_set(mosq, true)){
 		err_printf(cfg, "Error: Problem setting TLS insecure option.\n");
 		mosquitto_lib_cleanup();
@@ -1183,6 +1318,9 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		}
 	}
 #endif
+	if(cfg->tcp_nodelay){
+		mosquitto_int_option(mosq, MOSQ_OPT_TCP_NODELAY, 1);
+	}
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -1210,7 +1348,7 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	int rc;
 	int port;
 
-	if(cfg->port < 0){
+	if(cfg->port == PORT_UNDEFINED){
 #ifdef WITH_TLS
 		if(cfg->cafile || cfg->capath
 #  ifdef FINAL_WITH_TLS_PSK

@@ -12,7 +12,7 @@ keepalive = 60
 connect_packet = mosq_test.gen_connect("publish-qos2-test", keepalive=keepalive, proto_ver=5)
 
 props = mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_RECEIVE_MAXIMUM, 1)
-connack_packet = mosq_test.gen_connack(rc=0, proto_ver=5, properties=props)
+connack_packet = mosq_test.gen_connack(rc=0, proto_ver=5, properties=props, property_helper=False)
 
 disconnect_packet = mosq_test.gen_disconnect(proto_ver=5)
 
@@ -69,36 +69,28 @@ try:
     (conn, address) = sock.accept()
     conn.settimeout(10)
 
-    if mosq_test.expect_packet(conn, "connect", connect_packet):
-        conn.send(connack_packet)
+    mosq_test.do_receive_send(conn, connect_packet, connack_packet, "connect")
 
-        if mosq_test.expect_packet(conn, "publish 1", publish_1_packet):
-            conn.send(pubrec_1_packet)
-            if mosq_test.expect_packet(conn, "pubrel 1", pubrel_1_packet):
-                conn.send(pubcomp_1_packet)
+    mosq_test.do_receive_send(conn, publish_1_packet, pubrec_1_packet, "publish 1")
+    mosq_test.do_receive_send(conn, pubrel_1_packet, pubcomp_1_packet, "pubrel 1")
 
-                if mosq_test.expect_packet(conn, "publish 2", publish_2_packet):
-                    conn.send(pubrec_2_packet)
-                    if mosq_test.expect_packet(conn, "pubrel 2", pubrel_2_packet):
-                        conn.send(pubcomp_2_packet)
+    mosq_test.do_receive_send(conn, publish_2_packet, pubrec_2_packet, "publish 2")
+    mosq_test.do_receive_send(conn, pubrel_2_packet, pubcomp_2_packet, "pubrel 2")
 
-                        if mosq_test.expect_packet(conn, "publish 3", publish_3_packet):
-                            conn.send(pubrec_3_packet)
-                            if mosq_test.expect_packet(conn, "pubrel 3", pubrel_3_packet):
-                                conn.send(pubcomp_3_packet)
+    mosq_test.do_receive_send(conn, publish_3_packet, pubrec_3_packet, "publish 3")
+    mosq_test.do_receive_send(conn, pubrel_3_packet, pubcomp_3_packet, "pubrel 3")
 
-                                if mosq_test.expect_packet(conn, "publish 4", publish_4_packet):
-                                    conn.send(pubrec_4_packet)
-                                    if mosq_test.expect_packet(conn, "pubrel 4", pubrel_4_packet):
-                                        conn.send(pubcomp_4_packet)
+    mosq_test.do_receive_send(conn, publish_4_packet, pubrec_4_packet, "publish 4")
+    mosq_test.do_receive_send(conn, pubrel_4_packet, pubcomp_4_packet, "pubrel 4")
 
-                                        if mosq_test.expect_packet(conn, "publish 5", publish_5_packet):
-                                            conn.send(pubrec_5_packet)
-                                            if mosq_test.expect_packet(conn, "pubrel 5", pubrel_5_packet):
-                                                conn.send(pubcomp_5_packet)
-                                                rc = 0
+    mosq_test.do_receive_send(conn, publish_5_packet, pubrec_5_packet, "publish 5")
+    mosq_test.do_receive_send(conn, pubrel_5_packet, pubcomp_5_packet, "pubrel 5")
+
+    rc = 0
 
     conn.close()
+except mosq_test.TestError:
+    pass
 finally:
     for i in range(0, 5):
         if client.returncode != None:

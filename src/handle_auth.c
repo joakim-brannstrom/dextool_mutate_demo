@@ -2,13 +2,15 @@
 Copyright (c) 2018-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
 
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
+
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -29,7 +31,7 @@ Contributors:
 #include "will_mosq.h"
 
 
-int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
+int handle__auth(struct mosquitto *context)
 {
 	int rc = 0;
 	uint8_t reason_code = 0;
@@ -47,7 +49,7 @@ int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(context->in_packet.remaining_length > 0){
-		if(packet__read_byte(&context->in_packet, &reason_code)) return 1;
+		if(packet__read_byte(&context->in_packet, &reason_code)) return MOSQ_ERR_MALFORMED_PACKET;
 		if(reason_code != MQTT_RC_CONTINUE_AUTHENTICATION
 				&& reason_code != MQTT_RC_REAUTHENTICATE){
 
@@ -96,25 +98,25 @@ int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
 	if(reason_code == MQTT_RC_REAUTHENTICATE){
 		/* This is a re-authentication attempt */
 		mosquitto__set_state(context, mosq_cs_reauthenticating);
-		rc = mosquitto_security_auth_start(db, context, true, auth_data, auth_data_len, &auth_data_out, &auth_data_out_len);
+		rc = mosquitto_security_auth_start(context, true, auth_data, auth_data_len, &auth_data_out, &auth_data_out_len);
 	}else{
 		if(context->state != mosq_cs_reauthenticating){
 			mosquitto__set_state(context, mosq_cs_authenticating);
 		}
-		rc = mosquitto_security_auth_continue(db, context, auth_data, auth_data_len, &auth_data_out, &auth_data_out_len);
+		rc = mosquitto_security_auth_continue(context, auth_data, auth_data_len, &auth_data_out, &auth_data_out_len);
 	}
 	mosquitto__free(auth_data);
 	if(rc == MOSQ_ERR_SUCCESS){
 		if(context->state == mosq_cs_authenticating){
-			return connect__on_authorised(db, context, auth_data_out, auth_data_out_len);
+			return connect__on_authorised(context, auth_data_out, auth_data_out_len);
 		}else{
 			mosquitto__set_state(context, mosq_cs_active);
-			rc = send__auth(db, context, MQTT_RC_SUCCESS, auth_data_out, auth_data_out_len);
+			rc = send__auth(context, MQTT_RC_SUCCESS, auth_data_out, auth_data_out_len);
 			free(auth_data_out);
 			return rc;
 		}
 	}else if(rc == MOSQ_ERR_AUTH_CONTINUE){
-		rc = send__auth(db, context, MQTT_RC_CONTINUE_AUTHENTICATION, auth_data_out, auth_data_out_len);
+		rc = send__auth(context, MQTT_RC_CONTINUE_AUTHENTICATION, auth_data_out, auth_data_out_len);
 		free(auth_data_out);
 		return rc;
 	}else{
@@ -124,7 +126,7 @@ int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
 			will__clear(context);
 		}
 		if(rc == MOSQ_ERR_AUTH){
-			send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
+			send__connack(context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
 			if(context->state == mosq_cs_authenticating){
 				mosquitto__free(context->id);
 				context->id = NULL;
@@ -132,7 +134,7 @@ int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
 			return MOSQ_ERR_PROTOCOL;
 		}else if(rc == MOSQ_ERR_NOT_SUPPORTED){
 			/* Client has requested extended authentication, but we don't support it. */
-			send__connack(db, context, 0, MQTT_RC_BAD_AUTHENTICATION_METHOD, NULL);
+			send__connack(context, 0, MQTT_RC_BAD_AUTHENTICATION_METHOD, NULL);
 			if(context->state == mosq_cs_authenticating){
 				mosquitto__free(context->id);
 				context->id = NULL;

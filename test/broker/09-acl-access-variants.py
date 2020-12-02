@@ -8,17 +8,21 @@ def write_config(filename, port, per_listener):
     with open(filename, 'w') as f:
         f.write("per_listener_settings %s\n" % (per_listener))
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("acl_file %s\n" % (filename.replace('.conf', '.acl')))
 
 def write_acl(filename, global_en, user_en, pattern_en):
     with open(filename, 'w') as f:
         if global_en:
-            f.write('topic readwrite topic/global\n')
+            f.write('topic readwrite topic/global/#\n')
+            f.write('topic deny      topic/global/except\n')
         if user_en:
             f.write('user username\n')
-            f.write('topic readwrite topic/username\n')
+            f.write('topic readwrite topic/username/#\n')
+            f.write('topic deny      topic/username/except\n')
         if pattern_en:
-            f.write('pattern readwrite pattern/%u\n')
+            f.write('pattern readwrite pattern/%u/#\n')
+            f.write('pattern deny      pattern/%u/except\n')
 
 
 
@@ -48,14 +52,17 @@ def single_test(port, per_listener, username, topic, expect_deny):
 
         sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
-        mosq_test.do_send_receive(sock, publish1s_packet, puback1s_packet, "puback")
+        sock.send(publish1s_packet)
         if expect_deny:
+            mosq_test.expect_packet(sock, "puback", puback1s_packet)
             mosq_test.do_ping(sock)
         else:
-            mosq_test.expect_packet(sock, "publish1r", publish1r_packet)
+            mosq_test.receive_unordered(sock, puback1s_packet, publish1r_packet, "puback / publish1r")
         sock.close()
 
         rc = 0
+    except mosq_test.TestError:
+        pass
     finally:
         os.remove(conf_file)
         broker.terminate()
@@ -73,12 +80,15 @@ def acl_test(port, per_listener, global_en, user_en, pattern_en):
     if global_en:
         single_test(port, per_listener, username=None,       topic="topic/global", expect_deny=False)
         single_test(port, per_listener, username="username", topic="topic/global", expect_deny=True)
+        single_test(port, per_listener, username=None,       topic="topic/global/except", expect_deny=True)
     if user_en:
         single_test(port, per_listener, username=None,       topic="topic/username", expect_deny=True)
         single_test(port, per_listener, username="username", topic="topic/username", expect_deny=False)
+        single_test(port, per_listener, username="username", topic="topic/username/except", expect_deny=True)
     if pattern_en:
         single_test(port, per_listener, username=None,       topic="pattern/username", expect_deny=True)
         single_test(port, per_listener, username="username", topic="pattern/username", expect_deny=False)
+        single_test(port, per_listener, username="username", topic="pattern/username/except", expect_deny=True)
 
 def do_test(port, per_listener):
     try:

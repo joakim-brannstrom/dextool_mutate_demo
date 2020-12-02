@@ -2,6 +2,17 @@
 
 from mosq_test_helper import *
 
+def helper(port, pub_topic):
+    connect_packet = mosq_test.gen_connect("test-helper", keepalive=60)
+    connack_packet = mosq_test.gen_connack(rc=0)
+
+    publish_packet = mosq_test.gen_publish(pub_topic, qos=0, retain=True, payload="message")
+
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet, connack_error="helper connack", port=port)
+    sock.send(publish_packet)
+    sock.close()
+
+
 def pattern_test(sub_topic, pub_topic):
     rc = 1
     keepalive = 60
@@ -26,19 +37,17 @@ def pattern_test(sub_topic, pub_topic):
         sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20, port=port)
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-        pub = subprocess.Popen(['./03-pattern-matching-helper.py', pub_topic, str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        pub.wait()
-        (stdo, stde) = pub.communicate()
+        helper(port, pub_topic)
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            mosq_test.do_send_receive(sock, unsubscribe_packet, unsuback_packet, "unsuback")
-
-            mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
-
-            if mosq_test.expect_packet(sock, "publish retained", publish_retained_packet):
-                rc = 0
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        mosq_test.do_send_receive(sock, unsubscribe_packet, unsuback_packet, "unsuback")
+        mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
+        mosq_test.expect_packet(sock, "publish retained", publish_retained_packet)
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

@@ -34,6 +34,8 @@ try:
 except ssl.SSLError:
     # Expected error due to ca certs not matching.
     pass
+except mosq_test.TestError:
+    pass
 finally:
     time.sleep(1.0)
     try:

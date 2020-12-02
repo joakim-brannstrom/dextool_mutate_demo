@@ -20,6 +20,7 @@ def write_config1(filename, port1, port2):
 def write_config2(filename, port2, port3):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port3))
+        f.write("allow_anonymous true\n")
         f.write("\n")
         f.write("connection bridge-psk\n")
         f.write("address localhost:%d\n" % (port2))
@@ -68,10 +69,12 @@ try:
         raise ValueError
     (stdo, stde) = pub.communicate()
 
-    if mosq_test.expect_packet(sock, "publish", publish_packet):
-        rc = 0
+    mosq_test.expect_packet(sock, "publish", publish_packet)
+    rc = 0
 
     sock.close()
+except mosq_test.TestError:
+    pass
 finally:
     os.remove(conf_file1)
     os.remove(conf_file2)

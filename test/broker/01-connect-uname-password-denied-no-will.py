@@ -16,46 +16,57 @@ def write_pwfile(filename):
         # Username user, password password
         f.write('user:$6$vZY4TS+/HBxHw38S$vvjVFECzb8dyuu/mruD2QKTfdFn0WmKxbc+1TsdB0L8EdHk3v9JRmfjHd56+VaTnUcSZOZ/hzkdvWCtxlX7AUQ==\n')
 
-pw_file = os.path.basename(__file__).replace('.py', '.pwfile')
-port = mosq_test.get_port()
-conf_file = os.path.basename(__file__).replace('.py', '.conf')
-write_config(conf_file, port, pw_file)
-write_pwfile(pw_file)
 
-rc = 1
-keepalive = 10
-connect1_packet = mosq_test.gen_connect("connect-uname-pwd-test", keepalive=keepalive, username="user", password="password", will_topic="will/test", will_payload=b"will msg")
-connack1_packet = mosq_test.gen_connack(rc=0)
+def do_test(proto_ver):
+    pw_file = os.path.basename(__file__).replace('.py', '.pwfile')
+    port = mosq_test.get_port()
+    conf_file = os.path.basename(__file__).replace('.py', '.conf')
+    write_config(conf_file, port, pw_file)
+    write_pwfile(pw_file)
 
-mid = 1
-subscribe_packet = mosq_test.gen_subscribe(mid, topic="will/test", qos=0)
-suback_packet = mosq_test.gen_suback(mid, 0)
+    rc = 1
+    keepalive = 10
+    connect1_packet = mosq_test.gen_connect("connect-uname-pwd-test", keepalive=keepalive, username="user", password="password", will_topic="will/test", will_payload=b"will msg", proto_ver=proto_ver)
+    connack1_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
 
-connect2_packet = mosq_test.gen_connect("connect-uname-pwd-test", keepalive=keepalive, username="user", password="password9")
-connack2_packet = mosq_test.gen_connack(rc=5)
+    mid = 1
+    subscribe_packet = mosq_test.gen_subscribe(mid, topic="will/test", qos=0, proto_ver=proto_ver)
+    suback_packet = mosq_test.gen_suback(mid, 0, proto_ver=proto_ver)
 
-broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
+    connect2_packet = mosq_test.gen_connect("connect-uname-pwd-test", keepalive=keepalive, username="user", password="password9", proto_ver=proto_ver)
+    if proto_ver == 5:
+        connack2_packet = mosq_test.gen_connack(rc=mqtt5_rc.MQTT_RC_NOT_AUTHORIZED, proto_ver=proto_ver, properties=None)
+    else:
+        connack2_packet = mosq_test.gen_connack(rc=5, proto_ver=proto_ver)
 
-try:
-    sock1 = mosq_test.do_client_connect(connect1_packet, connack1_packet, port=port)
-    mosq_test.do_send_receive(sock1, subscribe_packet, suback_packet)
+    broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
-    sock2 = mosq_test.do_client_connect(connect2_packet, connack2_packet, port=port)
-    sock2.close()
+    try:
+        sock1 = mosq_test.do_client_connect(connect1_packet, connack1_packet, port=port)
+        mosq_test.do_send_receive(sock1, subscribe_packet, suback_packet)
 
-    # If we receive a will here, this is an error
-    mosq_test.do_ping(sock1)
-    sock1.close()
-    rc = 0
+        sock2 = mosq_test.do_client_connect(connect2_packet, connack2_packet, port=port)
+        sock2.close()
 
-finally:
-    os.remove(conf_file)
-    os.remove(pw_file)
-    broker.terminate()
-    broker.wait()
-    (stdo, stde) = broker.communicate()
-    if rc:
-        print(stde.decode('utf-8'))
+        # If we receive a will here, this is an error
+        mosq_test.do_ping(sock1)
+        sock1.close()
+        rc = 0
 
-exit(rc)
+    except mosq_test.TestError:
+        pass
+    finally:
+        os.remove(conf_file)
+        os.remove(pw_file)
+        broker.terminate()
+        broker.wait()
+        (stdo, stde) = broker.communicate()
+        if rc:
+            print(stde.decode('utf-8'))
+            print("proto_ver=%d" % (proto_ver))
+            exit(rc)
 
+
+do_test(proto_ver=4)
+do_test(proto_ver=5)
+exit(0)

@@ -29,7 +29,7 @@
 
 	<refsect1>
 		<title>Description</title>
-		<para><command>mosquitto</command> is a broker for the MQTT protocol version 3.1.1/3.1.</para>
+		<para><command>mosquitto</command> is a broker for the MQTT protocol version 5.0/3.1.1/3.1.</para>
 	</refsect1>
 
 	<refsect1>
@@ -39,7 +39,12 @@
 				<term><option>-c</option></term>
 				<term><option>--config-file</option></term>
 				<listitem>
-					<para>Load configuration from a file. If not given, the default values as described in <citerefentry><refentrytitle>mosquitto.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> are used.</para>
+                    <para>
+						Load configuration from a file. If not given, then the broker will listen on port 1883 bound to the loopback interface,
+						and the default values as described in <citerefentry><refentrytitle>mosquitto.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+                        are used.
+                    </para>
+					<important><para>See the <option>-p</option> option for a description of changes in behaviour from 1.6.x to 2.0.</para></important>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -53,7 +58,12 @@
 				<term><option>-p</option></term>
 				<term><option>--port</option></term>
 				<listitem>
-					<para>Listen on the port specified instead of the default 1883. This acts in addition to the port setting in the config file. May be specified multiple times to open multiple sockets listening on different ports. This socket will be bound to all network interfaces.</para>
+					<para>Listen on the port specified. May be specified up to 10 times to open multiple sockets listening on different ports.</para>
+					<important><para>In version 1.6.x and earlier, the listener defined by <option>-p</option> (or the default port of 1883) would be
+						bound to all interfaces and so be accessible from any network. It could also be used in combination with <option>-c</option>.</para>
+						<para>From version 2.0 onwards, the listeners defined with <option>-p</option> are bound to the loopback interface only, and so can
+						only be connected to from the local machine. If both <option>-p</option> is used and a listener is defined in a configuration
+						file, then the <option>-p</option> options are IGNORED.</para></important>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -499,6 +509,12 @@
 				<citerefentry>
 					<refentrytitle><link xlink:href="https://linux.die.net/man/5/hosts_access">hosts_access</link></refentrytitle>
 					<manvolnum>5</manvolnum>
+				</citerefentry>
+			</member>
+			<member>
+				<citerefentry>
+					<refentrytitle><link xlink:href="mosquitto_ctrl-1.html">mosquitto_ctrl</link></refentrytitle>
+					<manvolnum>1</manvolnum>
 				</citerefentry>
 			</member>
 			<member>

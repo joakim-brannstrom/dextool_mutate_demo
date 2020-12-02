@@ -37,6 +37,7 @@ int main(int argc, char *argv[])
 
 	rc = mosq->loop_forever();
 	delete mosq;
+	mosqpp::lib_cleanup();
 	if(rc == MOSQ_ERR_ERRNO && errno == EPROTO){
 		return 0;
 	}else{

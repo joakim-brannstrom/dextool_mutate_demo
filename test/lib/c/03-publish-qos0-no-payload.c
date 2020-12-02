@@ -36,6 +36,9 @@ int main(int argc, char *argv[])
 	mosquitto_lib_init();
 
 	mosq = mosquitto_new("publish-qos0-test-np", true, NULL);
+	if(mosq == NULL){
+		return 1;
+	}
 	mosquitto_connect_callback_set(mosq, on_connect);
 	mosquitto_publish_callback_set(mosq, on_publish);
 
@@ -44,6 +47,7 @@ int main(int argc, char *argv[])
 	while(run == -1){
 		mosquitto_loop(mosq, -1, 1);
 	}
+	mosquitto_destroy(mosq);
 
 	mosquitto_lib_cleanup();
 	return run;

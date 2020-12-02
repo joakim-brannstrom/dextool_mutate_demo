@@ -2,13 +2,15 @@
 Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
 
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
+
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -29,7 +31,6 @@ int send__unsuback(struct mosquitto *mosq, uint16_t mid, int reason_code_count, 
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
-	int proplen, varbytes;
 
 	assert(mosq);
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
@@ -39,9 +40,8 @@ int send__unsuback(struct mosquitto *mosq, uint16_t mid, int reason_code_count, 
 	packet->remaining_length = 2;
 
 	if(mosq->protocol == mosq_p_mqtt5){
-		proplen = property__get_length_all(properties);
-		varbytes = packet__varint_bytes(proplen);
-		packet->remaining_length += varbytes + proplen + reason_code_count;
+		packet->remaining_length += property__get_remaining_length(properties);
+		packet->remaining_length += (uint32_t)reason_code_count;
 	}
 
 	rc = packet__alloc(packet);
@@ -54,7 +54,7 @@ int send__unsuback(struct mosquitto *mosq, uint16_t mid, int reason_code_count, 
 
 	if(mosq->protocol == mosq_p_mqtt5){
 		property__write_all(packet, properties, true);
-        packet__write_bytes(packet, reason_codes, reason_code_count);
+        packet__write_bytes(packet, reason_codes, (uint32_t)reason_code_count);
 	}
 
 	return packet__queue(mosq, packet);

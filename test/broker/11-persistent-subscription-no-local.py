@@ -8,6 +8,7 @@ from mosq_test_helper import *
 def write_config(filename, port):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("persistence true\n")
         f.write("persistence_file mosquitto-%d.db\n" % (port))
 
@@ -17,9 +18,8 @@ write_config(conf_file, port)
 
 rc = 1
 keepalive = 60
-props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_SESSION_EXPIRY_INTERVAL, 100)
 connect_packet = mosq_test.gen_connect(
-    "persistent-subscription-test", keepalive=keepalive, clean_session=False, proto_ver=5, properties=props
+    "persistent-subscription-test", keepalive=keepalive, clean_session=False, proto_ver=5, session_expiry=60
 )
 connack_packet = mosq_test.gen_connack(rc=0, proto_ver=5)
 connack_packet2 = mosq_test.gen_connack(rc=0, flags=1, proto_ver=5)  # session present
@@ -60,27 +60,29 @@ try:
     mosq_test.do_send_receive(sock, subscribe2_packet, suback2_packet, "suback2")
 
     mosq_test.do_send_receive(sock, publish1_packet, puback1_packet, "puback1a")
-    mosq_test.do_send_receive(sock, publish2s_packet, puback2s_packet, "puback2a")
+    sock.send(publish2s_packet)
+    mosq_test.receive_unordered(sock, puback2s_packet, publish2a_packet, "puback2a/publish2a")
 
-    if mosq_test.expect_packet(sock, "publish2a", publish2a_packet):
-        sock.send(puback2a_packet)
+    sock.send(puback2a_packet)
 
-        broker.terminate()
-        broker.wait()
-        (stdo1, stde1) = broker.communicate()
-        sock.close()
+    broker.terminate()
+    broker.wait()
+    (stdo1, stde1) = broker.communicate()
+    sock.close()
 
-        broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
+    broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
-        sock = mosq_test.do_client_connect(connect_packet, connack_packet2, timeout=20, port=port)
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet2, timeout=20, port=port)
 
-        mosq_test.do_send_receive(sock, publish1_packet, puback1_packet, "puback1b")
-        mosq_test.do_send_receive(sock, publish2s_packet, puback2s_packet, "puback2b")
+    mosq_test.do_send_receive(sock, publish1_packet, puback1_packet, "puback1b")
+    sock.send(publish2s_packet)
+    mosq_test.receive_unordered(sock, puback2s_packet, publish2b_packet, "puback2b/publish2b")
 
-        if mosq_test.expect_packet(sock, "publish2b", publish2b_packet):
-            rc = 0
+    rc = 0
 
     sock.close()
+except mosq_test.TestError:
+    pass
 finally:
     os.remove(conf_file)
     broker.terminate()

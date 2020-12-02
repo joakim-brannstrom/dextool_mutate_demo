@@ -2,14 +2,16 @@
 Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
  
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -29,17 +31,15 @@ typedef SSIZE_T ssize_t;
 #include "mosquitto_internal.h"
 #include "mosquitto.h"
 
-#ifdef WITH_BROKER
-struct mosquitto_db;
-#endif
-
 #ifdef WIN32
 #  define COMPAT_CLOSE(a) closesocket(a)
 #  define COMPAT_ECONNRESET WSAECONNRESET
+#  define COMPAT_EINTR WSAEINTR
 #  define COMPAT_EWOULDBLOCK WSAEWOULDBLOCK
 #else
 #  define COMPAT_CLOSE(a) close(a)
 #  define COMPAT_ECONNRESET ECONNRESET
+#  define COMPAT_EINTR EINTR
 #  define COMPAT_EWOULDBLOCK EWOULDBLOCK
 #endif
 
@@ -55,12 +55,12 @@ struct mosquitto_db;
 int net__init(void);
 void net__cleanup(void);
 
-int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking);
-#ifdef WITH_BROKER
-int net__socket_close(struct mosquitto_db *db, struct mosquitto *mosq);
-#else
-int net__socket_close(struct mosquitto *mosq);
+#ifdef WITH_TLS
+void net__init_tls(void);
 #endif
+
+int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking);
+int net__socket_close(struct mosquitto *mosq);
 int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const char *bind_address, bool blocking);
 int net__try_connect_step1(struct mosquitto *mosq, const char *host);
 int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *sock);

@@ -5,9 +5,18 @@
 
 from mosq_test_helper import *
 
-def len_test(test, puback_packet):
-    port = mosq_test.get_port()
+def helper(port):
+    connect_packet = mosq_test.gen_connect("test-helper", keepalive=60)
+    connack_packet = mosq_test.gen_connack(rc=0)
+    mid = 1
+    publish_packet = mosq_test.gen_publish("qos1/len/test", qos=1, mid=mid, payload="len-message")
+    puback_packet = mosq_test.gen_puback(mid)
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet, connack_error="helper connack", port=port)
+    mosq_test.do_send_receive(sock, publish_packet, puback_packet, "helper puback")
+    sock.close()
 
+
+def len_test(test, puback_packet):
     rc = 1
     mid = 3265
     keepalive = 60
@@ -20,6 +29,7 @@ def len_test(test, puback_packet):
     mid = 1
     publish_packet = mosq_test.gen_publish("qos1/len/test", qos=1, mid=mid, payload="len-message", proto_ver=5)
 
+    port = mosq_test.get_port()
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
     try:
@@ -27,18 +37,18 @@ def len_test(test, puback_packet):
 
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-        pub = subprocess.Popen(['./03-publish-b2c-qos1-len-helper.py', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        pub.wait()
-        (stdo, stde) = pub.communicate()
+        helper(port)
         # Should have now received a publish command
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            sock.send(puback_packet)
+        mosq_test.expect_packet(sock, "publish", publish_packet)
+        sock.send(puback_packet)
 
-            mosq_test.do_ping(sock)
-            rc = 0
+        mosq_test.do_ping(sock)
+        rc = 0
 
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

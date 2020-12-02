@@ -39,6 +39,8 @@ except ssl.SSLError as err:
 except socket.error as err:
     if err.errno == errno.ECONNRESET:
         rc = 0
+except mosq_test.TestError:
+    pass
 finally:
     os.remove(conf_file)
     broker.terminate()

@@ -46,6 +46,8 @@ try:
 
     rc = 0
 
+except mosq_test.TestError:
+    pass
 finally:
     broker.terminate()
     broker.wait()

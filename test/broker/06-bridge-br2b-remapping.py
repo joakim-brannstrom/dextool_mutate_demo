@@ -4,9 +4,10 @@
 
 from mosq_test_helper import *
 
-def write_config(filename, port1, port2):
+def write_config(filename, port1, port2, protocol_version):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port2))
+        f.write("allow_anonymous true\n")
         f.write("\n")
         f.write("connection bridge_sample\n")
         f.write("address 127.0.0.1:%d\n" % (port1))
@@ -17,30 +18,12 @@ def write_config(filename, port1, port2):
         f.write("topic ic/+ out 0 local4/top remote4/tip\n")
         f.write("notifications false\n")
         f.write("restart_timeout 5\n")
-
-(port1, port2) = mosq_test.get_port(2)
-conf_file = os.path.basename(__file__).replace('.py', '.conf')
-write_config(conf_file, port1, port2)
-
-rc = 1
-keepalive = 60
-client_id = socket.gethostname()+".bridge_sample"
-connect_packet = mosq_test.gen_connect(client_id, keepalive=keepalive, clean_session=False, proto_ver=128+4)
-connack_packet = mosq_test.gen_connack(rc=0)
-
-client_connect_packet = mosq_test.gen_connect("pub-test", keepalive=keepalive)
-client_connack_packet = mosq_test.gen_connack(rc=0)
-
-ssock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-ssock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-ssock.settimeout(4)
-ssock.bind(('', port1))
-ssock.listen(5)
-
-broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port2, use_conf=True)
+        f.write("bridge_protocol_version %s\n" % (protocol_version))
 
 
-def test(bridge, sock):
+def inner_test(bridge, sock, proto_ver):
+    global connect_packet, connack_packet
+
     if not mosq_test.expect_packet(bridge, "connect", connect_packet):
         return 1
 
@@ -63,12 +46,12 @@ def test(bridge, sock):
     for (local_topic, remote_topic) in cases:
         mid += 1
         local_publish_packet = mosq_test.gen_publish(
-            local_topic, qos=0, mid=mid, payload=''
+            local_topic, qos=0, mid=mid, payload='', proto_ver=proto_ver
         )
         sock.send(local_publish_packet)
         if remote_topic:
             remote_publish_packet = mosq_test.gen_publish(
-                remote_topic, qos=0, mid=mid, payload=''
+                remote_topic, qos=0, mid=mid, payload='', proto_ver=proto_ver
             )
             match = mosq_test.expect_packet(bridge, "publish", remote_publish_packet)
             if not match:
@@ -84,31 +67,70 @@ def test(bridge, sock):
                 ))
     return 0
 
-try:
-    (bridge, address) = ssock.accept()
-    bridge.settimeout(2)
 
-    sock = mosq_test.do_client_connect(
-        client_connect_packet, client_connack_packet,
-        port=port2,
-    )
+def do_test(proto_ver):
+    global connect_packet, connack_packet
 
-    rc = test(bridge, sock)
+    if proto_ver == 4:
+        bridge_protocol = "mqttv311"
+        proto_ver_connect = 128+4
+    else:
+        bridge_protocol = "mqttv50"
+        proto_ver_connect = 5
 
-    sock.close()
-    bridge.close()
-finally:
-    os.remove(conf_file)
+    (port1, port2) = mosq_test.get_port(2)
+    conf_file = os.path.basename(__file__).replace('.py', '.conf')
+    write_config(conf_file, port1, port2, bridge_protocol)
+
+    rc = 1
+    keepalive = 60
+    client_id = socket.gethostname()+".bridge_sample"
+    connect_packet = mosq_test.gen_connect(client_id, keepalive=keepalive, clean_session=False, proto_ver=proto_ver_connect)
+    connack_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
+
+    client_connect_packet = mosq_test.gen_connect("pub-test", keepalive=keepalive, proto_ver=proto_ver)
+    client_connack_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
+
+    ssock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ssock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    ssock.settimeout(4)
+    ssock.bind(('', port1))
+    ssock.listen(5)
+
+    broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port2, use_conf=True)
+
     try:
+        (bridge, address) = ssock.accept()
+        bridge.settimeout(2)
+
+        sock = mosq_test.do_client_connect(
+            client_connect_packet, client_connack_packet,
+            port=port2,
+        )
+
+        rc = inner_test(bridge, sock, proto_ver)
+
+        sock.close()
         bridge.close()
-    except NameError:
+    except mosq_test.TestError:
         pass
+    finally:
+        os.remove(conf_file)
+        try:
+            bridge.close()
+        except NameError:
+            pass
 
-    broker.terminate()
-    broker.wait()
-    (stdo, stde) = broker.communicate()
-    if rc:
-        print(stde.decode('utf-8'))
-    ssock.close()
+        broker.terminate()
+        broker.wait()
+        (stdo, stde) = broker.communicate()
+        ssock.close()
+        if rc:
+            print(stde.decode('utf-8'))
+            exit(rc)
 
-exit(rc)
+
+do_test(proto_ver=4)
+do_test(proto_ver=5)
+
+exit(0)

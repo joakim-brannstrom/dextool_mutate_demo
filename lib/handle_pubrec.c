@@ -2,13 +2,15 @@
 Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
 
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
+
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -35,18 +37,16 @@ Contributors:
 #include "send_mosq.h"
 #include "util_mosq.h"
 
-int handle__pubrec(struct mosquitto_db *db, struct mosquitto *mosq)
+int handle__pubrec(struct mosquitto *mosq)
 {
 	uint8_t reason_code = 0;
 	uint16_t mid;
 	int rc;
 	mosquitto_property *properties = NULL;
-	int state;
 
 	assert(mosq);
 
-	state = mosquitto__get_state(mosq);
-	if(state != mosq_cs_active){
+	if(mosquitto__get_state(mosq) != mosq_cs_active){
 		return MOSQ_ERR_PROTOCOL;
 	}
 
@@ -72,10 +72,9 @@ int handle__pubrec(struct mosquitto_db *db, struct mosquitto *mosq)
 	if(reason_code < 0x80){
 		rc = db__message_update_outgoing(mosq, mid, mosq_ms_wait_for_pubcomp, 2);
 	}else{
-		return db__message_delete_outgoing(db, mosq, mid, mosq_ms_wait_for_pubrec, 2);
+		return db__message_delete_outgoing(mosq, mid, mosq_ms_wait_for_pubrec, 2);
 	}
 #else
-	UNUSED(db);
 
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREC (Mid: %d)", mosq->id, mid);
 
@@ -104,7 +103,7 @@ int handle__pubrec(struct mosquitto_db *db, struct mosquitto *mosq)
 	}else if(rc != MOSQ_ERR_SUCCESS){
 		return rc;
 	}
-	rc = send__pubrel(mosq, mid);
+	rc = send__pubrel(mosq, mid, NULL);
 	if(rc) return rc;
 
 	return MOSQ_ERR_SUCCESS;

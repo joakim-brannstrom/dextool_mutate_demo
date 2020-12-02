@@ -2,13 +2,15 @@
 Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
 
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
+
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -34,14 +36,14 @@ Contributors:
 int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session, const mosquitto_property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
-	int payloadlen;
+	uint32_t payloadlen;
 	uint8_t will = 0;
 	uint8_t byte;
 	int rc;
 	uint8_t version;
 	char *clientid, *username, *password;
-	int headerlen;
-	int proplen = 0, will_proplen, varbytes;
+	uint32_t headerlen;
+	uint32_t proplen = 0, varbytes;
 	mosquitto_property *local_props = NULL;
 	uint16_t receive_maximum;
 
@@ -96,19 +98,21 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	if(!packet) return MOSQ_ERR_NOMEM;
 
 	if(clientid){
-		payloadlen = 2+strlen(clientid);
+		payloadlen = (uint32_t)(2U+strlen(clientid));
 	}else{
-		payloadlen = 2;
+		payloadlen = 2U;
 	}
+#ifdef WITH_BROKER
+	if(mosq->will && (mosq->bridge == NULL || mosq->bridge->notifications_local_only == false)){
+#else
 	if(mosq->will){
+#endif
 		will = 1;
 		assert(mosq->will->msg.topic);
 
-		payloadlen += 2+strlen(mosq->will->msg.topic) + 2+mosq->will->msg.payloadlen;
+		payloadlen += (uint32_t)(2+strlen(mosq->will->msg.topic) + 2+(uint32_t)mosq->will->msg.payloadlen);
 		if(mosq->protocol == mosq_p_mqtt5){
-			will_proplen = property__get_length_all(mosq->will->properties);
-			varbytes = packet__varint_bytes(will_proplen);
-			payloadlen += will_proplen + varbytes;
+			payloadlen += property__get_remaining_length(mosq->will->properties);
 		}
 	}
 
@@ -117,15 +121,16 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	 * username before checking password. */
 	if(mosq->protocol == mosq_p_mqtt31 || mosq->protocol == mosq_p_mqtt311){
 		if(password != NULL && username == NULL){
+			mosquitto__free(packet);
 			return MOSQ_ERR_INVAL;
 		}
 	}
 
 	if(username){
-		payloadlen += 2+strlen(username);
+		payloadlen += (uint32_t)(2+strlen(username));
 	}
 	if(password){
-		payloadlen += 2+strlen(password);
+		payloadlen += (uint32_t)(2+strlen(password));
 	}
 
 	packet->command = CMD_CONNECT;
@@ -138,20 +143,23 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 
 	/* Variable header */
 	if(version == MQTT_PROTOCOL_V31){
-		packet__write_string(packet, PROTOCOL_NAME_v31, strlen(PROTOCOL_NAME_v31));
+		packet__write_string(packet, PROTOCOL_NAME_v31, (uint16_t)strlen(PROTOCOL_NAME_v31));
 	}else{
-		packet__write_string(packet, PROTOCOL_NAME, strlen(PROTOCOL_NAME));
+		packet__write_string(packet, PROTOCOL_NAME, (uint16_t)strlen(PROTOCOL_NAME));
 	}
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
-	if(mosq->bridge && mosq->bridge->try_private && mosq->bridge->try_private_accepted){
+	if(mosq->bridge && mosq->bridge->protocol_version != mosq_p_mqtt5 && mosq->bridge->try_private && mosq->bridge->try_private_accepted){
 		version |= 0x80;
 	}else{
 	}
 #endif
 	packet__write_byte(packet, version);
-	byte = (clean_session&0x1)<<1;
+	byte = (uint8_t)((clean_session&0x1)<<1);
 	if(will){
-		byte = byte | ((mosq->will->msg.retain&0x1)<<5) | ((mosq->will->msg.qos&0x3)<<3) | ((will&0x1)<<2);
+		byte = byte | (uint8_t)(((mosq->will->msg.qos&0x3)<<3) | ((will&0x1)<<2));
+		if(mosq->retain_available){
+			byte |= (uint8_t)((mosq->will->msg.retain&0x1)<<5);
+		}
 	}
 	if(username){
 		byte = byte | 0x1<<7;
@@ -172,7 +180,7 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 
 	/* Payload */
 	if(clientid){
-		packet__write_string(packet, clientid, strlen(clientid));
+		packet__write_string(packet, clientid, (uint16_t)strlen(clientid));
 	}else{
 		packet__write_uint16(packet, 0);
 	}
@@ -181,15 +189,15 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 			/* Write will properties */
 			property__write_all(packet, mosq->will->properties, true);
 		}
-		packet__write_string(packet, mosq->will->msg.topic, strlen(mosq->will->msg.topic));
-		packet__write_string(packet, (const char *)mosq->will->msg.payload, mosq->will->msg.payloadlen);
+		packet__write_string(packet, mosq->will->msg.topic, (uint16_t)strlen(mosq->will->msg.topic));
+		packet__write_string(packet, (const char *)mosq->will->msg.payload, (uint16_t)mosq->will->msg.payloadlen);
 	}
 
 	if(username){
-		packet__write_string(packet, username, strlen(username));
+		packet__write_string(packet, username, (uint16_t)strlen(username));
 	}
 	if(password){
-		packet__write_string(packet, password, strlen(password));
+		packet__write_string(packet, password, (uint16_t)strlen(password));
 	}
 
 	mosq->keepalive = keepalive;

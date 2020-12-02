@@ -2,14 +2,16 @@
 Copyright (c) 2014-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
  
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -37,6 +39,9 @@ Contributors:
 #define CLIENT_SUB 2
 #define CLIENT_RR 3
 #define CLIENT_RESPONSE_TOPIC 4
+
+#define PORT_UNDEFINED -1
+#define PORT_UNIX 0
 
 struct mosq_config {
 	char *id;
@@ -80,14 +85,15 @@ struct mosq_config {
 	char *tls_engine;
 	char *tls_engine_kpass_sha1;
 	char *keyform;
+	bool tls_use_os_certs;
 #  ifdef FINAL_WITH_TLS_PSK
 	char *psk;
 	char *psk_identity;
 #  endif
 #endif
 	bool clean_session;
-	char **topics; /* sub */
-	int topic_count; /* sub */
+	char **topics; /* sub, rr */
+	int topic_count; /* sub, rr */
 	bool exit_after_sub; /* sub */
 	bool no_retain; /* sub */
 	bool retained_only; /* sub */
@@ -99,10 +105,12 @@ struct mosq_config {
 	bool verbose; /* sub */
 	bool eol; /* sub */
 	int msg_count; /* sub */
-	char *format; /* sub */
+	char *format; /* sub, rr */
+	bool pretty; /* sub, rr */
 	unsigned int timeout; /* sub */
 	int sub_opts; /* sub */
 	long session_expiry_interval;
+	int random_filter; /* sub */
 #ifdef WITH_SOCKS
 	char *socks5_host;
 	int socks5_port;
@@ -117,6 +125,7 @@ struct mosq_config {
 	mosquitto_property *will_props;
 	bool have_topic_alias; /* pub */
 	char *response_topic; /* rr */
+	bool tcp_nodelay;
 };
 
 int client_config_load(struct mosq_config *config, int pub_or_sub, int argc, char *argv[]);

@@ -2,14 +2,16 @@
 Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
  
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+
 Contributors:
    Roger Light - initial implementation and documentation.
    Tatsuzo Osawa - Add epoll.
@@ -205,6 +207,10 @@ struct mosquitto_msg_data{
 
 
 struct mosquitto {
+#if defined(WITH_BROKER) && defined(WITH_EPOLL)
+	/* This *must* be the first element in the struct. */
+	int ident;
+#endif
 	mosq_sock_t sock;
 #ifndef WITH_BROKER
 	mosq_sock_t sockpairR, sockpairW;
@@ -229,8 +235,8 @@ struct mosquitto {
 	struct mosquitto_message_all *will;
 	struct mosquitto__alias *aliases;
 	struct will_delay_list *will_delay_entry;
-	uint32_t maximum_packet_size;
 	int alias_count;
+	uint32_t maximum_packet_size;
 	uint32_t will_delay_interval;
 	time_t will_delay_time;
 #ifdef WITH_TLS
@@ -245,14 +251,15 @@ struct mosquitto {
 	char *tls_ciphers;
 	char *tls_psk;
 	char *tls_psk_identity;
+	char *tls_engine;
+	char *tls_engine_kpass_sha1;
+	char *tls_alpn;
 	int tls_cert_reqs;
 	bool tls_insecure;
 	bool ssl_ctx_defaults;
 	bool tls_ocsp_required;
-	char *tls_engine;
-	char *tls_engine_kpass_sha1;
+	bool tls_use_os_certs;
 	enum mosquitto__keyform tls_keyform;
-	char *tls_alpn;
 #endif
 	bool want_write;
 	bool want_connect;
@@ -286,19 +293,14 @@ struct mosquitto {
 	int shared_sub_count;
 	int pollfd_index;
 #  ifdef WITH_WEBSOCKETS
-#    if defined(LWS_LIBRARY_VERSION_NUMBER)
 	struct lws *wsi;
-#    else
-	struct libwebsocket_context *ws_context;
-	struct libwebsocket *wsi;
-#    endif
 #  endif
 	bool ws_want_write;
 	bool assigned_id;
 #else
 #  ifdef WITH_SOCKS
 	char *socks5_host;
-	int socks5_port;
+	uint16_t socks5_port;
 	char *socks5_username;
 	char *socks5_password;
 #  endif
@@ -322,7 +324,7 @@ struct mosquitto {
 	void (*on_log)(struct mosquitto *, void *userdata, int level, const char *str);
 	/*void (*on_error)();*/
 	char *host;
-	int port;
+	uint16_t port;
 	char *bind_address;
 	unsigned int reconnects;
 	unsigned int reconnect_delay;
@@ -330,17 +332,21 @@ struct mosquitto {
 	bool reconnect_exponential_backoff;
 	char threaded;
 	struct mosquitto__packet *out_packet_last;
+	mosquitto_property *connect_properties;
 #  ifdef WITH_SRV
 	ares_channel achan;
 #  endif
 #endif
-	uint8_t maximum_qos;
+	uint8_t max_qos;
+	uint8_t retain_available;
+	bool tcp_nodelay;
 
 #ifdef WITH_BROKER
 	UT_hash_handle hh_id;
 	UT_hash_handle hh_sock;
 	struct mosquitto *for_free_next;
 	struct session_expiry_list *expiry_list_item;
+	uint16_t remote_port;
 #endif
 #ifdef WITH_EPOLL
 	uint32_t events;

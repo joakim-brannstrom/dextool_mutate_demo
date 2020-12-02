@@ -2,14 +2,16 @@
 Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
  
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -68,6 +70,8 @@ int mosquitto_will_clear(struct mosquitto *mosq)
 
 int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, const char *password)
 {
+	size_t slen;
+
 	if(!mosq) return MOSQ_ERR_INVAL;
 
 	if(mosq->protocol == mosq_p_mqtt311 || mosq->protocol == mosq_p_mqtt31){
@@ -83,7 +87,11 @@ int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, cons
 	mosq->password = NULL;
 
 	if(username){
-		if(mosquitto_validate_utf8(username, strlen(username))){
+		slen = strlen(username);
+		if(slen > UINT16_MAX){
+			return MOSQ_ERR_INVAL;
+		}
+		if(mosquitto_validate_utf8(username, (int)slen)){
 			return MOSQ_ERR_MALFORMED_UTF8;
 		}
 		mosq->username = mosquitto__strdup(username);
@@ -321,6 +329,20 @@ int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, cons
 #endif
 			break;
 
+		case MOSQ_OPT_BIND_ADDRESS:
+			mosquitto__free(mosq->bind_address);
+			if(value){
+				mosq->bind_address = mosquitto__strdup(value);
+				if(mosq->bind_address){
+					return MOSQ_ERR_SUCCESS;
+				}else{
+					return MOSQ_ERR_NOMEM;
+				}
+			}else{
+				return MOSQ_ERR_SUCCESS;
+			}
+
+
 		default:
 			return MOSQ_ERR_INVAL;
 	}
@@ -407,24 +429,24 @@ int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t option, int val
 			break;
 
 		case MOSQ_OPT_RECEIVE_MAXIMUM:
-			if(value < 0 || value > 65535){
+			if(value < 0 || value > UINT16_MAX){
 				return MOSQ_ERR_INVAL;
 			}
 			if(value == 0){
-				mosq->msgs_in.inflight_maximum = 65535;
+				mosq->msgs_in.inflight_maximum = UINT16_MAX;
 			}else{
-				mosq->msgs_in.inflight_maximum = value;
+				mosq->msgs_in.inflight_maximum = (uint16_t)value;
 			}
 			break;
 
 		case MOSQ_OPT_SEND_MAXIMUM:
-			if(value < 0 || value > 65535){
+			if(value < 0 || value > UINT16_MAX){
 				return MOSQ_ERR_INVAL;
 			}
 			if(value == 0){
-				mosq->msgs_out.inflight_maximum = 65535;
+				mosq->msgs_out.inflight_maximum = UINT16_MAX;
 			}else{
-				mosq->msgs_out.inflight_maximum = value;
+				mosq->msgs_out.inflight_maximum = (uint16_t)value;
 			}
 			break;
 
@@ -440,12 +462,28 @@ int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t option, int val
 			return MOSQ_ERR_NOT_SUPPORTED;
 #endif
 
+		case MOSQ_OPT_TLS_USE_OS_CERTS:
+#ifdef WITH_TLS
+			if(value){
+				mosq->tls_use_os_certs = true;
+			}else{
+				mosq->tls_use_os_certs = false;
+			}
+			break;
+#else
+			return MOSQ_ERR_NOT_SUPPORTED;
+#endif
+
 		case MOSQ_OPT_TLS_OCSP_REQUIRED:
 #ifdef WITH_TLS
 			mosq->tls_ocsp_required = (bool)value;
 #else
 			return MOSQ_ERR_NOT_SUPPORTED;
 #endif
+			break;
+
+		case MOSQ_OPT_TCP_NODELAY:
+			mosq->tcp_nodelay = (bool)value;
 			break;
 
 		default:

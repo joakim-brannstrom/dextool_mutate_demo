@@ -3,6 +3,7 @@
 build_variants = [
     'WITH_ADNS',
     'WITH_BRIDGE',
+    'WITH_CJSON',
     'WITH_DOCS',
     'WITH_EC',
     'WITH_EPOLL',
@@ -18,8 +19,10 @@ build_variants = [
     'WITH_THREADING',
     'WITH_TLS',
     'WITH_TLS_PSK',
+    'WITH_UNIX_SOCKETS',
     'WITH_WEBSOCKETS',
     'WITH_WRAP',
+    'WITH_XTREPORT',
 ]
 
 special_variants = [

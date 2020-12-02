@@ -18,12 +18,7 @@ def do_test(proto_ver):
     subscribe1_packet = mosq_test.gen_subscribe(mid, "will/test", 0, proto_ver=proto_ver)
     suback1_packet = mosq_test.gen_suback(mid, 0, proto_ver=proto_ver)
 
-    if proto_ver == 5:
-        props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_SESSION_EXPIRY_INTERVAL, 100)
-    else:
-        props = None
-
-    connect2_packet = mosq_test.gen_connect("will-1273", keepalive=keepalive, will_topic="will/test", will_payload=b"will msg",clean_session=False, proto_ver=proto_ver, properties=props)
+    connect2_packet = mosq_test.gen_connect("will-1273", keepalive=keepalive, will_topic="will/test", will_payload=b"will msg",clean_session=False, proto_ver=proto_ver, session_expiry=60)
     connack2a_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
     connack2b_packet = mosq_test.gen_connack(rc=0, flags=1, proto_ver=proto_ver)
 
@@ -62,6 +57,8 @@ def do_test(proto_ver):
 
         sock1.close()
         sock2.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

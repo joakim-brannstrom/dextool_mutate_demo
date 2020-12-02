@@ -2,13 +2,15 @@
 Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
 
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
+
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -41,12 +43,10 @@ int handle__suback(struct mosquitto *mosq)
 	int i = 0;
 	int rc;
 	mosquitto_property *properties = NULL;
-	int state;
 
 	assert(mosq);
 
-	state = mosquitto__get_state(mosq);
-	if(state != mosq_cs_active){
+	if(mosquitto__get_state(mosq) != mosq_cs_active){
 		return MOSQ_ERR_PROTOCOL;
 	}
 
@@ -64,13 +64,21 @@ int handle__suback(struct mosquitto *mosq)
 		if(rc) return rc;
 	}
 
-	qos_count = mosq->in_packet.remaining_length - mosq->in_packet.pos;
-	granted_qos = mosquitto__malloc(qos_count*sizeof(int));
-	if(!granted_qos) return MOSQ_ERR_NOMEM;
+	qos_count = (int)(mosq->in_packet.remaining_length - mosq->in_packet.pos);
+	granted_qos = mosquitto__malloc((size_t)qos_count*sizeof(int));
+	if(!granted_qos){
+#ifdef WITH_BROKER
+		mosquitto_property_free_all(&properties);
+#endif
+		return MOSQ_ERR_NOMEM;
+	}
 	while(mosq->in_packet.pos < mosq->in_packet.remaining_length){
 		rc = packet__read_byte(&mosq->in_packet, &qos);
 		if(rc){
 			mosquitto__free(granted_qos);
+#ifdef WITH_BROKER
+			mosquitto_property_free_all(&properties);
+#endif
 			return rc;
 		}
 		granted_qos[i] = (int)qos;

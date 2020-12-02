@@ -6,8 +6,12 @@
 
 #ifdef __APPLE__
 #  define __DARWIN_C_SOURCE
-#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__SYMBIAN32__) || defined(__QNX__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__SYMBIAN32__)
 #  define _XOPEN_SOURCE 700
+#  define __BSD_VISIBLE 1
+#  define HAVE_NETINET_IN_H
+#elif defined(__QNX__)
+#  define _XOPEN_SOURCE 600
 #  define __BSD_VISIBLE 1
 #  define HAVE_NETINET_IN_H
 #else
@@ -40,8 +44,8 @@
 #endif
 
 
-#define uthash_malloc(sz) mosquitto__malloc(sz)
-#define uthash_free(ptr,sz) mosquitto__free(ptr)
+#define uthash_malloc(sz) mosquitto_malloc(sz)
+#define uthash_free(ptr,sz) mosquitto_free(ptr)
 
 
 #ifdef WITH_TLS
@@ -67,6 +71,11 @@
 /* Android Bionic libpthread implementation doesn't have pthread_cancel */
 #ifndef ANDROID
 #  define HAVE_PTHREAD_CANCEL
+#endif
+
+#ifdef WITH_CJSON
+#  include <cJSON.h>
+#  define CJSON_VERSION_FULL (CJSON_VERSION_MAJOR*1000000+CJSON_VERSION_MINOR*1000+CJSON_VERSION_PATCH)
 #endif
 
 #endif

@@ -2,14 +2,16 @@
 Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
  
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -180,7 +182,8 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 			}else{
 				err_printf(&cfg, "Connection error: %s\n", mosquitto_connack_string(result));
 			}
-			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+			// let the loop know that this is an unrecoverable connection
+			status = STATUS_NOHOPE;
 		}
 	}
 }
@@ -188,12 +191,18 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 
 void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
 {
+	char *reason_string = NULL;
 	UNUSED(obj);
 	UNUSED(properties);
 
 	last_mid_sent = mid;
 	if(reason_code > 127){
 		err_printf(&cfg, "Warning: Publish %d failed: %s.\n", mid, mosquitto_reason_string(reason_code));
+		mosquitto_property_read_string(properties, MQTT_PROP_REASON_STRING, &reason_string, false);
+		if(reason_string){
+			err_printf(&cfg, "%s\n", reason_string);
+			free(reason_string);
+		}
 	}
 	publish_count++;
 
@@ -246,6 +255,10 @@ int pub_stdin_line_loop(struct mosquitto *mosq)
 #endif
 		}
 
+		if(status == STATUS_NOHOPE){
+			return MOSQ_ERR_CONN_REFUSED;
+		}
+
 		if(status == STATUS_CONNACK_RECVD){
 			pos = 0;
 			read_len = line_buf_len;
@@ -256,8 +269,8 @@ int pub_stdin_line_loop(struct mosquitto *mosq)
 					rc = my_publish(mosq, &mid_sent, cfg.topic, buf_len_actual-1, line_buf, cfg.qos, cfg.retain);
 					pos = 0;
 					if(rc){
-						err_printf(&cfg, "Error: Publish returned %d, disconnecting.\n", rc);
-						mosquitto_disconnect_v5(mosq, MQTT_RC_DISCONNECT_WITH_WILL_MSG, cfg.disconnect_props);
+						err_printf(&cfg, "Error: Publish returned %d.\n", rc);
+						if(cfg.qos>0) return rc;
 					}
 					break;
 				}else{
@@ -275,8 +288,8 @@ int pub_stdin_line_loop(struct mosquitto *mosq)
 			if(pos != 0){
 				rc = my_publish(mosq, &mid_sent, cfg.topic, buf_len_actual, line_buf, cfg.qos, cfg.retain);
 				if(rc){
-					err_printf(&cfg, "Error: Publish returned %d, disconnecting.\n", rc);
-					mosquitto_disconnect_v5(mosq, MQTT_RC_DISCONNECT_WITH_WILL_MSG, cfg.disconnect_props);
+					err_printf(&cfg, "Error: Publish returned %d.\n", rc);
+					if(cfg.qos>0) return rc;
 				}
 			}
 			if(feof(stdin)){
@@ -374,6 +387,14 @@ void pub_shared_cleanup(void)
 }
 
 
+void print_version(void)
+{
+	int major, minor, revision;
+
+	mosquitto_lib_version(&major, &minor, &revision);
+	printf("mosquitto_pub version %s running on libmosquitto %d.%d.%d.\n", VERSION, major, minor, revision);
+}
+
 void print_usage(void)
 {
 	int major, minor, revision;
@@ -381,13 +402,13 @@ void print_usage(void)
 	mosquitto_lib_version(&major, &minor, &revision);
 	printf("mosquitto_pub is a simple mqtt client that will publish a message on a single topic and exit.\n");
 	printf("mosquitto_pub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
-	printf("Usage: mosquitto_pub {[-h host] [-p port] [-u username] [-P password] -t topic | -L URL}\n");
+	printf("Usage: mosquitto_pub {[-h host] [--unix path] [-p port] [-u username] [-P password] -t topic | -L URL}\n");
 	printf("                     {-f file | -l | -n | -m message}\n");
-	printf("                     [-c] [-k keepalive] [-q qos] [-r] [--repeat N] [--repeat-delay time]\n");
+	printf("                     [-c] [-k keepalive] [-q qos] [-r] [--repeat N] [--repeat-delay time] [-x session-expiry]\n");
 #ifdef WITH_SRV
-	printf("                     [-A bind_address] [-S]\n");
+	printf("                     [-A bind_address] [--nodelay] [-S]\n");
 #else
-	printf("                     [-A bind_address]\n");
+	printf("                     [-A bind_address] [--nodelay]\n");
 #endif
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [--quiet]\n");
@@ -399,6 +420,7 @@ void print_usage(void)
 	printf("                       [--ciphers ciphers] [--insecure]\n");
 	printf("                       [--tls-alpn protocol]\n");
 	printf("                       [--tls-engine engine] [--keyform keyform] [--tls-engine-kpass-sha1]]\n");
+	printf("                       [--tls-use-os-certs]\n");
 #ifdef FINAL_WITH_TLS_PSK
 	printf("                     [--psk hex-key --psk-identity identity [--ciphers ciphers]]\n");
 #endif
@@ -412,6 +434,11 @@ void print_usage(void)
 	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
 	printf("      the client communicates over.\n");
 	printf(" -d : enable debug messages.\n");
+	printf(" -c : disable clean session/enable persistent client mode\n");
+	printf("      When this argument is used, the broker will be instructed not to clean existing sessions\n");
+	printf("      for the same client id when the client connects, and sessions will never expire when the\n");
+	printf("      client disconnects. MQTT v5 clients can change their session expiry interval with the -x\n");
+	printf("      argument.\n");
 	printf(" -D : Define MQTT v5 properties. See the documentation for more details.\n");
 	printf(" -f : send the contents of a file as the message.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
@@ -437,10 +464,18 @@ void print_usage(void)
 	printf(" -u : provide a username\n");
 	printf(" -V : specify the version of the MQTT protocol to use when connecting.\n");
 	printf("      Can be mqttv5, mqttv311 or mqttv31. Defaults to mqttv311.\n");
+	printf(" -x : Set the session-expiry-interval property on the CONNECT packet. Applies to MQTT v5\n");
+	printf("      clients only. Set to 0-4294967294 to specify the session will expire in that many\n");
+	printf("      seconds after the client disconnects, or use -1, 4294967295, or ∞ for a session\n");
+	printf("      that does not expire. Defaults to -1 if -c is also given, or 0 if -c not given.\n");
 	printf(" --help : display this message.\n");
+	printf(" --nodelay : disable Nagle's algorithm, to reduce socket sending latency at the possible\n");
+	printf("             expense of more packets being sent.\n");
+	printf(" --quiet : don't print error messages.\n");
 	printf(" --repeat : if publish mode is -f, -m, or -s, then repeat the publish N times.\n");
 	printf(" --repeat-delay : if using --repeat, wait time seconds between publishes. Defaults to 0.\n");
-	printf(" --quiet : don't print error messages.\n");
+	printf(" --unix : connect to a broker through a unix domain socket instead of a TCP socket,\n");
+	printf("          e.g. /tmp/mosquitto.sock\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
 	printf("                  unexpected disconnection. If not given and will-topic is set, a zero\n");
 	printf("                  length message will be sent.\n");
@@ -464,6 +499,7 @@ void print_usage(void)
 	printf("              Do not use this option in a production environment.\n");
 	printf(" --tls-engine : If set, enables the use of a TLS engine device.\n");
 	printf(" --tls-engine-kpass-sha1 : SHA1 of the key password to be used with the selected SSL engine.\n");
+	printf(" --tls-use-os-certs : Load and trust OS provided CA certificates.\n");
 #  ifdef FINAL_WITH_TLS_PSK
 	printf(" --psk : pre-shared-key in hexadecimal (no leading 0x) to enable TLS-PSK mode.\n");
 	printf(" --psk-identity : client identity string for TLS-PSK mode.\n");
@@ -491,6 +527,8 @@ int main(int argc, char *argv[])
 		if(rc == 2){
 			/* --help */
 			print_usage();
+		}else if(rc == 3){
+			print_version();
 		}else{
 			fprintf(stderr, "\nUse 'mosquitto_pub --help' to see usage.\n");
 		}

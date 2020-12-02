@@ -37,6 +37,7 @@ MOSQ_OBJS=mosquitto.o \
 		  send_unsubscribe.o \
 		  socks_mosq.o \
 		  srv_mosq.o \
+		  strings_mosq.o \
 		  thread_mosq.o \
 		  time_mosq.o \
 		  tls_mosq.o \
@@ -70,8 +71,8 @@ ifeq ($(WITH_STATIC_LIBRARIES),yes)
 	$(INSTALL) ${STRIP_OPTS} libmosquitto.a "${DESTDIR}${libdir}/libmosquitto.a"
 endif
 	$(INSTALL) -d "${DESTDIR}${incdir}/"
-	$(INSTALL) mosquitto.h "${DESTDIR}${incdir}/mosquitto.h"
-	$(INSTALL) mqtt_protocol.h "${DESTDIR}${incdir}/mqtt_protocol.h"
+	$(INSTALL) ../include/mosquitto.h "${DESTDIR}${incdir}/mosquitto.h"
+	$(INSTALL) ../include/mqtt_protocol.h "${DESTDIR}${incdir}/mqtt_protocol.h"
 	$(INSTALL) -d "${DESTDIR}${libdir}/pkgconfig"
 	$(INSTALL) -m644 ../libmosquitto.pc.in "${DESTDIR}${libdir}/pkgconfig/libmosquitto.pc"
 	sed ${SEDINPLACE} -e "s#@CMAKE_INSTALL_PREFIX@#${prefix}#" -e "s#@VERSION@#${VERSION}#" "${DESTDIR}${libdir}/pkgconfig/libmosquitto.pc"
@@ -97,16 +98,16 @@ libmosquitto.so.${SOVERSION} : ${MOSQ_OBJS}
 libmosquitto.a : ${MOSQ_OBJS}
 	${CROSS_COMPILE}$(AR) cr $@ $^
 
-mosquitto.o : mosquitto.c mosquitto.h mosquitto_internal.h
+mosquitto.o : mosquitto.c ../include/mosquitto.h mosquitto_internal.h
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
-actions.o : actions.c mosquitto.h mosquitto_internal.h
+actions.o : actions.c ../include/mosquitto.h mosquitto_internal.h
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
-callbacks.o : callbacks.c mosquitto.h mosquitto_internal.h
+callbacks.o : callbacks.c ../include/mosquitto.h mosquitto_internal.h
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
-connect.o : connect.c mosquitto.h mosquitto_internal.h
+connect.o : connect.c ../include/mosquitto.h mosquitto_internal.h
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
 handle_auth.o : handle_auth.c read_handle.h
@@ -145,7 +146,7 @@ helpers.o : helpers.c
 logging_mosq.o : logging_mosq.c logging_mosq.h
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
-loop.o : loop.c mosquitto.h mosquitto_internal.h
+loop.o : loop.c ../include/mosquitto.h mosquitto_internal.h
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
 messages_mosq.o : messages_mosq.c messages_mosq.h
@@ -163,7 +164,7 @@ net_mosq_ocsp.o : net_mosq_ocsp.c net_mosq.h
 net_mosq.o : net_mosq.c net_mosq.h
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
-options.o : options.c mosquitto.h mosquitto_internal.h
+options.o : options.c ../include/mosquitto.h mosquitto_internal.h
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
 packet_datatypes.o : packet_datatypes.c packet_mosq.h
@@ -200,6 +201,9 @@ socks_mosq.o : socks_mosq.c
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
 srv_mosq.o : srv_mosq.c
+	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
+
+strings_mosq.o : strings_mosq.c
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
 thread_mosq.o : thread_mosq.c

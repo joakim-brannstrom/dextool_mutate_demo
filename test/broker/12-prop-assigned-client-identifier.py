@@ -37,6 +37,8 @@ def do_test(clean_start):
             rc = 0
     
         sock.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

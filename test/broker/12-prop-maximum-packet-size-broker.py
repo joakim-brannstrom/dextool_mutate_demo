@@ -7,6 +7,7 @@ from mosq_test_helper import *
 def write_config(filename, port):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("max_packet_size 30\n")
 
 port = mosq_test.get_port()
@@ -29,6 +30,8 @@ try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
     mosq_test.do_send_receive(sock, publish_packet, disconnect_packet, "disconnect")
     rc = 0
+except mosq_test.TestError:
+    pass
 finally:
     broker.terminate()
     broker.wait()

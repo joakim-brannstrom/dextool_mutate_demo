@@ -34,10 +34,12 @@ def do_test(will_props, recvd_props):
         sock2 = mosq_test.do_client_connect(connect2_packet, connack2_packet, timeout=30, port=port)
         sock2.close()
 
-        if mosq_test.expect_packet(sock1, "publish", publish_packet):
-            rc = 0
+        mosq_test.expect_packet(sock1, "publish", publish_packet)
+        rc = 0
 
         sock1.close()
+    except mosq_test.TestError:
+        pass
     finally:
         broker.terminate()
         broker.wait()

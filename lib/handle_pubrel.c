@@ -2,13 +2,15 @@
 Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License v1.0
+are made available under the terms of the Eclipse Public License 2.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
 
 The Eclipse Public License is available at
-   http://www.eclipse.org/legal/epl-v10.html
+   https://www.eclipse.org/legal/epl-2.0/
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
+
+SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -36,7 +38,7 @@ Contributors:
 #include "util_mosq.h"
 
 
-int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
+int handle__pubrel(struct mosquitto *mosq)
 {
 	uint8_t reason_code;
 	uint16_t mid;
@@ -45,12 +47,10 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 #endif
 	int rc;
 	mosquitto_property *properties = NULL;
-	int state;
 
 	assert(mosq);
 
-	state = mosquitto__get_state(mosq);
-	if(state != mosq_cs_active){
+	if(mosquitto__get_state(mosq) != mosq_cs_active){
 		return MOSQ_ERR_PROTOCOL;
 	}
 
@@ -79,7 +79,7 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	/* Immediately free, we don't do anything with Reason String or User Property at the moment */
 	mosquitto_property_free_all(&properties);
 
-	rc = db__message_release_incoming(db, mosq, mid);
+	rc = db__message_release_incoming(mosq, mid);
 	if(rc == MOSQ_ERR_NOT_FOUND){
 		/* Message not found. Still send a PUBCOMP anyway because this could be
 		 * due to a repeated PUBREL after a client has reconnected. */
@@ -87,14 +87,12 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 		return rc;
 	}
 
-	rc = send__pubcomp(mosq, mid);
+	rc = send__pubcomp(mosq, mid, NULL);
 	if(rc) return rc;
 #else
-	UNUSED(db);
-
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREL (Mid: %d)", mosq->id, mid);
 
-	rc = send__pubcomp(mosq, mid);
+	rc = send__pubcomp(mosq, mid, NULL);
 	if(rc){
 		message__remove(mosq, mid, mosq_md_in, &message, 2);
 		return rc;

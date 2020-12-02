@@ -41,14 +41,16 @@ try:
     mosq_test.do_send_receive(sock2, subscribe_packet2, suback_packet, "subscribe2")
 
     sock2.send(publish_packet2)
-    if mosq_test.expect_packet(sock1, "publish1", publish_packet2):
-        # FIXME - it would be better to extract the property and payload, even though we know them
-        sock1.send(publish_packet1)
-        if mosq_test.expect_packet(sock2, "publish2", publish_packet1):
-            rc = 0
+    mosq_test.expect_packet(sock1, "publish1", publish_packet2)
+    # FIXME - it would be better to extract the property and payload, even though we know them
+    sock1.send(publish_packet1)
+    mosq_test.expect_packet(sock2, "publish2", publish_packet1)
+    rc = 0
 
     sock1.close()
     sock2.close()
+except mosq_test.TestError:
+    pass
 finally:
     broker.terminate()
     broker.wait()

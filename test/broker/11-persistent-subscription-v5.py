@@ -7,6 +7,7 @@ from mosq_test_helper import *
 def write_config(filename, port):
     with open(filename, 'w') as f:
         f.write("port %d\n" % (port))
+        f.write("allow_anonymous true\n")
         f.write("persistence true\n")
         f.write("persistence_file mosquitto-%d.db\n" % (port))
 
@@ -18,9 +19,8 @@ rc = 1
 mid = 530
 keepalive = 60
 
-props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_SESSION_EXPIRY_INTERVAL, 100)
 connect_packet = mosq_test.gen_connect(
-    "persistent-subscription-test", keepalive=keepalive, clean_session=False, proto_ver=5, properties=props
+    "persistent-subscription-test", keepalive=keepalive, clean_session=False, proto_ver=5, session_expiry=60
 )
 connack_packet = mosq_test.gen_connack(rc=0, proto_ver=5)
 connack_packet2 = mosq_test.gen_connack(rc=0, flags=1, proto_ver=5)  # session present
@@ -53,12 +53,13 @@ try:
 
     sock = mosq_test.do_client_connect(connect_packet, connack_packet2, timeout=20, port=port)
 
-    mosq_test.do_send_receive(sock, publish_packet, puback_packet, "puback")
-
-    if mosq_test.expect_packet(sock, "publish2", publish_packet2):
-        rc = 0
+    sock.send(publish_packet)
+    mosq_test.receive_unordered(sock, puback_packet, publish_packet2, "puback/publish2")
+    rc = 0
 
     sock.close()
+except mosq_test.TestError:
+    pass
 finally:
     os.remove(conf_file)
     broker.terminate()
