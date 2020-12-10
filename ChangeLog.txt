@@ -1,3 +1,27 @@
+2.0.1 - 2020-12-10
+==================
+
+Broker:
+- Fix websockets connections on Windows blocking subsequent connections.
+  Closes #1934.
+- Fix DH group not being set for TLS connections, which meant ciphers using
+  DHE couldn't be used. Closes #1925. Closes #1476.
+- Fix websockets listeners not causing the main loop not to wake up.
+  Closes #1936.
+
+Client library:
+- Fix DH group not being set for TLS connections, which meant ciphers using
+  DHE couldn't be used. Closes #1925. Closes #1476.
+
+Apps:
+- Fix `mosquitto_passwd -U`
+
+Build:
+- Fix cjson include paths.
+- Fix build using WITH_TLS=no when the openssl headers aren't available.
+- Distribute cmake/ and snap/ directories in tar.
+
+
 2.0.0 - 2020-12-03
 ==================
 
@@ -49,7 +73,7 @@ Breaking changes:
   OS provided CA certificates by default if `-L mqtts://...` is used, or if
   the port is set to 8883 and no other CA certificates are loaded.
 - Minimum support libwebsockets version is now 2.4.0
-
+- The license has changed from "EPL-1.0 OR EDL-1.0" to "EPL-2.0 OR EDL-1.0".
 
 Broker features:
 - New plugin interface which is more flexible, easier to develop for and

@@ -125,7 +125,7 @@ WITH_XTREPORT=no
 
 # Also bump lib/mosquitto.h, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto64.nsi
-VERSION=2.0.0
+VERSION=2.0.1
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
 SOVERSION=1
@@ -364,10 +364,10 @@ ifeq ($(WITH_COVERAGE),yes)
 endif
 
 ifeq ($(WITH_CJSON),yes)
-	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_CJSON -I/usr/include/cjson -I/usr/local/include/cjson
+	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_CJSON
 	CLIENT_LDADD:=$(CLIENT_LDADD) -lcjson
 	CLIENT_STATIC_LDADD:=$(CLIENT_STATIC_LDADD) -lcjson
-	CLIENT_LDFLAGS:=$(CLIENT_LDFLAGS) -L/usr/local/lib
+	CLIENT_LDFLAGS:=$(CLIENT_LDFLAGS)
 endif
 
 ifeq ($(WITH_XTREPORT),yes)

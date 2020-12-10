@@ -186,6 +186,7 @@ enum struct_ident{
 	id_invalid = 0,
 	id_listener = 1,
 	id_client = 2,
+	id_listener_ws = 3,
 };
 #endif
 
@@ -224,6 +225,7 @@ struct mosquitto__listener {
 #endif
 #ifdef WITH_WEBSOCKETS
 	struct lws_context *ws_context;
+	bool ws_in_init;
 	char *http_dir;
 	struct lws_protocols *ws_protocol;
 #endif
@@ -239,8 +241,8 @@ struct mosquitto__listener_sock{
 	/* This *must* be the first element in the struct. */
 	int ident;
 #endif
-	struct mosquitto__listener *listener;
 	mosq_sock_t sock;
+	struct mosquitto__listener *listener;
 };
 
 typedef struct mosquitto_plugin_id_t{
@@ -370,11 +372,11 @@ struct mosquitto_msg_store{
 	void *payload;
 	time_t message_expiry_time;
 	uint32_t payloadlen;
+	enum mosquitto_msg_origin origin;
 	uint16_t source_mid;
 	uint16_t mid;
 	uint8_t qos;
 	bool retain;
-	enum mosquitto_msg_origin origin;
 };
 
 struct mosquitto_client_msg{
@@ -557,6 +559,7 @@ struct mosquitto__bridge{
 #ifdef WITH_WEBSOCKETS
 struct libws_mqtt_hack {
 	char *http_dir;
+	struct mosquitto__listener *listener;
 };
 
 struct libws_mqtt_data {
@@ -743,6 +746,9 @@ int mux__cleanup(void);
  * ============================================================ */
 void listener__set_defaults(struct mosquitto__listener *listener);
 void listeners__reload_all_certificates(void);
+#ifdef WITH_WEBSOCKETS
+void listeners__add_websockets(struct lws_context *ws_context, int fd);
+#endif
 
 /* ============================================================
  * Plugin related functions
@@ -825,7 +831,7 @@ DWORD WINAPI SigThreadProc(void* data);
  * Websockets related functions
  * ============================================================ */
 #ifdef WITH_WEBSOCKETS
-struct lws_context *mosq_websockets_init(struct mosquitto__listener *listener, const struct mosquitto__config *conf);
+void mosq_websockets_init(struct mosquitto__listener *listener, const struct mosquitto__config *conf);
 #endif
 void do_disconnect(struct mosquitto *context, int reason);
 
