@@ -4,16 +4,13 @@
 # To configure the build options either use the CMake gui, or run the command
 # line utility including the "-i" option.
 
-set(CMAKE_LEGACY_CYGWIN_WIN32 0)
-
-project(mosquitto)
-
 cmake_minimum_required(VERSION 3.0)
 cmake_policy(SET CMP0042 NEW)
 
+project(mosquitto)
 set (VERSION 2.0.2)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
 
 add_definitions (-DCMAKE -DVERSION=\"${VERSION}\")
 
