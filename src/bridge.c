@@ -577,6 +577,7 @@ int bridge__register_local_connections(void)
 				log__printf(NULL, MOSQ_LOG_ERR, "Error in epoll initial registering bridge: %s", strerror(errno));
 				return MOSQ_ERR_UNKNOWN;
 			}
+			mux__add_out(context);
 		}
 	}
 #endif
@@ -776,6 +777,8 @@ void bridge_check(void)
 									mux__add_out(context);
 								}
 							}else if(rc == MOSQ_ERR_CONN_PENDING){
+								mux__add_in(context);
+								mux__add_out(context);
 								context->bridge->restart_t = 0;
 							}else{
 								context->bridge->cur_address++;
