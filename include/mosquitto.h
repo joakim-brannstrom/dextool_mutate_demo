@@ -19,6 +19,13 @@ Contributors:
 #ifndef MOSQUITTO_H
 #define MOSQUITTO_H
 
+/*
+ * File: mosquitto.h
+ *
+ * This header contains functions and definitions for use with libmosquitto, the Mosquitto client library.
+ *
+ * The definitions are also used in Mosquitto broker plugins, and some functions are available to plugins.
+ */
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -59,7 +66,7 @@ extern "C" {
 
 #define LIBMOSQUITTO_MAJOR 2
 #define LIBMOSQUITTO_MINOR 0
-#define LIBMOSQUITTO_REVISION 3
+#define LIBMOSQUITTO_REVISION 4
 /* LIBMOSQUITTO_VERSION_NUMBER looks like 1002001 for e.g. version 1.2.1. */
 #define LIBMOSQUITTO_VERSION_NUMBER (LIBMOSQUITTO_MAJOR*1000000+LIBMOSQUITTO_MINOR*1000+LIBMOSQUITTO_REVISION)
 
@@ -3059,8 +3066,8 @@ libmosq_EXPORT void mosquitto_property_free_all(mosquitto_property **properties)
  * Function: mosquitto_property_copy_all
  *
  * Parameters:
- *    dest : pointer for new property list
- *    src : property list
+ *    dest - pointer for new property list
+ *    src - property list
  *
  * Returns:
  *    MOSQ_ERR_SUCCESS - on successful copy
