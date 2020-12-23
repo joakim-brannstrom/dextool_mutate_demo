@@ -1,3 +1,8 @@
+Broker:
+- Fix `auth_method` not being provided to the extended auth plugin event.
+  Closes #1975.
+
+
 2.0.4 - 2020-12-22
 ==================
 

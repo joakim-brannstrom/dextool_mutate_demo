@@ -117,7 +117,8 @@ struct mosquitto_evt_extended_auth {
 	void *data_out;
 	uint16_t data_in_len;
 	uint16_t data_out_len;
-	void *future2[4];
+	const char *auth_method;
+	void *future2[3];
 };
 
 /* Data for the MOSQ_EVT_CONTROL event */
