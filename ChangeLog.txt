@@ -5,6 +5,8 @@ Broker:
   Closes #1977.
 - Fix bridge connection not relinquishing POLLOUT after messages are sent.
   Closes #1979.
+- Fix apparmor incorrectly denying access to
+  /var/lib/mosquitto/mosquitto.db.new. Closes #1978.
 
 
 2.0.4 - 2020-12-22
