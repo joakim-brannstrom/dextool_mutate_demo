@@ -1,6 +1,10 @@
 Broker:
 - Fix `auth_method` not being provided to the extended auth plugin event.
   Closes #1975.
+- Fix large packets not being completely published to slow clients.
+  Closes #1977.
+- Fix bridge connection not relinquishing POLLOUT after messages are sent.
+  Closes #1979.
 
 
 2.0.4 - 2020-12-22

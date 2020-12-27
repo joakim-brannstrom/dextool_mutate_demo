@@ -164,6 +164,7 @@ int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet)
 		lws_callback_on_writable(mosq->wsi);
 		return MOSQ_ERR_SUCCESS;
 	}else{
+		mux__add_out(mosq);
 		return packet__write(mosq);
 	}
 #  else
@@ -314,6 +315,9 @@ int packet__write(struct mosquitto *mosq)
 
 #ifdef WITH_BROKER
 		mosq->next_msg_out = db.now_s + mosq->keepalive;
+		if(mosq->current_out_packet == NULL){
+			mux__remove_out(mosq);
+		}
 #else
 		pthread_mutex_lock(&mosq->msgtime_mutex);
 		mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
