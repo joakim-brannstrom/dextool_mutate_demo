@@ -69,7 +69,7 @@ int net__socket_nonblock(mosq_sock_t *sock);
 int net__socketpair(mosq_sock_t *sp1, mosq_sock_t *sp2);
 
 ssize_t net__read(struct mosquitto *mosq, void *buf, size_t count);
-ssize_t net__write(struct mosquitto *mosq, void *buf, size_t count);
+ssize_t net__write(struct mosquitto *mosq, const void *buf, size_t count);
 
 #ifdef WITH_TLS
 void net__print_ssl_error(struct mosquitto *mosq);
