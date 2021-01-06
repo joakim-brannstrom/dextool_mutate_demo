@@ -9,6 +9,9 @@ Broker:
   /var/lib/mosquitto/mosquitto.db.new. Closes #1978.
 - Fix potential intermittent initial bridge connections when using poll().
 
+Apps:
+- Disallow control characters in mosquitto_passwd usernames.
+
 
 2.0.4 - 2020-12-22
 ==================

@@ -18,6 +18,7 @@ Contributors:
 
 #include "config.h"
 
+#include <ctype.h>
 #include <errno.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -378,6 +379,32 @@ void handle_sigint(int signal)
 	exit(0);
 }
 
+
+static bool is_username_valid(const char *username)
+{
+	int i;
+	size_t slen;
+
+	if(username){
+		slen = strlen(username);
+		if(slen > 65535){
+			fprintf(stderr, "Error: Username must be less than 65536 characters long.\n");
+			return false;
+		}
+		for(i=0; i<slen; i++){
+			if(iscntrl(username[i])){
+				fprintf(stderr, "Error: Username must not contain control characters.\n");
+				return false;
+			}
+		}
+		if(strchr(username, ':')){
+			fprintf(stderr, "Error: Username must not contain the ':' character.\n");
+			return false;
+		}
+	}
+	return true;
+}
+
 int main(int argc, char *argv[])
 {
 	char *password_file_tmp = NULL;
@@ -514,15 +541,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(username){
-		if(strlen(username) > 65535){
-			fprintf(stderr, "Error: Username must be less than 65536 characters long.\n");
-			return 1;
-		}
-		if(strchr(username, ':')){
-			fprintf(stderr, "Error: Username must not contain the ':' character.\n");
-			return 1;
-		}
+	if(!is_username_valid(username)){
+		return 1;
 	}
 	if(password_cmd && strlen(password_cmd) > 65535){
 		fprintf(stderr, "Error: Password must be less than 65536 characters long.\n");
