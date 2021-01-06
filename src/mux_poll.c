@@ -110,23 +110,26 @@ int mux_poll__add_out(struct mosquitto *context)
 {
 	int i;
 
-	if(context->pollfd_index != -1){
-		pollfds[context->pollfd_index].fd = context->sock;
-		pollfds[context->pollfd_index].events = POLLIN | POLLOUT;
-		pollfds[context->pollfd_index].revents = 0;
-	}else{
-		for(i=0; i<pollfd_max; i++){
-			if(pollfds[i].fd == INVALID_SOCKET){
-				pollfds[i].fd = context->sock;
-				pollfds[i].events = POLLIN | POLLOUT;
-				pollfds[i].revents = 0;
-				context->pollfd_index = i;
-				if(i > pollfd_current_max){
-					pollfd_current_max = (size_t )i;
+	if(!(context->events & POLLOUT)) {
+		if(context->pollfd_index != -1){
+			pollfds[context->pollfd_index].fd = context->sock;
+			pollfds[context->pollfd_index].events = POLLIN | POLLOUT;
+			pollfds[context->pollfd_index].revents = 0;
+		}else{
+			for(i=0; i<pollfd_max; i++){
+				if(pollfds[i].fd == INVALID_SOCKET){
+					pollfds[i].fd = context->sock;
+					pollfds[i].events = POLLIN | POLLOUT;
+					pollfds[i].revents = 0;
+					context->pollfd_index = i;
+					if(i > pollfd_current_max){
+						pollfd_current_max = (size_t )i;
+					}
+					break;
 				}
-				break;
 			}
 		}
+		context->events = POLLIN | POLLOUT;
 	}
 
 	return MOSQ_ERR_SUCCESS;
@@ -135,7 +138,11 @@ int mux_poll__add_out(struct mosquitto *context)
 
 int mux_poll__remove_out(struct mosquitto *context)
 {
-	return mux_poll__add_in(context);
+	if(context->events & POLLOUT) {
+		return mux_poll__add_in(context);
+	}else{
+		return MOSQ_ERR_SUCCESS;
+	}
 }
 
 
@@ -161,6 +168,7 @@ int mux_poll__add_in(struct mosquitto *context)
 			}
 		}
 	}
+	context->events = POLLIN;
 
 	return MOSQ_ERR_SUCCESS;
 }
