@@ -350,9 +350,7 @@ struct mosquitto {
 	struct session_expiry_list *expiry_list_item;
 	uint16_t remote_port;
 #endif
-#ifdef WITH_EPOLL
 	uint32_t events;
-#endif
 };
 
 #define STREMPTY(str) (str[0] == '\0')

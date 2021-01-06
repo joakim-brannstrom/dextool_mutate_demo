@@ -164,7 +164,6 @@ int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet)
 		lws_callback_on_writable(mosq->wsi);
 		return MOSQ_ERR_SUCCESS;
 	}else{
-		mux__add_out(mosq);
 		return packet__write(mosq);
 	}
 #  else
@@ -215,6 +214,10 @@ int packet__write(struct mosquitto *mosq)
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+
+#ifdef WITH_BROKER
+	mux__add_out(mosq);
+#endif
 
 	pthread_mutex_lock(&mosq->current_out_packet_mutex);
 	pthread_mutex_lock(&mosq->out_packet_mutex);

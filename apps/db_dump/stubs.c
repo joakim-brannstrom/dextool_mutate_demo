@@ -38,6 +38,11 @@ enum mosquitto_client_state mosquitto__get_state(struct mosquitto *mosq)
 	return mosq_cs_new;
 }
 
+int mux__add_out(struct mosquitto *mosq)
+{
+	return 0;
+}
+
 int mux__remove_out(struct mosquitto *mosq)
 {
 	return 0;
