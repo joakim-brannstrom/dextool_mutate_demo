@@ -124,6 +124,37 @@ static void print_list(cJSON *j_response, const char *arrayname, const char *key
 }
 
 
+static void print_roles(cJSON *j_roles, int slen)
+{
+	bool first;
+	cJSON *j_elem, *jtmp;
+
+	if(j_roles && cJSON_IsArray(j_roles)){
+		first = true;
+		cJSON_ArrayForEach(j_elem, j_roles){
+			jtmp = cJSON_GetObjectItem(j_elem, "rolename");
+			if(jtmp && cJSON_IsString(jtmp)){
+				if(first){
+					first = false;
+					printf("%-*s %s", slen, "Roles:", jtmp->valuestring);
+				}else{
+					printf("%-*s %s", slen, "", jtmp->valuestring);
+				}
+				jtmp = cJSON_GetObjectItem(j_elem, "priority");
+				if(jtmp && cJSON_IsNumber(jtmp)){
+					printf(" (priority: %d)", (int)jtmp->valuedouble);
+				}else{
+					printf(" (priority: -1)");
+				}
+				printf("\n");
+			}
+		}
+	}else{
+		printf("Roles:\n");
+	}
+}
+
+
 static void print_client(cJSON *j_response)
 {
 	cJSON *j_data, *j_client, *j_array, *j_elem, *jtmp;
@@ -161,29 +192,8 @@ static void print_client(cJSON *j_response)
 	}
 
 	j_array = cJSON_GetObjectItem(j_client, "roles");
-	if(j_array && cJSON_IsArray(j_array)){
-		first = true;
-		cJSON_ArrayForEach(j_elem, j_array){
-			jtmp = cJSON_GetObjectItem(j_elem, "rolename");
-			if(jtmp && cJSON_IsString(jtmp)){
-				if(first){
-					first = false;
-					printf("Roles:    %s", jtmp->valuestring);
-				}else{
-					printf("          %s", jtmp->valuestring);
-				}
-				jtmp = cJSON_GetObjectItem(j_elem, "priority");
-				if(jtmp && cJSON_IsNumber(jtmp)){
-					printf(" (priority: %d)", (int)jtmp->valuedouble);
-				}else{
-					printf(" (priority: -1)");
-				}
-				printf("\n");
-			}
-		}
-	}else{
-		printf("Roles:\n");
-	}
+	print_roles(j_array, strlen("Username:"));
+
 	j_array = cJSON_GetObjectItem(j_client, "groups");
 	if(j_array && cJSON_IsArray(j_array)){
 		first = true;
@@ -236,27 +246,7 @@ static void print_group(cJSON *j_response)
 	printf("Groupname: %s\n", jtmp->valuestring);
 
 	j_array = cJSON_GetObjectItem(j_group, "roles");
-	if(j_array && cJSON_IsArray(j_array)){
-		first = true;
-		cJSON_ArrayForEach(j_elem, j_array){
-			jtmp = cJSON_GetObjectItem(j_elem, "groupname");
-			if(jtmp && cJSON_IsString(jtmp)){
-				if(first){
-					first = false;
-					printf("Roles:  %s", jtmp->valuestring);
-				}else{
-					printf("    %s", jtmp->valuestring);
-				}
-				jtmp = cJSON_GetObjectItem(j_elem, "priority");
-				if(jtmp && cJSON_IsNumber(jtmp)){
-					printf(" (priority: %d)", (int)jtmp->valuedouble);
-				}else{
-					printf(" (priority: -1)");
-				}
-				printf("\n");
-			}
-		}
-	}
+	print_roles(j_array, strlen("Groupname:"));
 
 	j_array = cJSON_GetObjectItem(j_group, "clients");
 	if(j_array && cJSON_IsArray(j_array)){

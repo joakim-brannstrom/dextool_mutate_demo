@@ -13,6 +13,7 @@ Broker:
 Apps:
 - Disallow control characters in mosquitto_passwd usernames.
 - Fix incorrect description in mosquitto_ctrl man page. Closes #1995.
+- Fix `mosquitto_ctrl dynsec getGroup` not showing roles. Closes #1997.
 
 
 2.0.4 - 2020-12-22
