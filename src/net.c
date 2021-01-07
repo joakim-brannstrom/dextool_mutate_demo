@@ -24,7 +24,7 @@ Contributors:
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
-#include <net/if.h>
+#include <ifaddrs.h>
 #else
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -607,6 +607,52 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 }
 
 
+#ifndef WIN32
+static int net__bind_interface(struct mosquitto__listener *listener, mosq_sock_t sock, struct addrinfo *rp)
+{
+	/*
+	 * This binds the listener sock to a network interface.
+	 * The use of SO_BINDTODEVICE requires root access, which we don't have, so instead
+	 * use getifaddrs to find the interface addresses, and attempt to bind to
+	 * the IP of the matching interface.
+	 */
+	struct ifaddrs *ifaddr, *ifa;
+	if(getifaddrs(&ifaddr) < 0){
+		net__print_error(MOSQ_LOG_ERR, "Error: %s");
+		return MOSQ_ERR_ERRNO;
+	}
+
+	for(ifa=ifaddr; ifa!=NULL; ifa=ifa->ifa_next){
+		if(ifa->ifa_addr == NULL){
+			continue;
+		}
+
+		if(!strcasecmp(listener->bind_interface, ifa->ifa_name)
+				&& ifa->ifa_addr->sa_family == rp->ai_addr->sa_family){
+
+			if(rp->ai_addr->sa_family == AF_INET){
+				memcpy(&((struct sockaddr_in *)rp->ai_addr)->sin_addr,
+						&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+						sizeof(struct in_addr));
+
+				freeifaddrs(ifaddr);
+				return MOSQ_ERR_SUCCESS;
+			}else if(rp->ai_addr->sa_family == AF_INET6){
+				memcpy(&((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
+						&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
+						 sizeof(struct in6_addr));
+				freeifaddrs(ifaddr);
+				return MOSQ_ERR_SUCCESS;
+			}
+		}
+	}
+	freeifaddrs(ifaddr);
+	log__printf(NULL, MOSQ_LOG_ERR, "Error: Interface %s not found.", listener->bind_interface);
+	return MOSQ_ERR_NOT_FOUND;
+}
+#endif
+
+
 static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 {
 	mosq_sock_t sock = INVALID_SOCKET;
@@ -615,9 +661,6 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 	char service[10];
 	int rc;
 	int ss_opt = 1;
-#ifdef SO_BINDTODEVICE
-	struct ifreq ifr;
-#endif
 
 	if(!listener) return MOSQ_ERR_INVAL;
 
@@ -680,14 +723,9 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 			return 1;
 		}
 
-#ifdef SO_BINDTODEVICE
+#ifndef WIN32
 		if(listener->bind_interface){
-			memset(&ifr, 0, sizeof(ifr));
-			strncpy(ifr.ifr_name, listener->bind_interface, sizeof(ifr.ifr_name)-1);
-			ifr.ifr_name[sizeof(ifr.ifr_name)-1] = '\0';
-			log__printf(NULL, MOSQ_LOG_INFO, "Binding listener to interface \"%s\".", ifr.ifr_name);
-			if(setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) < 0) {
-				net__print_error(MOSQ_LOG_ERR, "Error: %s");
+			if(net__bind_interface(listener, sock, rp)){
 				COMPAT_CLOSE(sock);
 				freeaddrinfo(ainfo);
 				mosquitto__free(listener->socks);

@@ -8,6 +8,7 @@ Broker:
 - Fix apparmor incorrectly denying access to
   /var/lib/mosquitto/mosquitto.db.new. Closes #1978.
 - Fix potential intermittent initial bridge connections when using poll().
+- Fix `bind_interface` option. Closes #1999.
 
 Apps:
 - Disallow control characters in mosquitto_passwd usernames.
