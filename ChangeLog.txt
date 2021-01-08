@@ -9,6 +9,9 @@ Broker:
   /var/lib/mosquitto/mosquitto.db.new. Closes #1978.
 - Fix potential intermittent initial bridge connections when using poll().
 - Fix `bind_interface` option. Closes #1999.
+- Fix invalid behaviour in dynsec plugin if a group or client is deleted
+  before a role that was attached to the group or client is deleted.
+  Closes #1998.
 
 Apps:
 - Disallow control characters in mosquitto_passwd usernames.

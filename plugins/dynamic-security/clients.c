@@ -35,6 +35,7 @@ Contributors:
  * ################################################################ */
 
 static int dynsec__remove_client_from_all_groups(const char *username);
+static void client__remove_all_roles(struct dynsec__client *client);
 
 /* ################################################################
  * #
@@ -482,6 +483,7 @@ int dynsec_clients__process_delete(cJSON *j_responses, struct mosquitto *context
 	client = dynsec_clients__find(username);
 	if(client){
 		dynsec__remove_client_from_all_groups(username);
+		client__remove_all_roles(client);
 		client__free_item(client);
 		dynsec__config_save();
 		dynsec__command_reply(j_responses, context, "deleteClient", NULL, correlation_data);

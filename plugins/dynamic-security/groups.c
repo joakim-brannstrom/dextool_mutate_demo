@@ -44,6 +44,7 @@ struct dynsec__group *dynsec_anonymous_group = NULL;
  * ################################################################ */
 
 static int dynsec__remove_all_clients_from_group(struct dynsec__group *group);
+static int dynsec__remove_all_roles_from_group(struct dynsec__group *group);
 static cJSON *add_group_to_json(struct dynsec__group *group);
 
 
@@ -460,6 +461,7 @@ int dynsec_groups__process_delete(cJSON *j_responses, struct mosquitto *context,
 		/* Enforce any changes */
 		group__kick_all(group);
 
+		dynsec__remove_all_roles_from_group(group);
 		group__free_item(group);
 		dynsec__config_save();
 		dynsec__command_reply(j_responses, context, "deleteGroup", NULL, correlation_data);
@@ -578,6 +580,17 @@ static int dynsec__remove_all_clients_from_group(struct dynsec__group *group)
 
 		HASH_DELETE(hh, group->clientlist, clientlist);
 		mosquitto_free(clientlist);
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+static int dynsec__remove_all_roles_from_group(struct dynsec__group *group)
+{
+	struct dynsec__rolelist *rolelist, *rolelist_tmp;
+
+	HASH_ITER(hh, group->rolelist, rolelist, rolelist_tmp){
+		dynsec_rolelist__group_remove(group, rolelist->role);
 	}
 
 	return MOSQ_ERR_SUCCESS;
