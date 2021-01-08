@@ -13,6 +13,10 @@ Broker:
   before a role that was attached to the group or client is deleted.
   Closes #1998.
 
+Build:
+- `install` Makefile target should depend on `all`, not `mosquitto`, to ensure
+  that man pages are always built. Closes #1989.
+
 Apps:
 - Disallow control characters in mosquitto_passwd usernames.
 - Fix incorrect description in mosquitto_ctrl man page. Closes #1995.

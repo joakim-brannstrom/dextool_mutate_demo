@@ -87,7 +87,7 @@ ptest : mosquitto
 utest : mosquitto
 	$(MAKE) -C test utest
 
-install : mosquitto
+install : all
 	set -e; for d in ${DIRS}; do $(MAKE) -C $${d} install; done
 ifeq ($(WITH_DOCS),yes)
 	set -e; for d in ${DOCDIRS}; do $(MAKE) -C $${d} install; done
