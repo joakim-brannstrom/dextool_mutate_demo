@@ -1,4 +1,9 @@
 if(NOT WIN32)
+	find_program(XSLTPROC xsltproc REQUIRED)
+	if(NOT XSLTPROC)
+    message(FATAL_ERROR "xsltproc not found: manpages cannot be built")
+	endif()
+
 	function(compile_manpage page)
 		add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/man/${page}
 			COMMAND xsltproc ${CMAKE_SOURCE_DIR}/man/${page}.xml -o ${CMAKE_SOURCE_DIR}/man/
