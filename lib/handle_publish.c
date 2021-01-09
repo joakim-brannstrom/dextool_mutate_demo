@@ -39,7 +39,7 @@ int handle__publish(struct mosquitto *mosq)
 	uint8_t header;
 	struct mosquitto_message_all *message;
 	int rc = 0;
-	uint16_t mid;
+	uint16_t mid = 0;
 	uint16_t slen;
 	mosquitto_property *properties = NULL;
 

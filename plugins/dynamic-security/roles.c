@@ -66,7 +66,7 @@ static void role__free_acl(struct dynsec__acl **acl, struct dynsec__acl *item)
 
 static void role__free_all_acls(struct dynsec__acl **acl)
 {
-	struct dynsec__acl *iter, *tmp;
+	struct dynsec__acl *iter, *tmp = NULL;
 
 	HASH_ITER(hh, *acl, iter, tmp){
 		role__free_acl(acl, iter);
@@ -105,7 +105,7 @@ struct dynsec__role *dynsec_roles__find(const char *rolename)
 
 void dynsec_roles__cleanup(void)
 {
-	struct dynsec__role *role, *role_tmp;
+	struct dynsec__role *role, *role_tmp = NULL;
 
 	HASH_ITER(hh, local_roles, role, role_tmp){
 		role__free_item(role, true);
@@ -115,7 +115,7 @@ void dynsec_roles__cleanup(void)
 
 static void role__kick_all(struct dynsec__role *role)
 {
-	struct dynsec__grouplist *grouplist, *grouplist_tmp;
+	struct dynsec__grouplist *grouplist, *grouplist_tmp = NULL;
 
 	dynsec_clientlist__kick_all(role->clientlist);
 
@@ -137,7 +137,7 @@ static void role__kick_all(struct dynsec__role *role)
 
 static int add_single_acl_to_json(cJSON *j_array, const char *acl_type, struct dynsec__acl *acl)
 {
-	struct dynsec__acl *iter, *tmp;
+	struct dynsec__acl *iter, *tmp = NULL;
 	cJSON *j_acl;
 
 	HASH_ITER(hh, acl, iter, tmp){
@@ -185,7 +185,7 @@ static int add_acls_to_json(cJSON *j_role, struct dynsec__role *role)
 int dynsec_roles__config_save(cJSON *tree)
 {
 	cJSON *j_roles, *j_role;
-	struct dynsec__role *role, *role_tmp;
+	struct dynsec__role *role, *role_tmp = NULL;
 
 	if((j_roles = cJSON_AddArrayToObject(tree, "roles")) == NULL){
 		return 1;
@@ -433,7 +433,7 @@ error:
 
 static void role__remove_all_clients(struct dynsec__role *role)
 {
-	struct dynsec__clientlist *clientlist, *clientlist_tmp;
+	struct dynsec__clientlist *clientlist, *clientlist_tmp = NULL;
 
 	HASH_ITER(hh, role->clientlist, clientlist, clientlist_tmp){
 		mosquitto_kick_client_by_username(clientlist->client->username, false);
@@ -444,7 +444,7 @@ static void role__remove_all_clients(struct dynsec__role *role)
 
 static void role__remove_all_groups(struct dynsec__role *role)
 {
-	struct dynsec__grouplist *grouplist, *grouplist_tmp;
+	struct dynsec__grouplist *grouplist, *grouplist_tmp = NULL;
 
 	HASH_ITER(hh, role->grouplist, grouplist, grouplist_tmp){
 		if(grouplist->group == dynsec_anonymous_group){
@@ -526,7 +526,7 @@ static cJSON *add_role_to_json(struct dynsec__role *role, bool verbose)
 int dynsec_roles__process_list(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data)
 {
 	bool verbose;
-	struct dynsec__role *role, *role_tmp;
+	struct dynsec__role *role, *role_tmp = NULL;
 	cJSON *tree, *j_roles, *j_role, *j_data;
 	int i, count, offset;
 	const char *admin_clientid, *admin_username;

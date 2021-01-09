@@ -124,7 +124,7 @@ int control__unregister_callback(struct mosquitto__security_options *opts, MOSQ_
 	if(strncmp(topic, "$CONTROL/", strlen("$CONTROL/"))) return MOSQ_ERR_INVAL;
 
 	HASH_FIND(hh, opts->plugin_callbacks.control, topic, topic_len, cb_found);
-	if(cb_found){
+	if(cb_found && cb_found->cb == cb_func){
 		HASH_DELETE(hh, opts->plugin_callbacks.control, cb_found);
 		mosquitto__free(cb_found->data);
 		mosquitto__free(cb_found);

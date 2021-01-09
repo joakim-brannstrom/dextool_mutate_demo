@@ -241,6 +241,10 @@ static int pwfile_iterate(FILE *fptr, FILE *ftmp,
  * ====================================================================== */
 static int delete_pwuser_cb(FILE *fptr, FILE *ftmp, const char *username, const char *password, const char *line, struct cb_helper *helper)
 {
+	UNUSED(fptr);
+	UNUSED(password);
+	UNUSED(line);
+
 	if(strcmp(username, helper->username)){
 		/* If this isn't the username to delete, write it to the new file */
 		fprintf(ftmp, "%s", line);
@@ -274,6 +278,9 @@ int delete_pwuser(FILE *fptr, FILE *ftmp, const char *username)
  * ====================================================================== */
 static int update_file_cb(FILE *fptr, FILE *ftmp, const char *username, const char *password, const char *line, struct cb_helper *helper)
 {
+	UNUSED(fptr);
+	UNUSED(line);
+
 	if(helper){
 		return output_new_password(ftmp, username, password, helper->iterations);
 	}else{
@@ -293,6 +300,9 @@ int update_file(FILE *fptr, FILE *ftmp)
 static int update_pwuser_cb(FILE *fptr, FILE *ftmp, const char *username, const char *password, const char *line, struct cb_helper *helper)
 {
 	int rc = 0;
+
+	UNUSED(fptr);
+	UNUSED(password);
 
 	if(strcmp(username, helper->username)){
 		/* If this isn't the matching user, then writing out the exiting line */

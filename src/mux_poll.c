@@ -56,7 +56,7 @@ Contributors:
 #include "util_mosq.h"
 #include "mux.h"
 
-static void loop_handle_reads_writes(struct pollfd *pollfds);
+static void loop_handle_reads_writes(void);
 
 static struct pollfd *pollfds = NULL;
 static size_t pollfd_max, pollfd_current_max;
@@ -235,7 +235,7 @@ int mux_poll__handle(struct mosquitto__listener_sock *listensock, int listensock
 			log__printf(NULL, MOSQ_LOG_ERR, "Error in poll: %s.", strerror(errno));
 		}
 	}else{
-		loop_handle_reads_writes(pollfds);
+		loop_handle_reads_writes();
 
 		for(i=0; i<listensock_count; i++){
 			if(pollfds[i].revents & POLLIN){
@@ -267,7 +267,7 @@ int mux_poll__cleanup(void)
 }
 
 
-static void loop_handle_reads_writes(struct pollfd *pollfds)
+static void loop_handle_reads_writes(void)
 {
 	struct mosquitto *context, *ctxt_tmp;
 	int err;

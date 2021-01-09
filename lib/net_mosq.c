@@ -393,9 +393,6 @@ static int net__try_connect_tcp(const char *host, uint16_t port, mosq_sock_t *so
 	struct addrinfo *ainfo_bind, *rp_bind;
 	int s;
 	int rc = MOSQ_ERR_SUCCESS;
-#ifdef WIN32
-	uint32_t val = 1;
-#endif
 
 	ainfo_bind = NULL;
 

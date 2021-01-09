@@ -90,8 +90,8 @@ bool db__ready_for_queue(struct mosquitto *context, int qos, struct mosquitto_ms
 {
 	int source_count;
 	int adjust_count;
-	unsigned long source_bytes;
-	unsigned long adjust_bytes = db.config->max_inflight_bytes;
+	size_t source_bytes;
+	size_t adjust_bytes = db.config->max_inflight_bytes;
 	bool valid_bytes;
 	bool valid_count;
 
@@ -148,10 +148,10 @@ int db__open(struct mosquitto__config *config)
 
 	db.subs = NULL;
 
-	subhier = sub__add_hier_entry(NULL, &db.subs, "", strlen(""));
+	subhier = sub__add_hier_entry(NULL, &db.subs, "", 0);
 	if(!subhier) return MOSQ_ERR_NOMEM;
 
-	subhier = sub__add_hier_entry(NULL, &db.subs, "$SYS", strlen("$SYS"));
+	subhier = sub__add_hier_entry(NULL, &db.subs, "$SYS", (uint16_t)strlen("$SYS"));
 	if(!subhier) return MOSQ_ERR_NOMEM;
 
 	retain__init();
@@ -311,6 +311,8 @@ static void db__message_remove(struct mosquitto_msg_data *msg_data, struct mosqu
 void db__message_dequeue_first(struct mosquitto *context, struct mosquitto_msg_data *msg_data)
 {
 	struct mosquitto_client_msg *msg;
+
+	UNUSED(context);
 
 	msg = msg_data->queued;
 	DL_DELETE(msg_data->queued, msg);

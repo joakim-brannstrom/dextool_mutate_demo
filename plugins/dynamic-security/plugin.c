@@ -41,6 +41,8 @@ void dynsec__command_reply(cJSON *j_responses, struct mosquitto *context, const 
 {
 	cJSON *j_response;
 
+	UNUSED(context);
+
 	j_response = cJSON_CreateObject();
 	if(j_response == NULL) return;
 
@@ -81,6 +83,9 @@ static int dynsec_control_callback(int event, void *event_data, void *userdata)
 	struct mosquitto_evt_control *ed = event_data;
 	cJSON *tree, *commands;
 	cJSON *j_response_tree, *j_responses;
+
+	UNUSED(event);
+	UNUSED(userdata);
 
 	/* Create object for responses */
 	j_response_tree = cJSON_CreateObject();
@@ -173,6 +178,8 @@ int dynsec__process_get_default_acl_access(cJSON *j_responses, struct mosquitto 
 {
 	cJSON *tree, *jtmp, *j_data, *j_acls, *j_acl;
 	const char *admin_clientid, *admin_username;
+
+	UNUSED(command);
 
 	tree = cJSON_CreateObject();
 	if(tree == NULL){
@@ -465,6 +472,8 @@ int mosquitto_plugin_init(mosquitto_plugin_id_t *identifier, void **user_data, s
 {
 	int i;
 
+	UNUSED(user_data);
+
 	for(i=0; i<option_count; i++){
 		if(!strcasecmp(options[i].key, "config_file")){
 			config_file = mosquitto_strdup(options[i].value);
@@ -491,6 +500,10 @@ int mosquitto_plugin_init(mosquitto_plugin_id_t *identifier, void **user_data, s
 
 int mosquitto_plugin_cleanup(void *user_data, struct mosquitto_opt *options, int option_count)
 {
+	UNUSED(user_data);
+	UNUSED(options);
+	UNUSED(option_count);
+
 	if(plg_id){
 		mosquitto_callback_unregister(plg_id, MOSQ_EVT_CONTROL, dynsec_control_callback, "$CONTROL/dynamic-security/v1");
 		mosquitto_callback_unregister(plg_id, MOSQ_EVT_BASIC_AUTH, dynsec_auth__basic_auth_callback, NULL);

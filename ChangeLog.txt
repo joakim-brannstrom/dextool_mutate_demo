@@ -16,6 +16,7 @@ Broker:
 Build:
 - `install` Makefile target should depend on `all`, not `mosquitto`, to ensure
   that man pages are always built. Closes #1989.
+- Fixes for lots of minor build warnings highlighted by Visual Studio. 
 
 Apps:
 - Disallow control characters in mosquitto_passwd usernames.

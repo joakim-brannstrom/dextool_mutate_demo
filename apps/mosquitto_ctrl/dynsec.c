@@ -124,7 +124,7 @@ static void print_list(cJSON *j_response, const char *arrayname, const char *key
 }
 
 
-static void print_roles(cJSON *j_roles, int slen)
+static void print_roles(cJSON *j_roles, size_t slen)
 {
 	bool first;
 	cJSON *j_elem, *jtmp;
@@ -136,9 +136,9 @@ static void print_roles(cJSON *j_roles, int slen)
 			if(jtmp && cJSON_IsString(jtmp)){
 				if(first){
 					first = false;
-					printf("%-*s %s", slen, "Roles:", jtmp->valuestring);
+					printf("%-*s %s", (int)slen, "Roles:", jtmp->valuestring);
 				}else{
-					printf("%-*s %s", slen, "", jtmp->valuestring);
+					printf("%-*s %s", (int)slen, "", jtmp->valuestring);
 				}
 				jtmp = cJSON_GetObjectItem(j_elem, "priority");
 				if(jtmp && cJSON_IsNumber(jtmp)){
@@ -383,7 +383,13 @@ static void dynsec__payload_callback(struct mosq_ctrl *ctrl, long payloadlen, co
 {
 	cJSON *tree, *j_responses, *j_response, *j_command, *j_error;
 
+	UNUSED(ctrl);
+
+#if CJSON_VERSION_FULL < 1007013
 	tree = cJSON_Parse(payload);
+#else
+	tree = cJSON_ParseWithLength(payload, payloadlen);
+#endif
 	if(tree == NULL){
 		fprintf(stderr, "Error: Payload not JSON.\n");
 		return;
@@ -492,6 +498,9 @@ static int dynsec__set_default_acl_access(int argc, char *argv[], cJSON *j_comma
 
 static int dynsec__get_default_acl_access(int argc, char *argv[], cJSON *j_command)
 {
+	UNUSED(argc);
+	UNUSED(argv);
+
 	if(cJSON_AddStringToObject(j_command, "command", "getDefaultACLAccess") == NULL
 			){
 

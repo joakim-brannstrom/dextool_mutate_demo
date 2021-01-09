@@ -747,7 +747,7 @@ int mux__cleanup(void);
 void listener__set_defaults(struct mosquitto__listener *listener);
 void listeners__reload_all_certificates(void);
 #ifdef WITH_WEBSOCKETS
-void listeners__add_websockets(struct lws_context *ws_context, int fd);
+void listeners__add_websockets(struct lws_context *ws_context, mosq_sock_t fd);
 #endif
 
 /* ============================================================

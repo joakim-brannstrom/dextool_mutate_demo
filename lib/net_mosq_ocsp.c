@@ -65,6 +65,8 @@ int mosquitto__verify_ocsp_status_cb(SSL * ssl, void *arg)
 	X509_STORE     *st = NULL;
 	STACK_OF(X509) *ch = NULL;
 
+	UNUSED(ssl);
+
 	long len = SSL_get_tlsext_status_ocsp_resp(mosq->ssl, &p);
 	log__printf(mosq, MOSQ_LOG_DEBUG, "OCSP: SSL_get_tlsext_status_ocsp_resp returned %ld bytes", len);
 

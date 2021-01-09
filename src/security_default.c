@@ -47,7 +47,7 @@ int mosquitto_security_init_default(bool reload)
 	int rc;
 	int i;
 	char *pwf;
-	char *pskf;
+	char *pskf = NULL;
 
 	UNUSED(reload);
 
@@ -136,7 +136,7 @@ int mosquitto_security_init_default(bool reload)
 			}
 		}
 	}else{
-		char *pskf = db.config->security_options.psk_file;
+		pskf = db.config->security_options.psk_file;
 		if(pskf){
 			rc = psk__file_parse(&db.config->security_options.psk_id, pskf);
 			if(rc){
@@ -371,6 +371,9 @@ static int mosquitto_acl_check_default(int event, void *event_data, void *userda
 	size_t len, tlen, clen, ulen;
 	char *s;
 	struct mosquitto__security_options *security_opts = NULL;
+
+	UNUSED(event);
+	UNUSED(userdata);
 
 	if(ed->client->bridge) return MOSQ_ERR_SUCCESS;
 	if(ed->access == MOSQ_ACL_SUBSCRIBE || ed->access == MOSQ_ACL_UNSUBSCRIBE) return MOSQ_ERR_SUCCESS; /* FIXME - implement ACL subscription strings. */
@@ -667,7 +670,7 @@ static void acl__cleanup_single(struct mosquitto__security_options *security_opt
 
 static int acl__cleanup(bool reload)
 {
-	struct mosquitto *context, *ctxt_tmp;
+	struct mosquitto *context, *ctxt_tmp = NULL;
 	int i;
 
 	UNUSED(reload);
@@ -833,7 +836,7 @@ void unpwd__free_item(struct mosquitto__unpwd **unpwd, struct mosquitto__unpwd *
 #ifdef WITH_TLS
 static int unpwd__decode_passwords(struct mosquitto__unpwd **unpwd)
 {
-	struct mosquitto__unpwd *u, *tmp;
+	struct mosquitto__unpwd *u, *tmp = NULL;
 	char *token;
 	unsigned char *salt;
 	unsigned int salt_len;
@@ -939,7 +942,7 @@ static int unpwd__file_parse(struct mosquitto__unpwd **unpwd, const char *passwo
 static int psk__file_parse(struct mosquitto__unpwd **psk_id, const char *psk_file)
 {
 	int rc;
-	struct mosquitto__unpwd *u, *tmp;
+	struct mosquitto__unpwd *u, *tmp = NULL;
 
 	if(!db.config || !psk_id) return MOSQ_ERR_INVAL;
 
@@ -993,6 +996,9 @@ static int mosquitto_unpwd_check_default(int event, void *event_data, void *user
 	int rc;
 #endif
 
+	UNUSED(event);
+	UNUSED(userdata);
+
 	if(ed->client->username == NULL){
 		return MOSQ_ERR_PLUGIN_DEFER;
 	}
@@ -1038,7 +1044,7 @@ static int mosquitto_unpwd_check_default(int event, void *event_data, void *user
 
 static int unpwd__cleanup(struct mosquitto__unpwd **root, bool reload)
 {
-	struct mosquitto__unpwd *u, *tmp;
+	struct mosquitto__unpwd *u, *tmp = NULL;
 
 	UNUSED(reload);
 
@@ -1079,7 +1085,7 @@ static void security__disconnect_auth(struct mosquitto *context)
  */
 int mosquitto_security_apply_default(void)
 {
-	struct mosquitto *context, *ctxt_tmp;
+	struct mosquitto *context, *ctxt_tmp = NULL;
 	struct mosquitto__acl_user *acl_user_tail;
 	bool allow_anonymous;
 	struct mosquitto__security_options *security_opts = NULL;
@@ -1289,7 +1295,7 @@ int mosquitto_security_apply_default(void)
 
 int mosquitto_psk_key_get_default(struct mosquitto *context, const char *hint, const char *identity, char *key, int max_key_len)
 {
-	struct mosquitto__unpwd *u, *tmp;
+	struct mosquitto__unpwd *u, *tmp = NULL;
 	struct mosquitto__unpwd *psk_id_ref = NULL;
 
 	if(!hint || !identity || !key) return MOSQ_ERR_INVAL;

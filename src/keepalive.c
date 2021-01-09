@@ -27,6 +27,8 @@ static time_t last_keepalive_check = 0;
 
 int keepalive__add(struct mosquitto *context)
 {
+	UNUSED(context);
+
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -58,6 +60,8 @@ void keepalive__check(void)
 
 int keepalive__remove(struct mosquitto *context)
 {
+	UNUSED(context);
+
 	return MOSQ_ERR_SUCCESS;
 }
 

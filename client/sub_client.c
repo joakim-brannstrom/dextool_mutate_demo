@@ -41,7 +41,7 @@ Contributors:
 struct mosq_config cfg;
 bool process_messages = true;
 int msg_count = 0;
-struct mosquitto *mosq = NULL;
+struct mosquitto *g_mosq = NULL;
 int last_mid = 0;
 static bool timed_out = false;
 static int connack_result = 0;
@@ -53,7 +53,7 @@ void my_signal_handler(int signum)
 	if(signum == SIGALRM || signum == SIGTERM || signum == SIGINT){
 		if(connack_received){
 			process_messages = false;
-			mosquitto_disconnect_v5(mosq, MQTT_RC_DISCONNECT_WITH_WILL_MSG, cfg.disconnect_props);
+			mosquitto_disconnect_v5(g_mosq, MQTT_RC_DISCONNECT_WITH_WILL_MSG, cfg.disconnect_props);
 		}else{
 			exit(-1);
 		}
@@ -358,8 +358,8 @@ int main(int argc, char *argv[])
 		goto cleanup;
 	}
 
-	mosq = mosquitto_new(cfg.id, cfg.clean_session, &cfg);
-	if(!mosq){
+	g_mosq = mosquitto_new(cfg.id, cfg.clean_session, &cfg);
+	if(!g_mosq){
 		switch(errno){
 			case ENOMEM:
 				err_printf(&cfg, "Error: Out of memory.\n");
@@ -370,17 +370,17 @@ int main(int argc, char *argv[])
 		}
 		goto cleanup;
 	}
-	if(client_opts_set(mosq, &cfg)){
+	if(client_opts_set(g_mosq, &cfg)){
 		goto cleanup;
 	}
 	if(cfg.debug){
-		mosquitto_log_callback_set(mosq, my_log_callback);
+		mosquitto_log_callback_set(g_mosq, my_log_callback);
 	}
-	mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
-	mosquitto_connect_v5_callback_set(mosq, my_connect_callback);
-	mosquitto_message_v5_callback_set(mosq, my_message_callback);
+	mosquitto_subscribe_callback_set(g_mosq, my_subscribe_callback);
+	mosquitto_connect_v5_callback_set(g_mosq, my_connect_callback);
+	mosquitto_message_v5_callback_set(g_mosq, my_message_callback);
 
-	rc = client_connect(mosq, &cfg);
+	rc = client_connect(g_mosq, &cfg);
 	if(rc){
 		goto cleanup;
 	}
@@ -410,9 +410,9 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	rc = mosquitto_loop_forever(mosq, -1, 1);
+	rc = mosquitto_loop_forever(g_mosq, -1, 1);
 
-	mosquitto_destroy(mosq);
+	mosquitto_destroy(g_mosq);
 	mosquitto_lib_cleanup();
 
 	if(cfg.msg_count>0 && rc == MOSQ_ERR_NO_CONN){
@@ -432,7 +432,7 @@ int main(int argc, char *argv[])
 	}
 
 cleanup:
-	mosquitto_destroy(mosq);
+	mosquitto_destroy(g_mosq);
 	mosquitto_lib_cleanup();
 	client_config_cleanup(&cfg);
 	return 1;
