@@ -116,6 +116,7 @@ int dynsec_groups__process_add_role(cJSON *j_responses, struct mosquitto *contex
 	struct dynsec__role *role;
 	int priority;
 	const char *admin_clientid, *admin_username;
+	int rc;
 
 	if(json_get_string(command, "groupname", &groupname, false) != MOSQ_ERR_SUCCESS){
 		dynsec__command_reply(j_responses, context, "addGroupRole", "Invalid/missing groupname", correlation_data);
@@ -151,13 +152,20 @@ int dynsec_groups__process_add_role(cJSON *j_responses, struct mosquitto *contex
 	admin_clientid = mosquitto_client_id(context);
 	admin_username = mosquitto_client_username(context);
 
-	mosquitto_log_printf(MOSQ_LOG_INFO, "dynsec: %s/%s | addGroupRole | groupname=%s | rolename=%s | priority=%d",
-			admin_clientid, admin_username, groupname, rolename, priority);
-
-	if(dynsec_rolelist__group_add(group, role, priority) != MOSQ_ERR_SUCCESS){
+	rc = dynsec_rolelist__group_add(group, role, priority);
+	if(rc == MOSQ_ERR_SUCCESS){
+		/* Continue */
+	}else if(rc == MOSQ_ERR_ALREADY_EXISTS){
+		dynsec__command_reply(j_responses, context, "addGroupRole", "Group is already in this role", correlation_data);
+		return MOSQ_ERR_ALREADY_EXISTS;
+	}else{
 		dynsec__command_reply(j_responses, context, "addGroupRole", "Internal error", correlation_data);
 		return MOSQ_ERR_UNKNOWN;
 	}
+
+	mosquitto_log_printf(MOSQ_LOG_INFO, "dynsec: %s/%s | addGroupRole | groupname=%s | rolename=%s | priority=%d",
+			admin_clientid, admin_username, groupname, rolename, priority);
+
 	dynsec__config_save();
 	dynsec__command_reply(j_responses, context, "addGroupRole", NULL, correlation_data);
 
