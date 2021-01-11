@@ -1,3 +1,6 @@
+2.0.5 - 2021-01-11
+==================
+
 Broker:
 - Fix `auth_method` not being provided to the extended auth plugin event.
   Closes #1975.
@@ -12,6 +15,7 @@ Broker:
 - Fix invalid behaviour in dynsec plugin if a group or client is deleted
   before a role that was attached to the group or client is deleted.
   Closes #1998.
+- Improve logging in dynsec addGroupRole command. Closes #2005.
 
 Client library:
 - Improve documentation around the `_v5()` and non-v5 functions, e.g.
