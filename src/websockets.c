@@ -605,21 +605,44 @@ static int callback_http(
 			break;
 
 		case LWS_CALLBACK_ADD_POLL_FD:
-		case LWS_CALLBACK_DEL_POLL_FD:
-		case LWS_CALLBACK_CHANGE_MODE_POLL_FD:
 			HASH_FIND(hh_sock, db.contexts_by_sock, &pollargs->fd, sizeof(pollargs->fd), mosq);
 			if(mosq){
-				if(pollargs->events & POLLOUT){
+				if(pollargs->events & LWS_POLLOUT){
 					mux__add_out(mosq);
 					mosq->ws_want_write = true;
 				}else{
 					mux__remove_out(mosq);
 				}
 			}else{
-				if(reason == LWS_CALLBACK_ADD_POLL_FD && (pollargs->events & POLLIN)){
+				if(pollargs->events & POLLIN){
 					/* Assume this is a new listener */
 					listeners__add_websockets(lws_get_context(wsi), pollargs->fd);
 				}
+			}
+			break;
+
+		case LWS_CALLBACK_DEL_POLL_FD:
+			HASH_FIND(hh_sock, db.contexts_by_sock, &pollargs->fd, sizeof(pollargs->fd), mosq);
+			if(mosq){
+				mux__delete(mosq);
+			}else{
+				return 1;
+			}
+			break;
+
+		case LWS_CALLBACK_CHANGE_MODE_POLL_FD:
+			HASH_FIND(hh_sock, db.contexts_by_sock, &pollargs->fd, sizeof(pollargs->fd), mosq);
+			if(mosq){
+				if(pollargs->events & LWS_POLLHUP){
+					return 1;
+				}else if(pollargs->events & LWS_POLLOUT){
+					mux__add_out(mosq);
+					mosq->ws_want_write = true;
+				}else{
+					mux__remove_out(mosq);
+				}
+			}else{
+				return 1;
 			}
 			break;
 
