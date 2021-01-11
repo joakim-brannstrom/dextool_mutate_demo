@@ -507,7 +507,7 @@ int dynsec_groups__add_client(const char *username, const char *groupname, int p
 	HASH_FIND(hh, group->clientlist, username, strlen(username), clientlist);
 	if(clientlist != NULL){
 		/* Client is already in the group */
-		return MOSQ_ERR_SUCCESS;
+		return MOSQ_ERR_ALREADY_EXISTS;
 	}
 
 	rc = dynsec_clientlist__add(&group->clientlist, client, priority);
@@ -567,6 +567,8 @@ int dynsec_groups__process_add_client(cJSON *j_responses, struct mosquitto *cont
 		dynsec__command_reply(j_responses, context, "addGroupClient", "Client not found", correlation_data);
 	}else if(rc == ERR_GROUP_NOT_FOUND){
 		dynsec__command_reply(j_responses, context, "addGroupClient", "Group not found", correlation_data);
+	}else if(rc == MOSQ_ERR_ALREADY_EXISTS){
+		dynsec__command_reply(j_responses, context, "addGroupClient", "Client is already in this group", correlation_data);
 	}else{
 		dynsec__command_reply(j_responses, context, "addGroupClient", "Internal error", correlation_data);
 	}

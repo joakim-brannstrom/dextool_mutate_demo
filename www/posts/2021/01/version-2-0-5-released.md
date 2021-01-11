@@ -26,6 +26,7 @@ Version 2.0.5 of Mosquitto has been released. This is a bugfix release.
   before a role that was attached to the group or client is deleted.
   Closes [#1998].
 - Improve logging in dynsec addGroupRole command. Closes [#2005].
+- Improve logging in dynsec addGroupClient command. Closes [#2008].
 
 # Client library
 - Improve documentation around the `_v5()` and non-v5 functions, e.g.
@@ -52,3 +53,4 @@ Version 2.0.5 of Mosquitto has been released. This is a bugfix release.
 [#1998]: https://github.com/eclipse/mosquitto/issues/1998
 [#1999]: https://github.com/eclipse/mosquitto/issues/1999
 [#2005]: https://github.com/eclipse/mosquitto/issues/2005
+[#2008]: https://github.com/eclipse/mosquitto/issues/2008
