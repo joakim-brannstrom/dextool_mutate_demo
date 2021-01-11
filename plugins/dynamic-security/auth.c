@@ -37,7 +37,7 @@ Contributors:
 int dynsec_auth__base64_encode(unsigned char *in, int in_len, char **encoded)
 {
 	BIO *bmem, *b64;
-	BUF_MEM *bptr;
+	BUF_MEM *bptr = NULL;
 
 	if(in_len < 0) return 1;
 
@@ -177,6 +177,9 @@ int dynsec_auth__basic_auth_callback(int event, void *event_data, void *userdata
 	struct dynsec__client *client;
 	unsigned char password_hash[64]; /* For SHA512 */
 	const char *clientid;
+
+	UNUSED(event);
+	UNUSED(userdata);
 
 	if(ed->username == NULL || ed->password == NULL) return MOSQ_ERR_PLUGIN_DEFER;
 

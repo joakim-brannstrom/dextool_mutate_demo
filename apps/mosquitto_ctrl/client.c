@@ -36,6 +36,8 @@ static void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto
 {
 	struct mosq_ctrl *ctrl = obj;
 
+	UNUSED(properties);
+
 	if(ctrl->payload_callback){
 		ctrl->payload_callback(ctrl, msg->payloadlen, msg->payload);
 	}
@@ -47,6 +49,10 @@ static void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto
 
 static void on_publish(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
 {
+	UNUSED(obj);
+	UNUSED(mid);
+	UNUSED(properties);
+
 	if(reason_code > 127){
 		fprintf(stderr, "Publish error: %s\n", mosquitto_reason_string(reason_code));
 		run = 0;
@@ -58,6 +64,9 @@ static void on_publish(struct mosquitto *mosq, void *obj, int mid, int reason_co
 static void on_subscribe(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos, const mosquitto_property *properties)
 {
 	struct mosq_ctrl *ctrl = obj;
+
+	UNUSED(mid);
+	UNUSED(properties);
 
 	if(qos_count == 1){
 		if(granted_qos[0] < 128){
@@ -86,6 +95,9 @@ static void on_subscribe(struct mosquitto *mosq, void *obj, int mid, int qos_cou
 static void on_connect(struct mosquitto *mosq, void *obj, int reason_code, int flags, const mosquitto_property *properties)
 {
 	struct mosq_ctrl *ctrl = obj;
+
+	UNUSED(flags);
+	UNUSED(properties);
 
 	if(reason_code == 0){
 		if(ctrl->response_topic){

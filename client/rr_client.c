@@ -54,7 +54,7 @@ extern struct mosq_config cfg;
 
 bool process_messages = true;
 int msg_count = 0;
-struct mosquitto *mosq = NULL;
+struct mosquitto *g_mosq = NULL;
 static bool timed_out = false;
 static int connack_result = 0;
 
@@ -63,7 +63,7 @@ void my_signal_handler(int signum)
 {
 	if(signum == SIGALRM){
 		process_messages = false;
-		mosquitto_disconnect_v5(mosq, MQTT_RC_DISCONNECT_WITH_WILL_MSG, cfg.disconnect_props);
+		mosquitto_disconnect_v5(g_mosq, MQTT_RC_DISCONNECT_WITH_WILL_MSG, cfg.disconnect_props);
 		timed_out = true;
 	}
 }
@@ -82,6 +82,10 @@ int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadl
 
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message, const mosquitto_property *properties)
 {
+	UNUSED(mosq);
+	UNUSED(obj);
+	UNUSED(properties);
+
 	print_message(&cfg, message, properties);
 	switch(cfg.pub_mode){
 		case MSGMODE_CMD:
@@ -125,6 +129,10 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flags, const mosquitto_property *properties)
 {
+	UNUSED(obj);
+	UNUSED(flags);
+	UNUSED(properties);
+
 	connack_result = result;
 	if(!result){
 		client_state = rr_s_connected;
@@ -145,6 +153,10 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 
 void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
+	UNUSED(obj);
+	UNUSED(mid);
+	UNUSED(qos_count);
+
 	if(granted_qos[0] < 128){
 		client_state = rr_s_ready_to_publish;
 	}else{
@@ -157,6 +169,12 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_c
 
 void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
 {
+	UNUSED(mosq);
+	UNUSED(obj);
+	UNUSED(mid);
+	UNUSED(reason_code);
+	UNUSED(properties);
+
 	client_state = rr_s_wait_for_response;
 }
 
@@ -328,8 +346,8 @@ int main(int argc, char *argv[])
 		goto cleanup;
 	}
 
-	mosq = mosquitto_new(cfg.id, cfg.clean_session, &cfg);
-	if(!mosq){
+	g_mosq = mosquitto_new(cfg.id, cfg.clean_session, &cfg);
+	if(!g_mosq){
 		switch(errno){
 			case ENOMEM:
 				err_printf(&cfg, "Error: Out of memory.\n");
@@ -340,17 +358,17 @@ int main(int argc, char *argv[])
 		}
 		goto cleanup;
 	}
-	if(client_opts_set(mosq, &cfg)){
+	if(client_opts_set(g_mosq, &cfg)){
 		goto cleanup;
 	}
 	if(cfg.debug){
-		mosquitto_log_callback_set(mosq, my_log_callback);
+		mosquitto_log_callback_set(g_mosq, my_log_callback);
 	}
-	mosquitto_connect_v5_callback_set(mosq, my_connect_callback);
-	mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
-	mosquitto_message_v5_callback_set(mosq, my_message_callback);
+	mosquitto_connect_v5_callback_set(g_mosq, my_connect_callback);
+	mosquitto_subscribe_callback_set(g_mosq, my_subscribe_callback);
+	mosquitto_message_v5_callback_set(g_mosq, my_message_callback);
 
-	rc = client_connect(mosq, &cfg);
+	rc = client_connect(g_mosq, &cfg);
 	if(rc){
 		goto cleanup;
 	}
@@ -371,17 +389,17 @@ int main(int argc, char *argv[])
 #endif
 
 	do{
-		rc = mosquitto_loop(mosq, -1, 1);
+		rc = mosquitto_loop(g_mosq, -1, 1);
 		if(client_state == rr_s_ready_to_publish){
 			client_state = rr_s_wait_for_response;
 			switch(cfg.pub_mode){
 				case MSGMODE_CMD:
 				case MSGMODE_FILE:
 				case MSGMODE_STDIN_FILE:
-					rc = my_publish(mosq, &mid_sent, cfg.topic, cfg.msglen, cfg.message, cfg.qos, cfg.retain);
+					rc = my_publish(g_mosq, &mid_sent, cfg.topic, cfg.msglen, cfg.message, cfg.qos, cfg.retain);
 					break;
 				case MSGMODE_NULL:
-					rc = my_publish(mosq, &mid_sent, cfg.topic, 0, NULL, cfg.qos, cfg.retain);
+					rc = my_publish(g_mosq, &mid_sent, cfg.topic, 0, NULL, cfg.qos, cfg.retain);
 					break;
 				case MSGMODE_STDIN_LINE:
 					/* FIXME */
@@ -390,7 +408,7 @@ int main(int argc, char *argv[])
 		}
 	}while(rc == MOSQ_ERR_SUCCESS && client_state != rr_s_disconnect);
 
-	mosquitto_destroy(mosq);
+	mosquitto_destroy(g_mosq);
 	mosquitto_lib_cleanup();
 
 	if(cfg.msg_count>0 && rc == MOSQ_ERR_NO_CONN){

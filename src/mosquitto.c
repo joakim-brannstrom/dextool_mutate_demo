@@ -140,6 +140,8 @@ int drop_privileges(struct mosquitto__config *config)
 			log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Mosquitto should not be run as root/administrator.");
 		}
 	}
+#else
+	UNUSED(config);
 #endif
 	return MOSQ_ERR_SUCCESS;
 }
@@ -237,7 +239,7 @@ int listeners__start_single_mqtt(struct mosquitto__listener *listener)
 
 
 #ifdef WITH_WEBSOCKETS
-void listeners__add_websockets(struct lws_context *ws_context, int fd)
+void listeners__add_websockets(struct lws_context *ws_context, mosq_sock_t fd)
 {
 	int i;
 	struct mosquitto__listener *listener = NULL;
@@ -623,6 +625,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	char *token;
 	char *saveptr = NULL;
 	int rc;
+
+	UNUSED(hInstance);
+	UNUSED(hPrevInstance);
+	UNUSED(nCmdShow);
 
 	argv = mosquitto__malloc(sizeof(char *)*1);
 	argv[0] = "mosquitto";

@@ -1,3 +1,38 @@
+2.0.5 - 2021-01-11
+==================
+
+Broker:
+- Fix `auth_method` not being provided to the extended auth plugin event.
+  Closes #1975.
+- Fix large packets not being completely published to slow clients.
+  Closes #1977.
+- Fix bridge connection not relinquishing POLLOUT after messages are sent.
+  Closes #1979.
+- Fix apparmor incorrectly denying access to
+  /var/lib/mosquitto/mosquitto.db.new. Closes #1978.
+- Fix potential intermittent initial bridge connections when using poll().
+- Fix `bind_interface` option. Closes #1999.
+- Fix invalid behaviour in dynsec plugin if a group or client is deleted
+  before a role that was attached to the group or client is deleted.
+  Closes #1998.
+- Improve logging in dynsec addGroupRole command. Closes #2005.
+- Improve logging in dynsec addGroupClient command. Closes #2008.
+
+Client library:
+- Improve documentation around the `_v5()` and non-v5 functions, e.g.
+  `mosquitto_publish()` and `mosquitto_publish_v5().
+
+Build:
+- `install` Makefile target should depend on `all`, not `mosquitto`, to ensure
+  that man pages are always built. Closes #1989.
+- Fixes for lots of minor build warnings highlighted by Visual Studio. 
+
+Apps:
+- Disallow control characters in mosquitto_passwd usernames.
+- Fix incorrect description in mosquitto_ctrl man page. Closes #1995.
+- Fix `mosquitto_ctrl dynsec getGroup` not showing roles. Closes #1997.
+
+
 2.0.4 - 2020-12-22
 ==================
 

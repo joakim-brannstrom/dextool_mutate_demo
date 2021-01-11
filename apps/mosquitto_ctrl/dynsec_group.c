@@ -15,6 +15,8 @@ SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
 Contributors:
    Roger Light - initial implementation and documentation.
 */
+#include "config.h"
+
 #include <cjson/cJSON.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,6 +68,9 @@ int dynsec_group__delete(int argc, char *argv[], cJSON *j_command)
 
 int dynsec_group__get_anonymous(int argc, char *argv[], cJSON *j_command)
 {
+	UNUSED(argc);
+	UNUSED(argv);
+
 	if(cJSON_AddStringToObject(j_command, "command", "getAnonymousGroup") == NULL
 			){
 

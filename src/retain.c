@@ -62,10 +62,10 @@ int retain__init(void)
 {
 	struct mosquitto__retainhier *retainhier;
 
-	retainhier = retain__add_hier_entry(NULL, &db.retains, "", (int)strlen(""));
+	retainhier = retain__add_hier_entry(NULL, &db.retains, "", 0);
 	if(!retainhier) return MOSQ_ERR_NOMEM;
 
-	retainhier = retain__add_hier_entry(NULL, &db.retains, "$SYS", (int)strlen("$SYS"));
+	retainhier = retain__add_hier_entry(NULL, &db.retains, "$SYS", (uint16_t)strlen("$SYS"));
 	if(!retainhier) return MOSQ_ERR_NOMEM;
 
 	return MOSQ_ERR_SUCCESS;

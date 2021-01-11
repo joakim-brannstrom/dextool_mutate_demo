@@ -443,7 +443,7 @@ static void formatted_print_percent(const struct mosq_config *lcfg, const struct
 	uint8_t i8value;
 	uint16_t i16value;
 	uint32_t i32value;
-	char *binvalue, *strname, *strvalue;
+	char *binvalue = NULL, *strname, *strvalue;
 	const mosquitto_property *prop;
 
 
@@ -627,8 +627,8 @@ static void formatted_print(const struct mosq_config *lcfg, const struct mosquit
 	size_t len;
 	int i;
 	struct tm *ti = NULL;
-	long ns;
-	char strf[3];
+	long ns = 0;
+	char strf[3] = {0, 0 ,0};
 	char buf[100];
 	char align, pad;
 	int field_width, precision;
@@ -769,7 +769,7 @@ void rand_init(void)
 }
 
 
-void print_message(struct mosq_config *cfg, const struct mosquitto_message *message, const mosquitto_property *properties)
+void print_message(struct mosq_config *lcfg, const struct mosquitto_message *message, const mosquitto_property *properties)
 {
 #ifdef WIN32
 	unsigned int r = 0;
@@ -777,27 +777,27 @@ void print_message(struct mosq_config *cfg, const struct mosquitto_message *mess
 	long r = 0;
 #endif
 
-	if(cfg->random_filter < 10000){
+	if(lcfg->random_filter < 10000){
 #ifdef WIN32
 		rand_s(&r);
 #else
 		r = random();
 #endif
-		if((r%10000) >= cfg->random_filter){
+		if((long)(r%10000) >= lcfg->random_filter){
 			return;
 		}
 	}
-	if(cfg->format){
-		formatted_print(cfg, message, properties);
-	}else if(cfg->verbose){
+	if(lcfg->format){
+		formatted_print(lcfg, message, properties);
+	}else if(lcfg->verbose){
 		if(message->payloadlen){
 			printf("%s ", message->topic);
 			write_payload(message->payload, message->payloadlen, false, 0, 0, 0, 0);
-			if(cfg->eol){
+			if(lcfg->eol){
 				printf("\n");
 			}
 		}else{
-			if(cfg->eol){
+			if(lcfg->eol){
 				printf("%s (null)\n", message->topic);
 			}
 		}
@@ -805,7 +805,7 @@ void print_message(struct mosq_config *cfg, const struct mosquitto_message *mess
 	}else{
 		if(message->payloadlen){
 			write_payload(message->payload, message->payloadlen, false, 0, 0, 0, 0);
-			if(cfg->eol){
+			if(lcfg->eol){
 				printf("\n");
 			}
 			fflush(stdout);

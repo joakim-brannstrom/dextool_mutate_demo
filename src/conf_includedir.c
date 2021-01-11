@@ -79,7 +79,7 @@ int scmp_p(const void *p1, const void *p2)
 #ifdef WIN32
 int config__get_dir_files(const char *include_dir, char ***files, int *file_count)
 {
-	int len;
+	size_t len;
 	int i;
 	char **l_files = NULL;
 	int l_file_count = 0;

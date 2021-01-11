@@ -84,7 +84,7 @@ get_group_response = {'responses':[{'command': 'getGroup', 'data': {'group': {'g
 add_client_to_group_command = {"commands": [{"command":"addGroupClient", "username":"user_one",
             "groupname": "group_one", "correlationData":"1234"}]}
 add_client_to_group_response = {'responses':[{'command': 'addGroupClient', 'correlationData': '1234'}]}
-add_duplicate_client_to_group_response = {'responses':[{'command': 'addGroupClient', 'correlationData': '1234'}]}
+add_duplicate_client_to_group_response = {'responses':[{'command': 'addGroupClient', 'error':'Client is already in this group', 'correlationData': '1234'}]}
 
 add_client_to_group2_command = {"commands": [{"command":"addGroupClient", "username":"user_one",
             "groupname": "group_two", "correlationData":"1234"}]}

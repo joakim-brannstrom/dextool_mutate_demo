@@ -253,7 +253,7 @@ static int sub__add_shared(struct mosquitto *context, uint8_t qos, uint32_t iden
 			}
 		}
 		if(shared_ref){
-			shared_subs = mosquitto__realloc(context->shared_subs, sizeof(struct mosquitto__subhier_ref *)*(size_t)(context->shared_sub_count + 1));
+			shared_subs = mosquitto__realloc(context->shared_subs, sizeof(struct mosquitto__subshared_ref *)*(size_t)(context->shared_sub_count + 1));
 			if(!shared_subs){
 				mosquitto__free(shared_ref);
 				context->shared_subs[context->shared_sub_count-1] = NULL;

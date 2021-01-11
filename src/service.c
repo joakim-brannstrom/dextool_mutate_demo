@@ -31,7 +31,7 @@ int main(int argc, char *argv[]);
 
 static void print_error(void)
 {
-	char *buf;
+	char *buf = NULL;
 
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
 		NULL, GetLastError(), LANG_NEUTRAL, (LPTSTR)&buf, 0, NULL);
@@ -69,6 +69,9 @@ void __stdcall service_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	int argc = 1;
 	char conf_path[MAX_PATH + 20];
 	int rc;
+
+	UNUSED(dwArgc);
+	UNUSED(lpszArgv);
 
 	service_handle = RegisterServiceCtrlHandler("mosquitto", service_handler);
 	if(service_handle){

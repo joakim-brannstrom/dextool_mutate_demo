@@ -33,7 +33,7 @@ int handle__unsubscribe(struct mosquitto *context)
 	char *sub;
 	uint16_t slen;
 	int rc;
-	uint8_t reason;
+	uint8_t reason = 0;
 	int reason_code_count = 0;
 	int reason_code_max;
 	uint8_t *reason_codes = NULL, *reason_tmp;

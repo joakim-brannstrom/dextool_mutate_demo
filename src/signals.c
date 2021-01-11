@@ -92,6 +92,8 @@ DWORD WINAPI SigThreadProc(void* data)
 	static HANDLE evt[3];
 	int pid = GetCurrentProcessId();
 
+	UNUSED(data);
+
 	sprintf_s(evt_name, MAX_PATH, "mosq%d_shutdown", pid);
 	evt[0] = CreateEvent(NULL, TRUE, FALSE, evt_name);
 	sprintf_s(evt_name, MAX_PATH, "mosq%d_reload", pid);

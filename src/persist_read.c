@@ -54,7 +54,7 @@ static struct mosquitto *persist__find_or_add_context(const char *client_id, uin
 	context = NULL;
 	HASH_FIND(hh_id, db.contexts_by_id, client_id, strlen(client_id), context);
 	if(!context){
-		context = context__init(-1);
+		context = context__init(INVALID_SOCKET);
 		if(!context) return NULL;
 		context->id = mosquitto__strdup(client_id);
 		if(!context->id){

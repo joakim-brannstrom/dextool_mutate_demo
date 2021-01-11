@@ -936,6 +936,7 @@ int mosquitto_security_auth_start(struct mosquitto *context, bool reauth, const 
 	DL_FOREACH(opts->plugin_callbacks.ext_auth_start, cb_base){
 		memset(&event_data, 0, sizeof(event_data));
 		event_data.client = context;
+		event_data.auth_method = context->auth_method;
 		event_data.data_in = data_in;
 		event_data.data_out = NULL;
 		event_data.data_in_len = data_in_len;

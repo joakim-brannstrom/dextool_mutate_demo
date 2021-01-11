@@ -44,6 +44,7 @@ struct dynsec__group *dynsec_anonymous_group = NULL;
  * ################################################################ */
 
 static int dynsec__remove_all_clients_from_group(struct dynsec__group *group);
+static int dynsec__remove_all_roles_from_group(struct dynsec__group *group);
 static cJSON *add_group_to_json(struct dynsec__group *group);
 
 
@@ -115,6 +116,7 @@ int dynsec_groups__process_add_role(cJSON *j_responses, struct mosquitto *contex
 	struct dynsec__role *role;
 	int priority;
 	const char *admin_clientid, *admin_username;
+	int rc;
 
 	if(json_get_string(command, "groupname", &groupname, false) != MOSQ_ERR_SUCCESS){
 		dynsec__command_reply(j_responses, context, "addGroupRole", "Invalid/missing groupname", correlation_data);
@@ -150,13 +152,20 @@ int dynsec_groups__process_add_role(cJSON *j_responses, struct mosquitto *contex
 	admin_clientid = mosquitto_client_id(context);
 	admin_username = mosquitto_client_username(context);
 
-	mosquitto_log_printf(MOSQ_LOG_INFO, "dynsec: %s/%s | addGroupRole | groupname=%s | rolename=%s | priority=%d",
-			admin_clientid, admin_username, groupname, rolename, priority);
-
-	if(dynsec_rolelist__group_add(group, role, priority) != MOSQ_ERR_SUCCESS){
+	rc = dynsec_rolelist__group_add(group, role, priority);
+	if(rc == MOSQ_ERR_SUCCESS){
+		/* Continue */
+	}else if(rc == MOSQ_ERR_ALREADY_EXISTS){
+		dynsec__command_reply(j_responses, context, "addGroupRole", "Group is already in this role", correlation_data);
+		return MOSQ_ERR_ALREADY_EXISTS;
+	}else{
 		dynsec__command_reply(j_responses, context, "addGroupRole", "Internal error", correlation_data);
 		return MOSQ_ERR_UNKNOWN;
 	}
+
+	mosquitto_log_printf(MOSQ_LOG_INFO, "dynsec: %s/%s | addGroupRole | groupname=%s | rolename=%s | priority=%d",
+			admin_clientid, admin_username, groupname, rolename, priority);
+
 	dynsec__config_save();
 	dynsec__command_reply(j_responses, context, "addGroupRole", NULL, correlation_data);
 
@@ -169,7 +178,7 @@ int dynsec_groups__process_add_role(cJSON *j_responses, struct mosquitto *contex
 
 void dynsec_groups__cleanup(void)
 {
-	struct dynsec__group *group, *group_tmp;
+	struct dynsec__group *group, *group_tmp = NULL;
 
 	HASH_ITER(hh, local_groups, group, group_tmp){
 		group__free_item(group);
@@ -299,7 +308,7 @@ int dynsec_groups__config_load(cJSON *tree)
 
 static int dynsec__config_add_groups(cJSON *j_groups)
 {
-	struct dynsec__group *group, *group_tmp;
+	struct dynsec__group *group, *group_tmp = NULL;
 	cJSON *j_group, *j_clients, *j_roles;
 
 	HASH_ITER(hh, local_groups, group, group_tmp){
@@ -460,6 +469,7 @@ int dynsec_groups__process_delete(cJSON *j_responses, struct mosquitto *context,
 		/* Enforce any changes */
 		group__kick_all(group);
 
+		dynsec__remove_all_roles_from_group(group);
 		group__free_item(group);
 		dynsec__config_save();
 		dynsec__command_reply(j_responses, context, "deleteGroup", NULL, correlation_data);
@@ -497,7 +507,7 @@ int dynsec_groups__add_client(const char *username, const char *groupname, int p
 	HASH_FIND(hh, group->clientlist, username, strlen(username), clientlist);
 	if(clientlist != NULL){
 		/* Client is already in the group */
-		return MOSQ_ERR_SUCCESS;
+		return MOSQ_ERR_ALREADY_EXISTS;
 	}
 
 	rc = dynsec_clientlist__add(&group->clientlist, client, priority);
@@ -557,6 +567,8 @@ int dynsec_groups__process_add_client(cJSON *j_responses, struct mosquitto *cont
 		dynsec__command_reply(j_responses, context, "addGroupClient", "Client not found", correlation_data);
 	}else if(rc == ERR_GROUP_NOT_FOUND){
 		dynsec__command_reply(j_responses, context, "addGroupClient", "Group not found", correlation_data);
+	}else if(rc == MOSQ_ERR_ALREADY_EXISTS){
+		dynsec__command_reply(j_responses, context, "addGroupClient", "Client is already in this group", correlation_data);
 	}else{
 		dynsec__command_reply(j_responses, context, "addGroupClient", "Internal error", correlation_data);
 	}
@@ -570,7 +582,7 @@ int dynsec_groups__process_add_client(cJSON *j_responses, struct mosquitto *cont
 
 static int dynsec__remove_all_clients_from_group(struct dynsec__group *group)
 {
-	struct dynsec__clientlist *clientlist, *clientlist_tmp;
+	struct dynsec__clientlist *clientlist, *clientlist_tmp = NULL;
 
 	HASH_ITER(hh, group->clientlist, clientlist, clientlist_tmp){
 		/* Remove client stored group reference */
@@ -578,6 +590,17 @@ static int dynsec__remove_all_clients_from_group(struct dynsec__group *group)
 
 		HASH_DELETE(hh, group->clientlist, clientlist);
 		mosquitto_free(clientlist);
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+static int dynsec__remove_all_roles_from_group(struct dynsec__group *group)
+{
+	struct dynsec__rolelist *rolelist, *rolelist_tmp = NULL;
+
+	HASH_ITER(hh, group->rolelist, rolelist, rolelist_tmp){
+		dynsec_rolelist__group_remove(group, rolelist->role);
 	}
 
 	return MOSQ_ERR_SUCCESS;
@@ -657,7 +680,7 @@ int dynsec_groups__process_remove_client(cJSON *j_responses, struct mosquitto *c
 static cJSON *add_group_to_json(struct dynsec__group *group)
 {
 	cJSON *j_group, *jtmp, *j_clientlist, *j_client, *j_rolelist;
-	struct dynsec__clientlist *clientlist, *clientlist_tmp;
+	struct dynsec__clientlist *clientlist, *clientlist_tmp = NULL;
 
 	j_group = cJSON_CreateObject();
 	if(j_group == NULL){
@@ -705,7 +728,7 @@ int dynsec_groups__process_list(cJSON *j_responses, struct mosquitto *context, c
 {
 	bool verbose;
 	cJSON *tree, *j_groups, *j_group, *j_data;
-	struct dynsec__group *group, *group_tmp;
+	struct dynsec__group *group, *group_tmp = NULL;
 	int i, count, offset;
 	const char *admin_clientid, *admin_username;
 
@@ -1028,6 +1051,8 @@ int dynsec_groups__process_get_anonymous_group(cJSON *j_responses, struct mosqui
 	cJSON *tree, *j_data, *j_group;
 	const char *groupname;
 	const char *admin_clientid, *admin_username;
+
+	UNUSED(command);
 
 	tree = cJSON_CreateObject();
 	if(tree == NULL){

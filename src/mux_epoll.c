@@ -115,8 +115,8 @@ int mux_epoll__add_out(struct mosquitto *context)
 {
 	struct epoll_event ev;
 
-	memset(&ev, 0, sizeof(struct epoll_event));
 	if(!(context->events & EPOLLOUT)) {
+		memset(&ev, 0, sizeof(struct epoll_event));
 		ev.data.ptr = context;
 		ev.events = EPOLLIN | EPOLLOUT;
 		if(epoll_ctl(db.epollfd, EPOLL_CTL_ADD, context->sock, &ev) == -1) {
@@ -134,8 +134,8 @@ int mux_epoll__remove_out(struct mosquitto *context)
 {
 	struct epoll_event ev;
 
-	memset(&ev, 0, sizeof(struct epoll_event));
 	if(context->events & EPOLLOUT) {
+		memset(&ev, 0, sizeof(struct epoll_event));
 		ev.data.ptr = context;
 		ev.events = EPOLLIN;
 		if(epoll_ctl(db.epollfd, EPOLL_CTL_ADD, context->sock, &ev) == -1) {

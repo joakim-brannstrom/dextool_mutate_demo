@@ -35,8 +35,8 @@ typedef int (*MOSQ_FUNC_acl_check)(struct mosquitto_evt_acl_check *, struct dyns
 
 static int acl_check_publish_c_recv(struct mosquitto_evt_acl_check *ed, struct dynsec__rolelist *base_rolelist)
 {
-	struct dynsec__rolelist *rolelist, *rolelist_tmp;
-	struct dynsec__acl *acl, *acl_tmp;
+	struct dynsec__rolelist *rolelist, *rolelist_tmp = NULL;
+	struct dynsec__acl *acl, *acl_tmp = NULL;
 	bool result;
 
 	HASH_ITER(hh, base_rolelist, rolelist, rolelist_tmp){
@@ -63,8 +63,8 @@ static int acl_check_publish_c_recv(struct mosquitto_evt_acl_check *ed, struct d
 
 static int acl_check_publish_c_send(struct mosquitto_evt_acl_check *ed, struct dynsec__rolelist *base_rolelist)
 {
-	struct dynsec__rolelist *rolelist, *rolelist_tmp;
-	struct dynsec__acl *acl, *acl_tmp;
+	struct dynsec__rolelist *rolelist, *rolelist_tmp = NULL;
+	struct dynsec__acl *acl, *acl_tmp = NULL;
 	bool result;
 
 	HASH_ITER(hh, base_rolelist, rolelist, rolelist_tmp){
@@ -91,8 +91,8 @@ static int acl_check_publish_c_send(struct mosquitto_evt_acl_check *ed, struct d
 
 static int acl_check_subscribe(struct mosquitto_evt_acl_check *ed, struct dynsec__rolelist *base_rolelist)
 {
-	struct dynsec__rolelist *rolelist, *rolelist_tmp;
-	struct dynsec__acl *acl, *acl_tmp;
+	struct dynsec__rolelist *rolelist, *rolelist_tmp = NULL;
+	struct dynsec__acl *acl, *acl_tmp = NULL;
 	size_t len;
 
 	len = strlen(ed->topic);
@@ -128,8 +128,8 @@ static int acl_check_subscribe(struct mosquitto_evt_acl_check *ed, struct dynsec
 
 static int acl_check_unsubscribe(struct mosquitto_evt_acl_check *ed, struct dynsec__rolelist *base_rolelist)
 {
-	struct dynsec__rolelist *rolelist, *rolelist_tmp;
-	struct dynsec__acl *acl, *acl_tmp;
+	struct dynsec__rolelist *rolelist, *rolelist_tmp = NULL;
+	struct dynsec__acl *acl, *acl_tmp = NULL;
 	size_t len;
 
 	len = strlen(ed->topic);
@@ -163,10 +163,10 @@ static int acl_check_unsubscribe(struct mosquitto_evt_acl_check *ed, struct dyns
  * #
  * ################################################################ */
 
-static int acl_check(struct mosquitto_evt_acl_check *ed, MOSQ_FUNC_acl_check check, bool default_access)
+static int acl_check(struct mosquitto_evt_acl_check *ed, MOSQ_FUNC_acl_check check, bool acl_default_access)
 {
 	struct dynsec__client *client;
-	struct dynsec__grouplist *grouplist, *grouplist_tmp;
+	struct dynsec__grouplist *grouplist, *grouplist_tmp = NULL;
 	const char *username;
 	int rc;
 
@@ -196,7 +196,7 @@ static int acl_check(struct mosquitto_evt_acl_check *ed, MOSQ_FUNC_acl_check che
 		}
 	}
 
-	if(default_access == false){
+	if(acl_default_access == false){
 		return MOSQ_ERR_PLUGIN_DEFER;
 	}else{
 		if(!strncmp(ed->topic, "$CONTROL", strlen("$CONTROL"))){
@@ -219,6 +219,9 @@ static int acl_check(struct mosquitto_evt_acl_check *ed, MOSQ_FUNC_acl_check che
 int dynsec__acl_check_callback(int event, void *event_data, void *userdata)
 {
 	struct mosquitto_evt_acl_check *ed = event_data;
+
+	UNUSED(event);
+	UNUSED(userdata);
 
 	/* ACL checks are made in the order below until a match occurs, at which
 	 * point the decision is made.
