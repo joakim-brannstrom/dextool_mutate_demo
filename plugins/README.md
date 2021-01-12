@@ -18,3 +18,6 @@ This is an **example** plugin to demonstrate how it is possible to modify the pa
 If you are considering using this feature, you should be very certain you have verified the payload is the correct format before modifying it.
 
 This plugin adds the text string "hello " to the beginning of each payload, so with anything other than simple plain text messages it will corrupt the payload contents.
+
+## Authenticate by IP address
+This is an **example** plugin that demonstrates a basic authentication callback that allows clients based on their IP address. Password based authentication is preferred over this very simple type of access control.
