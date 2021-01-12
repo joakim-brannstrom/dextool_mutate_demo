@@ -1,3 +1,11 @@
+2.0.6 - 2021-01-xx
+==================
+
+Broker:
+- Fix calculation of remaining length parameter for websockets clients that
+  send fragmented packets. Closes #1974.
+
+
 2.0.5 - 2021-01-11
 ==================
 

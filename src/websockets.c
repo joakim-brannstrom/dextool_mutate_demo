@@ -332,7 +332,7 @@ static int callback_mqtt(
 						mosq->in_packet.remaining_length += (byte & 127) * mosq->in_packet.remaining_mult;
 						mosq->in_packet.remaining_mult *= 128;
 					}while((byte & 128) != 0);
-					mosq->in_packet.remaining_count = (int8_t)(mosq->in_packet.remaining_count -1);
+					mosq->in_packet.remaining_count = (int8_t)(mosq->in_packet.remaining_count * -1);
 
 					if(mosq->in_packet.remaining_length > 0){
 						mosq->in_packet.payload = mosquitto__malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
