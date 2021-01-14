@@ -1,6 +1,8 @@
 Broker:
 - Fix potential duplicate Will messages being sent when a will delay interval
   has been set.
+- Fix message expiry interval property not being honoured in
+  `mosquitto_broker_publish` and `mosquitto_broker_publish_copy`.
 
 
 2.0.5 - 2021-01-11
