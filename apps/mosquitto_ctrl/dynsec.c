@@ -720,9 +720,8 @@ int dynsec_init(int argc, char *argv[])
 		snprintf(verify_prompt, sizeof(verify_prompt), "Reenter password for %s: ", admin_user);
 		rc = get_password(prompt, verify_prompt, false, password, sizeof(password));
 		if(rc){
-			fprintf(stderr, "Error getting password.\n");
 			mosquitto_lib_cleanup();
-			return 1;
+			return -1;
 		}
 		admin_password = password;
 	}

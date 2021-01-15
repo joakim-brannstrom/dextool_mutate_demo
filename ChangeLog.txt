@@ -10,6 +10,8 @@ Broker:
 Apps:
 - Allow command line arguments to override config file options in
   mosquitto_ctrl. Closes #2010.
+- mosquitto_ctrl: produce an error when requesting a new password if both
+  attempts do not match. Closes #2011.
 
 2.0.5 - 2021-01-11
 ==================

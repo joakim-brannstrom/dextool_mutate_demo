@@ -65,6 +65,9 @@ int dynsec_client__create(int argc, char *argv[], cJSON *j_command)
 		rc = get_password(prompt, verify_prompt, true, password_buf, sizeof(password_buf));
 		if(rc == 0){
 			password = password_buf;
+		}else if(rc == 2){
+			fprintf(stderr, "Error: Passwords do not match.\n");
+			return -1;
 		}else{
 			password = NULL;
 			printf("\n");
@@ -163,7 +166,7 @@ int dynsec_client__set_password(int argc, char *argv[], cJSON *j_command)
 		snprintf(verify_prompt, sizeof(verify_prompt), "Reenter password for %s: ", username);
 		rc = get_password(prompt, verify_prompt, false, password_buf, sizeof(password_buf));
 		if(rc){
-			return MOSQ_ERR_INVAL;
+			return -1;
 		}
 		password = password_buf;
 	}else{

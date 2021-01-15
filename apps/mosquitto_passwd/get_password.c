@@ -135,7 +135,7 @@ int get_password(const char *prompt, const char *verify_prompt, bool quiet, char
 			if(!quiet){
 				fprintf(stderr, "Error: Passwords do not match.\n");
 			}
-			return 1;
+			return 2;
 		}
 	}
 
