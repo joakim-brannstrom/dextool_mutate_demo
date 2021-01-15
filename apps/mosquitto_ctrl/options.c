@@ -89,11 +89,11 @@ int ctrl_config_parse(struct mosq_config *cfg, int *argc, char **argv[])
 
 	init_config(cfg);
 
-	/* Deal with real argc/argv */
-	rc = client_config_line_proc(cfg, argc, argv);
+	rc = client_config_load(cfg);
 	if(rc) return rc;
 
-	rc = client_config_load(cfg);
+	/* Deal with real argc/argv */
+	rc = client_config_line_proc(cfg, argc, argv);
 	if(rc) return rc;
 
 #ifdef WITH_TLS

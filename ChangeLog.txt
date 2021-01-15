@@ -7,6 +7,9 @@ Broker:
 - Add notes that libsystemd-dev or similar is needed if building with systemd
   support. Closes #2019.
 
+Apps:
+- Allow command line arguments to override config file options in
+  mosquitto_ctrl. Closes #2010.
 
 2.0.5 - 2021-01-11
 ==================
