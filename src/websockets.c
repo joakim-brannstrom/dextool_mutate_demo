@@ -625,8 +625,6 @@ static int callback_http(
 			HASH_FIND(hh_sock, db.contexts_by_sock, &pollargs->fd, sizeof(pollargs->fd), mosq);
 			if(mosq){
 				mux__delete(mosq);
-			}else{
-				return 1;
 			}
 			break;
 
@@ -641,8 +639,6 @@ static int callback_http(
 				}else{
 					mux__remove_out(mosq);
 				}
-			}else{
-				return 1;
 			}
 			break;
 

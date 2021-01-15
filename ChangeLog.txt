@@ -3,6 +3,7 @@ Broker:
   has been set.
 - Fix message expiry interval property not being honoured in
   `mosquitto_broker_publish` and `mosquitto_broker_publish_copy`.
+- Fix websockets listeners with TLS not responding. Closes #2020.
 
 
 2.0.5 - 2021-01-11
