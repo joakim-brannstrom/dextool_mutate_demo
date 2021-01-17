@@ -99,12 +99,14 @@ if (WITH_DLT)
 	add_definitions("-DWITH_DLT")
 endif (WITH_DLT)
 
-FIND_PACKAGE(cJSON)
-if (CJSON_FOUND)
-	message(STATUS ${CJSON_FOUND})
-else (CJSON_FOUND)
-	message(STATUS "Optional dependency cJSON not found. Some features will be disabled.")
-endif(CJSON_FOUND)
+if (WITH_CJSON)
+    FIND_PACKAGE(cJSON)
+    if (CJSON_FOUND)
+	    message(STATUS ${CJSON_FOUND})
+    else (CJSON_FOUND)
+	    message(STATUS "Optional dependency cJSON not found. Some features will be disabled.")
+    endif(CJSON_FOUND)
+endif()
 
 # ========================================
 # Include projects
