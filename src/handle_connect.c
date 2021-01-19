@@ -291,7 +291,7 @@ error:
 }
 
 
-static int will__read(struct mosquitto *context, struct mosquitto_message_all **will, uint8_t will_qos, int will_retain)
+static int will__read(struct mosquitto *context, const char *client_id, struct mosquitto_message_all **will, uint8_t will_qos, int will_retain)
 {
 	int rc = MOSQ_ERR_SUCCESS;
 	size_t slen;
@@ -344,6 +344,17 @@ static int will__read(struct mosquitto *context, struct mosquitto_message_all **
 
 	will_struct->msg.payloadlen = payloadlen;
 	if(will_struct->msg.payloadlen > 0){
+		if(db.config->message_size_limit && will_struct->msg.payloadlen > db.config->message_size_limit){
+			log__printf(NULL, MOSQ_LOG_DEBUG, "Client %s connected with too large Will payload", client_id);
+			if(context->protocol == mosq_p_mqtt5){
+				send__connack(context, 0, MQTT_RC_PACKET_TOO_LARGE, NULL);
+			}else{
+				send__connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
+			}
+			context__disconnect(context);
+			rc = MOSQ_ERR_PAYLOAD_SIZE;
+			goto error_cleanup;
+		}
 		will_struct->msg.payload = mosquitto__malloc((size_t)will_struct->msg.payloadlen);
 		if(!will_struct->msg.payload){
 			rc = MOSQ_ERR_NOMEM;
@@ -602,7 +613,7 @@ int handle__connect(struct mosquitto *context)
 	}
 
 	if(will){
-		rc = will__read(context, &will_struct, will_qos, will_retain);
+		rc = will__read(context, client_id, &will_struct, will_qos, will_retain);
 		if(rc) goto handle_connect_error;
 	}else{
 		if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt5){

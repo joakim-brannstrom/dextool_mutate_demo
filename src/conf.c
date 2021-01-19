@@ -1696,6 +1696,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					}
 					memory__set_limit((size_t)lim);
 				}else if(!strcmp(token, "message_size_limit")){
+					log__printf(NULL, MOSQ_LOG_NOTICE, "Note: It is recommended to replace `message_size_limit` with `max_packet_size`.");
 					if(conf__parse_int(&token, "message_size_limit", (int *)&config->message_size_limit, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->message_size_limit > MQTT_MAX_PAYLOAD){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid message_size_limit value (%u).", config->message_size_limit);

@@ -344,6 +344,9 @@ void do_disconnect(struct mosquitto *context, int reason)
 					case MOSQ_ERR_OVERSIZE_PACKET:
 						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected due to oversize packet.", id);
 						break;
+					case MOSQ_ERR_PAYLOAD_SIZE:
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected due to oversize payload.", id);
+						break;
 					case MOSQ_ERR_NOMEM:
 						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected due to out of memory.", id);
 						break;
@@ -357,7 +360,7 @@ void do_disconnect(struct mosquitto *context, int reason)
 						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected: %s.", id, strerror(errno));
 						break;
 					default:
-						log__printf(NULL, MOSQ_LOG_NOTICE, "Bad socket read/write on client %s: %s.", id, mosquitto_strerror(reason));
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Bad socket read/write on client %s: %s", id, mosquitto_strerror(reason));
 						break;
 				}
 			}else{

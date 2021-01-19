@@ -44,6 +44,7 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10 11 12 13 14
 	./02-shared-qos0-v5.py
 	./02-subhier-crash.py
 	./02-subpub-qos0-long-topic.py
+	./02-subpub-qos0-oversize-payload.py
 	./02-subpub-qos0-retain-as-publish.py
 	./02-subpub-qos0-send-retain.py
 	./02-subpub-qos0-subscription-id.py
@@ -56,6 +57,7 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10 11 12 13 14
 	./02-subpub-qos1-message-expiry-will.py
 	./02-subpub-qos1-message-expiry.py
 	./02-subpub-qos1-nolocal.py
+	./02-subpub-qos1-oversize-payload.py
 	./02-subpub-qos1.py
 	./02-subpub-qos2-1322.py
 	./02-subpub-qos2-bad-puback-1.py
@@ -141,6 +143,7 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10 11 12 13 14
 	./07-will-no-flag.py
 	./07-will-null-topic.py
 	./07-will-null.py
+	./07-will-oversize-payload.py
 	./07-will-properties.py
 	./07-will-qos0.py
 	./07-will-reconnect-1273.py

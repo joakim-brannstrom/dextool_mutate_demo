@@ -224,7 +224,7 @@ int handle__publish(struct mosquitto *context)
 	if(msg->payloadlen){
 		if(db.config->message_size_limit && msg->payloadlen > db.config->message_size_limit){
 			log__printf(NULL, MOSQ_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, msg->qos, msg->retain, msg->source_mid, msg->topic, (long)msg->payloadlen);
-			reason_code = MQTT_RC_IMPLEMENTATION_SPECIFIC;
+			reason_code = MQTT_RC_PACKET_TOO_LARGE;
 			goto process_bad_message;
 		}
 		msg->payload = mosquitto__malloc(msg->payloadlen+1);
