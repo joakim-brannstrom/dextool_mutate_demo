@@ -1417,8 +1417,21 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 							{
 								for(i=0; i<config->listener_count; i++){
 									if(config->listeners[i].port == tmp_int){
-										cur_listener = &config->listeners[i];
-										break;
+										/* Now check we have a matching bind address, if defined */
+										if(config->listeners[i].host){
+											if(token && !strcmp(config->listeners[i].host, token)){
+												/* They both have a bind address, and they match */
+												cur_listener = &config->listeners[i];
+												break;
+											}
+										}else{
+											if(token == NULL){
+												/* Neither this config nor the new config have a bind address,
+												 * so they match. */
+												cur_listener = &config->listeners[i];
+												break;
+											}
+										}
 									}
 								}
 							}
