@@ -14,6 +14,11 @@ Apps:
 - mosquitto_ctrl: produce an error when requesting a new password if both
   attempts do not match. Closes #2011.
 
+Build:
+- Fix cmake builds using `WITH_CJSON=no` not working if cJSON not found.
+  Closes #2026.
+
+
 2.0.5 - 2021-01-11
 ==================
 
