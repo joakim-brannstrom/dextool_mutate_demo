@@ -186,7 +186,7 @@ int handle__publish(struct mosquitto *context)
 			rc = alias__find(context, &msg->topic, (uint16_t)topic_alias);
 			if(rc){
 				db__msg_store_free(msg);
-				return MOSQ_ERR_TOPIC_ALIAS_INVALID;
+				return MOSQ_ERR_PROTOCOL;
 			}
 		}
 	}
