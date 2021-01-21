@@ -71,7 +71,9 @@ int mux__delete(struct mosquitto *context)
 int mux__handle(struct mosquitto__listener_sock *listensock, int listensock_count)
 {
 #ifdef WITH_EPOLL
-	return mux_epoll__handle(listensock, listensock_count);
+	UNUSED(listensock);
+	UNUSED(listensock_count);
+	return mux_epoll__handle();
 #else
 	return mux_poll__handle(listensock, listensock_count);
 #endif

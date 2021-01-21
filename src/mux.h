@@ -26,7 +26,7 @@ int mux_epoll__add_out(struct mosquitto *context);
 int mux_epoll__remove_out(struct mosquitto *context);
 int mux_epoll__add_in(struct mosquitto *context);
 int mux_epoll__delete(struct mosquitto *context);
-int mux_epoll__handle(struct mosquitto__listener_sock *listensock, int listensock_count);
+int mux_epoll__handle(void);
 int mux_epoll__cleanup(void);
 
 int mux_poll__init(struct mosquitto__listener_sock *listensock, int listensock_count);

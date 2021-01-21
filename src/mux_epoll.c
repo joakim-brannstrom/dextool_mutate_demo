@@ -54,6 +54,7 @@ Contributors:
 
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
+#include "mux.h"
 #include "packet_mosq.h"
 #include "send_mosq.h"
 #include "sys_tree.h"
