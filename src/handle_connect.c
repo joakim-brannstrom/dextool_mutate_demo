@@ -344,7 +344,7 @@ static int will__read(struct mosquitto *context, const char *client_id, struct m
 
 	will_struct->msg.payloadlen = payloadlen;
 	if(will_struct->msg.payloadlen > 0){
-		if(db.config->message_size_limit && will_struct->msg.payloadlen > db.config->message_size_limit){
+		if(db.config->message_size_limit && will_struct->msg.payloadlen > (int)db.config->message_size_limit){
 			log__printf(NULL, MOSQ_LOG_DEBUG, "Client %s connected with too large Will payload", client_id);
 			if(context->protocol == mosq_p_mqtt5){
 				send__connack(context, 0, MQTT_RC_PACKET_TOO_LARGE, NULL);

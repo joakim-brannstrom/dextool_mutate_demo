@@ -125,7 +125,7 @@ int load_file(const char *filename)
 		return 1;
 	}
 	pos = 0;
-	while(pos < cfg.msglen){
+	while(pos < (size_t)cfg.msglen){
 		rlen = fread(&(cfg.message[pos]), sizeof(char), (size_t )cfg.msglen-pos, fptr);
 		pos += rlen;
 	}

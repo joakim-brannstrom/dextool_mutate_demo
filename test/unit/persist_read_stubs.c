@@ -18,6 +18,8 @@ struct mosquitto *context__init(mosq_sock_t sock)
 {
 	struct mosquitto *m;
 
+	UNUSED(sock);
+
 	m = mosquitto__calloc(1, sizeof(struct mosquitto));
 	if(m){
 		m->msgs_in.inflight_maximum = 20;
@@ -49,6 +51,8 @@ void db__msg_store_free(struct mosquitto_msg_store *store)
 int db__message_store(const struct mosquitto *source, struct mosquitto_msg_store *stored, uint32_t message_expiry_interval, dbid_t store_id, enum mosquitto_msg_origin origin)
 {
     int rc = MOSQ_ERR_SUCCESS;
+
+	UNUSED(origin);
 
     if(source && source->id){
         stored->source_id = mosquitto__strdup(source->id);
@@ -98,6 +102,10 @@ error:
 
 int log__printf(struct mosquitto *mosq, unsigned int priority, const char *fmt, ...)
 {
+	UNUSED(mosq);
+	UNUSED(priority);
+	UNUSED(fmt);
+
 	return 0;
 }
 
@@ -108,27 +116,45 @@ time_t mosquitto_time(void)
 
 int net__socket_close(struct mosquitto *mosq)
 {
+	UNUSED(mosq);
+
 	return MOSQ_ERR_SUCCESS;
 }
 
 int send__pingreq(struct mosquitto *mosq)
 {
+	UNUSED(mosq);
+
 	return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_acl_check(struct mosquitto *context, const char *topic, uint32_t payloadlen, void* payload, uint8_t qos, bool retain, int access)
 {
+	UNUSED(context);
+	UNUSED(topic);
+	UNUSED(payloadlen);
+	UNUSED(payload);
+	UNUSED(qos);
+	UNUSED(retain);
+	UNUSED(access);
+
 	return MOSQ_ERR_SUCCESS;
 }
 
 int acl__find_acls(struct mosquitto *context)
 {
+	UNUSED(context);
+
 	return MOSQ_ERR_SUCCESS;
 }
 
 
 int sub__add(struct mosquitto *context, const char *sub, uint8_t qos, uint32_t identifier, int options, struct mosquitto__subhier **root)
 {
+	UNUSED(context);
+	UNUSED(options);
+	UNUSED(root);
+
 	last_sub = strdup(sub);
 	last_qos = qos;
 	last_identifier = identifier;
@@ -138,11 +164,21 @@ int sub__add(struct mosquitto *context, const char *sub, uint8_t qos, uint32_t i
 
 int db__message_insert(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, uint8_t qos, bool retain, struct mosquitto_msg_store *stored, mosquitto_property *properties, bool update)
 {
+	UNUSED(context);
+	UNUSED(mid);
+	UNUSED(dir);
+	UNUSED(qos);
+	UNUSED(retain);
+	UNUSED(stored);
+	UNUSED(properties);
+	UNUSED(update);
+
 	return MOSQ_ERR_SUCCESS;
 }
 
 void db__msg_store_ref_dec(struct mosquitto_msg_store **store)
 {
+	UNUSED(store);
 }
 
 void db__msg_store_ref_inc(struct mosquitto_msg_store *store)

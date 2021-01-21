@@ -46,7 +46,7 @@ static int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int 
 
 static int check_format(const char *str)
 {
-	int i;
+	size_t i;
 	size_t len;
 
 	len = strlen(str);
@@ -1395,7 +1395,7 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 /* Convert %25 -> %, %3a, %3A -> :, %40 -> @ */
 static int mosquitto__urldecode(char *str)
 {
-	int i, j;
+	size_t i, j;
 	size_t len;
 	if(!str) return 0;
 

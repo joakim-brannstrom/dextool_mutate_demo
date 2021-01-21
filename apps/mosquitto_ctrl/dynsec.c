@@ -386,6 +386,7 @@ static void dynsec__payload_callback(struct mosq_ctrl *ctrl, long payloadlen, co
 	UNUSED(ctrl);
 
 #if CJSON_VERSION_FULL < 1007013
+	UNUSED(payloadlen);
 	tree = cJSON_Parse(payload);
 #else
 	tree = cJSON_ParseWithLength(payload, payloadlen);

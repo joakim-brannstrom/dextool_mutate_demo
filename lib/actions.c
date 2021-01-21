@@ -92,7 +92,7 @@ int mosquitto_publish_v5(struct mosquitto *mosq, int *mid, const char *topic, in
 	}else{
 		tlen = strlen(topic);
 		if(mosquitto_validate_utf8(topic, (int)tlen)) return MOSQ_ERR_MALFORMED_UTF8;
-		if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
+		if(payloadlen < 0 || payloadlen > (int)MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
 		if(mosquitto_pub_topic_check(topic) != MOSQ_ERR_SUCCESS){
 			return MOSQ_ERR_INVAL;
 		}

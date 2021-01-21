@@ -317,6 +317,8 @@ static void varint_prop_write_helper(
 
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.remaining_length = property__get_length_all(&property)+1;
+	CU_ASSERT_EQUAL(packet.remaining_length, remaining_length);
+
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
 

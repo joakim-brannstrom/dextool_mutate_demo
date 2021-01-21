@@ -367,7 +367,7 @@ static int mosquitto_acl_check_default(int event, void *event_data, void *userda
 	char *local_acl;
 	struct mosquitto__acl *acl_root;
 	bool result;
-	int i;
+	size_t i;
 	size_t len, tlen, clen, ulen;
 	char *s;
 	struct mosquitto__security_options *security_opts = NULL;

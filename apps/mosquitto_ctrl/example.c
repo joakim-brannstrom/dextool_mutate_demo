@@ -15,6 +15,8 @@ SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 Contributors:
    Roger Light - initial implementation and documentation.
 */
+#include "config.h"
+
 #include <cjson/cJSON.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,6 +33,9 @@ void ctrl_help(void)
 
 int ctrl_main(int argc, char *argv[], struct mosq_ctrl *ctrl)
 {
+	UNUSED(argc);
+	UNUSED(ctrl);
+
 	if(!strcasecmp(argv[0], "help")){
 		ctrl_help();
 		return -1;

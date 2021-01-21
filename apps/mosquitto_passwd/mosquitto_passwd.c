@@ -392,7 +392,7 @@ void handle_sigint(int signal)
 
 static bool is_username_valid(const char *username)
 {
-	int i;
+	size_t i;
 	size_t slen;
 
 	if(username){
