@@ -15,6 +15,7 @@ Broker:
   already been configured on the broker. This has been fixed to send a
   protocol error, as per section 3.3.4 of the specification.
 - Note in the man pages that SIGHUP reloads TLS certificates. Closes #2037.
+- Fix bridges not always connecting on Windows. Closes #2043.
 
 Apps:
 - Allow command line arguments to override config file options in

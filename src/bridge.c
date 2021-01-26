@@ -62,7 +62,7 @@ void bridge__start_all(void)
 	int i;
 
 	for(i=0; i<db.config->bridge_count; i++){
-		if(bridge__new(&(db.config->bridges[i]))){
+		if(bridge__new(&(db.config->bridges[i])) > 0){
 			log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Unable to connect to bridge %s.", 
 					db.config->bridges[i].name);
 		}
