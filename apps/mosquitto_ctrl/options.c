@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
 
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -89,11 +89,11 @@ int ctrl_config_parse(struct mosq_config *cfg, int *argc, char **argv[])
 
 	init_config(cfg);
 
-	/* Deal with real argc/argv */
-	rc = client_config_line_proc(cfg, argc, argv);
+	rc = client_config_load(cfg);
 	if(rc) return rc;
 
-	rc = client_config_load(cfg);
+	/* Deal with real argc/argv */
+	rc = client_config_line_proc(cfg, argc, argv);
 	if(rc) return rc;
 
 #ifdef WITH_TLS

@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -43,7 +43,7 @@ int will__set(struct mosquitto *mosq, const char *topic, int payloadlen, const v
 	mosquitto_property *p;
 
 	if(!mosq || !topic) return MOSQ_ERR_INVAL;
-	if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
+	if(payloadlen < 0 || payloadlen > (int)MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
 	if(payloadlen > 0 && !payload) return MOSQ_ERR_INVAL;
 
 	if(mosquitto_pub_topic_check(topic)) return MOSQ_ERR_INVAL;

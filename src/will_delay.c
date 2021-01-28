@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -39,6 +39,10 @@ static int will_delay__cmp(struct will_delay_list *i1, struct will_delay_list *i
 int will_delay__add(struct mosquitto *context)
 {
 	struct will_delay_list *item;
+
+	if(context->will_delay_entry){
+		return MOSQ_ERR_SUCCESS;
+	}
 
 	item = mosquitto__calloc(1, sizeof(struct will_delay_list));
 	if(!item) return MOSQ_ERR_NOMEM;

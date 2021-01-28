@@ -18,6 +18,9 @@ int main(int argc, char *argv[])
 {
 	unsigned int fails;
 
+	UNUSED(argc);
+	UNUSED(argv);
+
     if(CU_initialize_registry() != CUE_SUCCESS){
         printf("Error initializing CUnit registry.\n");
         return 1;

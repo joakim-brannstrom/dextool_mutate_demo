@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -367,7 +367,7 @@ static int mosquitto_acl_check_default(int event, void *event_data, void *userda
 	char *local_acl;
 	struct mosquitto__acl *acl_root;
 	bool result;
-	int i;
+	size_t i;
 	size_t len, tlen, clen, ulen;
 	char *s;
 	struct mosquitto__security_options *security_opts = NULL;

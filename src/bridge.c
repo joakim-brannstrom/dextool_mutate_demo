@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -62,7 +62,7 @@ void bridge__start_all(void)
 	int i;
 
 	for(i=0; i<db.config->bridge_count; i++){
-		if(bridge__new(&(db.config->bridges[i]))){
+		if(bridge__new(&(db.config->bridges[i])) > 0){
 			log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Unable to connect to bridge %s.", 
 					db.config->bridges[i].name);
 		}

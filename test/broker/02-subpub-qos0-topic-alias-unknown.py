@@ -14,7 +14,7 @@ def do_test():
     props = mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_TOPIC_ALIAS, 3)
     publish1_packet = mosq_test.gen_publish("", qos=0, payload="message", proto_ver=5, properties=props)
 
-    disconnect_packet = mosq_test.gen_disconnect(reason_code=148, proto_ver=5)
+    disconnect_packet = mosq_test.gen_disconnect(reason_code=mqtt5_rc.MQTT_RC_PROTOCOL_ERROR, proto_ver=5)
 
     port = mosq_test.get_port()
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)

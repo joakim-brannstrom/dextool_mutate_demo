@@ -59,6 +59,8 @@ WITH_SYS_TREE:=yes
 
 # Build with systemd support. If enabled, mosquitto will notify systemd after
 # initialization. See README in service/systemd/ for more information.
+# Setting to yes means the libsystemd-dev or similar package will need to be
+# installed.
 WITH_SYSTEMD:=no
 
 # Build with SRV lookup support.

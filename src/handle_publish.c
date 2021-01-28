@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
 
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -186,7 +186,7 @@ int handle__publish(struct mosquitto *context)
 			rc = alias__find(context, &msg->topic, (uint16_t)topic_alias);
 			if(rc){
 				db__msg_store_free(msg);
-				return MOSQ_ERR_TOPIC_ALIAS_INVALID;
+				return MOSQ_ERR_PROTOCOL;
 			}
 		}
 	}
@@ -224,7 +224,7 @@ int handle__publish(struct mosquitto *context)
 	if(msg->payloadlen){
 		if(db.config->message_size_limit && msg->payloadlen > db.config->message_size_limit){
 			log__printf(NULL, MOSQ_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, msg->qos, msg->retain, msg->source_mid, msg->topic, (long)msg->payloadlen);
-			reason_code = MQTT_RC_IMPLEMENTATION_SPECIFIC;
+			reason_code = MQTT_RC_PACKET_TOO_LARGE;
 			goto process_bad_message;
 		}
 		msg->payload = mosquitto__malloc(msg->payloadlen+1);

@@ -284,12 +284,20 @@ def to_string(packet):
         return s
     elif cmd == 0x40:
         # PUBACK
-        (cmd, rl, mid) = struct.unpack('!BBH', packet)
-        return "PUBACK, rl="+str(rl)+", mid="+str(mid)
+        if len(packet) == 5:
+            (cmd, rl, mid, reason_code) = struct.unpack('!BBHB', packet)
+            return "PUBACK, rl="+str(rl)+", mid="+str(mid)+", reason_code="+str(reason_code)
+        else:
+            (cmd, rl, mid) = struct.unpack('!BBH', packet)
+            return "PUBACK, rl="+str(rl)+", mid="+str(mid)
     elif cmd == 0x50:
         # PUBREC
-        (cmd, rl, mid) = struct.unpack('!BBH', packet)
-        return "PUBREC, rl="+str(rl)+", mid="+str(mid)
+        if len(packet) == 5:
+            (cmd, rl, mid, reason_code) = struct.unpack('!BBHB', packet)
+            return "PUBREC, rl="+str(rl)+", mid="+str(mid)+", reason_code="+str(reason_code)
+        else:
+            (cmd, rl, mid) = struct.unpack('!BBH', packet)
+            return "PUBREC, rl="+str(rl)+", mid="+str(mid)
     elif cmd == 0x60:
         # PUBREL
         dup = (packet0 & 0x08)>>3
@@ -353,8 +361,12 @@ def to_string(packet):
         return "PINGRESP, rl="+str(rl)
     elif cmd == 0xE0:
         # DISCONNECT
-        (cmd, rl) = struct.unpack('!BB', packet)
-        return "DISCONNECT, rl="+str(rl)
+        if len(packet) == 3:
+            (cmd, rl, reason_code) = struct.unpack('!BBB', packet)
+            return "DISCONNECT, rl="+str(rl)+", reason_code="+str(reason_code)
+        else:
+            (cmd, rl) = struct.unpack('!BB', packet)
+            return "DISCONNECT, rl="+str(rl)
     elif cmd == 0xF0:
         # AUTH
         (cmd, rl) = struct.unpack('!BB', packet)

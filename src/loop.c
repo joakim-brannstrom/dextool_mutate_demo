@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -48,6 +48,7 @@ Contributors:
 
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
+#include "mqtt_protocol.h"
 #include "packet_mosq.h"
 #include "send_mosq.h"
 #include "sys_tree.h"
@@ -69,7 +70,7 @@ void lws__sul_callback(struct lws_sorted_usec_list *l)
 static struct lws_sorted_usec_list sul;
 #endif
 
-static int single_publish(struct mosquitto *context, struct mosquitto_message_v5 *msg)
+static int single_publish(struct mosquitto *context, struct mosquitto_message_v5 *msg, uint32_t message_expiry)
 {
 	struct mosquitto_msg_store *stored;
 	uint16_t mid;
@@ -95,7 +96,7 @@ static int single_publish(struct mosquitto *context, struct mosquitto_message_v5
 		msg->properties = NULL;
 	}
 
-	if(db__message_store(context, stored, 0, 0, mosq_mo_broker)) return 1;
+	if(db__message_store(context, stored, message_expiry, 0, mosq_mo_broker)) return 1;
 
 	if(msg->qos){
 		mid = mosquitto__mid_generate(context);
@@ -106,20 +107,50 @@ static int single_publish(struct mosquitto *context, struct mosquitto_message_v5
 }
 
 
+static void read_message_expiry_interval(mosquitto_property **proplist, uint32_t *message_expiry)
+{
+	mosquitto_property *p, *previous = NULL;
+
+	*message_expiry = 0;
+
+	if(!proplist) return;
+
+	p = *proplist;
+	while(p){
+		if(p->identifier == MQTT_PROP_MESSAGE_EXPIRY_INTERVAL){
+			*message_expiry = p->value.i32;
+			if(p == *proplist){
+				*proplist = p->next;
+			}else{
+				previous->next = p->next;
+			}
+			property__free(&p);
+			return;
+
+		}
+		previous = p;
+		p = p->next;
+	}
+}
+
 void queue_plugin_msgs(void)
 {
 	struct mosquitto_message_v5 *msg, *tmp;
 	struct mosquitto *context;
+	uint32_t message_expiry;
 
 	DL_FOREACH_SAFE(db.plugin_msgs, msg, tmp){
 		DL_DELETE(db.plugin_msgs, msg);
+
+		read_message_expiry_interval(&msg->properties, &message_expiry);
+
 		if(msg->clientid){
 			HASH_FIND(hh_id, db.contexts_by_id, msg->clientid, strlen(msg->clientid), context);
 			if(context){
-				single_publish(context, msg);
+				single_publish(context, msg, message_expiry);
 			}
 		}else{
-			db__messages_easy_queue(NULL, msg->topic, (uint8_t)msg->qos, (uint32_t)msg->payloadlen, msg->payload, msg->retain, 0, &msg->properties);
+			db__messages_easy_queue(NULL, msg->topic, (uint8_t)msg->qos, (uint32_t)msg->payloadlen, msg->payload, msg->retain, message_expiry, &msg->properties);
 		}
 		mosquitto__free(msg->topic);
 		mosquitto__free(msg->payload);
@@ -313,6 +344,9 @@ void do_disconnect(struct mosquitto *context, int reason)
 					case MOSQ_ERR_OVERSIZE_PACKET:
 						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected due to oversize packet.", id);
 						break;
+					case MOSQ_ERR_PAYLOAD_SIZE:
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected due to oversize payload.", id);
+						break;
 					case MOSQ_ERR_NOMEM:
 						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected due to out of memory.", id);
 						break;
@@ -322,8 +356,11 @@ void do_disconnect(struct mosquitto *context, int reason)
 					case MOSQ_ERR_ADMINISTRATIVE_ACTION:
 						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s been disconnected by administrative action.", id);
 						break;
+					case MOSQ_ERR_ERRNO:
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected: %s.", id, strerror(errno));
+						break;
 					default:
-						log__printf(NULL, MOSQ_LOG_NOTICE, "Bad socket read/write on client %s, disconnecting.", id);
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Bad socket read/write on client %s: %s", id, mosquitto_strerror(reason));
 						break;
 				}
 			}else{

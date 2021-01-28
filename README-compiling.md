@@ -7,6 +7,7 @@ are optional.
 * libwebsockets (optional, disabled by default, version 2.4 and above)
 * cJSON (optional but recommended, for dynamic-security plugin support, and
   JSON output from mosquitto_sub/mosquitto_rr)
+* libsystemd-dev (optional, if building with systemd support on Linux)
 * On Windows, a pthreads library is required if threading support is to be
   included.
 

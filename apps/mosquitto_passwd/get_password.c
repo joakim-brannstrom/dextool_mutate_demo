@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -135,7 +135,7 @@ int get_password(const char *prompt, const char *verify_prompt, bool quiet, char
 			if(!quiet){
 				fprintf(stderr, "Error: Passwords do not match.\n");
 			}
-			return 1;
+			return 2;
 		}
 	}
 

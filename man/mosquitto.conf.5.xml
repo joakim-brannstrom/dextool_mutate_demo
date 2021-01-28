@@ -1275,6 +1275,12 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 							option and <option>keyfile</option> must be present
 							to enable certificate based TLS encryption.
 						</para>
+						<para>
+							The certificate pointed to by this option will be
+							reloaded when Mosquitto receives a SIGHUP signal.
+							This can be used to load new certificates prior to
+							the existing ones expiring.
+						</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>
@@ -1327,6 +1333,12 @@ openssl dhparam -out dhparam.pem 2048</programlisting>
 							Path to the PEM encoded server key. This
 							option and <option>certfile</option> must be present
 							to enable certificate based TLS encryption.
+						</para>
+						<para>
+							The private key pointed to by this option will be
+							reloaded when Mosquitto receives a SIGHUP signal.
+							This can be used to load new keys prior to
+							the existing ones expiring.
 						</para>
 					</listitem>
 				</varlistentry>

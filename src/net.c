@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -608,13 +608,13 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 
 
 #ifndef WIN32
-static int net__bind_interface(struct mosquitto__listener *listener, mosq_sock_t sock, struct addrinfo *rp)
+static int net__bind_interface(struct mosquitto__listener *listener, struct addrinfo *rp)
 {
 	/*
 	 * This binds the listener sock to a network interface.
 	 * The use of SO_BINDTODEVICE requires root access, which we don't have, so instead
-	 * use getifaddrs to find the interface addresses, and attempt to bind to
-	 * the IP of the matching interface.
+	 * use getifaddrs to find the interface addresses, and use IP of the
+	 * matching interface in the later bind().
 	 */
 	struct ifaddrs *ifaddr, *ifa;
 	if(getifaddrs(&ifaddr) < 0){
@@ -725,7 +725,7 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 
 #ifndef WIN32
 		if(listener->bind_interface){
-			if(net__bind_interface(listener, sock, rp)){
+			if(net__bind_interface(listener, rp)){
 				COMPAT_CLOSE(sock);
 				freeaddrinfo(ainfo);
 				mosquitto__free(listener->socks);

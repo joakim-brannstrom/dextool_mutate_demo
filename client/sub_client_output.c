@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -95,6 +95,8 @@ static void write_payload(const unsigned char *payload, int payloadlen, int hex,
 {
 	int i;
 	int padlen;
+
+	UNUSED(precision); /* FIXME - use or remove */
 
 	if(field_width > 0){
 		if(payloadlen > field_width){
@@ -357,6 +359,9 @@ static int json_print(const struct mosquitto_message *message, const mosquitto_p
 	
 	return MOSQ_ERR_SUCCESS;
 #else
+	UNUSED(properties);
+	UNUSED(pretty);
+
 	strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S.000000Z%z", ti);
 	snprintf(&buf[strlen("2020-05-06T21:48:00.")], 9, "%06d", ns/1000);
 	buf[strlen("2020-05-06T21:48:00.000000")] = 'Z';
@@ -625,7 +630,7 @@ static void formatted_print_percent(const struct mosq_config *lcfg, const struct
 static void formatted_print(const struct mosq_config *lcfg, const struct mosquitto_message *message, const mosquitto_property *properties)
 {
 	size_t len;
-	int i;
+	size_t i;
 	struct tm *ti = NULL;
 	long ns = 0;
 	char strf[3] = {0, 0 ,0};

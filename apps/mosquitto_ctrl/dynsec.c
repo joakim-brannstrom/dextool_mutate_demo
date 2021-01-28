@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
 
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -386,6 +386,7 @@ static void dynsec__payload_callback(struct mosq_ctrl *ctrl, long payloadlen, co
 	UNUSED(ctrl);
 
 #if CJSON_VERSION_FULL < 1007013
+	UNUSED(payloadlen);
 	tree = cJSON_Parse(payload);
 #else
 	tree = cJSON_ParseWithLength(payload, payloadlen);
@@ -720,9 +721,8 @@ int dynsec_init(int argc, char *argv[])
 		snprintf(verify_prompt, sizeof(verify_prompt), "Reenter password for %s: ", admin_user);
 		rc = get_password(prompt, verify_prompt, false, password, sizeof(password));
 		if(rc){
-			fprintf(stderr, "Error getting password.\n");
 			mosquitto_lib_cleanup();
-			return 1;
+			return -1;
 		}
 		admin_password = password;
 	}

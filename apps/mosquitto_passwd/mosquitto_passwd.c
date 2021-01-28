@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -392,7 +392,7 @@ void handle_sigint(int signal)
 
 static bool is_username_valid(const char *username)
 {
-	int i;
+	size_t i;
 	size_t slen;
 
 	if(username){

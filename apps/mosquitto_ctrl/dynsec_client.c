@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
 
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -65,6 +65,9 @@ int dynsec_client__create(int argc, char *argv[], cJSON *j_command)
 		rc = get_password(prompt, verify_prompt, true, password_buf, sizeof(password_buf));
 		if(rc == 0){
 			password = password_buf;
+		}else if(rc == 2){
+			fprintf(stderr, "Error: Passwords do not match.\n");
+			return -1;
 		}else{
 			password = NULL;
 			printf("\n");
@@ -163,7 +166,7 @@ int dynsec_client__set_password(int argc, char *argv[], cJSON *j_command)
 		snprintf(verify_prompt, sizeof(verify_prompt), "Reenter password for %s: ", username);
 		rc = get_password(prompt, verify_prompt, false, password_buf, sizeof(password_buf));
 		if(rc){
-			return MOSQ_ERR_INVAL;
+			return -1;
 		}
 		password = password_buf;
 	}else{

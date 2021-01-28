@@ -88,6 +88,9 @@ int main(int argc, char *argv[])
 	CU_pSuite test_suite = NULL;
 	unsigned int fails;
 
+	UNUSED(argc);
+	UNUSED(argv);
+
     if(CU_initialize_registry() != CUE_SUCCESS){
         printf("Error initializing CUnit registry.\n");
         return 1;

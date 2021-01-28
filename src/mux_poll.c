@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
  
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -94,7 +94,7 @@ int mux_poll__init(struct mosquitto__listener_sock *listensock, int listensock_c
 		pollfds[i].fd = INVALID_SOCKET;
 	}
 
-	for(i=0; i<listensock_count; i++){
+	for(i=0; i<(size_t )listensock_count; i++){
 		pollfds[pollfd_index].fd = listensock[i].sock;
 		pollfds[pollfd_index].events = POLLIN;
 		pollfds[pollfd_index].revents = 0;
@@ -108,7 +108,7 @@ int mux_poll__init(struct mosquitto__listener_sock *listensock, int listensock_c
 
 int mux_poll__add_out(struct mosquitto *context)
 {
-	int i;
+	size_t i;
 
 	if(!(context->events & POLLOUT)) {
 		if(context->pollfd_index != -1){
@@ -121,9 +121,9 @@ int mux_poll__add_out(struct mosquitto *context)
 					pollfds[i].fd = context->sock;
 					pollfds[i].events = POLLIN | POLLOUT;
 					pollfds[i].revents = 0;
-					context->pollfd_index = i;
+					context->pollfd_index = (int )i;
 					if(i > pollfd_current_max){
-						pollfd_current_max = (size_t )i;
+						pollfd_current_max = i;
 					}
 					break;
 				}
@@ -148,7 +148,7 @@ int mux_poll__remove_out(struct mosquitto *context)
 
 int mux_poll__add_in(struct mosquitto *context)
 {
-	int i;
+	size_t i;
 
 	if(context->pollfd_index != -1){
 		pollfds[context->pollfd_index].fd = context->sock;
@@ -160,9 +160,9 @@ int mux_poll__add_in(struct mosquitto *context)
 				pollfds[i].fd = context->sock;
 				pollfds[i].events = POLLIN;
 				pollfds[i].revents = 0;
-				context->pollfd_index = i;
+				context->pollfd_index = (int )i;
 				if(i > pollfd_current_max){
-					pollfd_current_max = (size_t )i;
+					pollfd_current_max = i;
 				}
 				break;
 			}

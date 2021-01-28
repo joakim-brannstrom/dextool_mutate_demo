@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
 
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -1417,8 +1417,21 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 							{
 								for(i=0; i<config->listener_count; i++){
 									if(config->listeners[i].port == tmp_int){
-										cur_listener = &config->listeners[i];
-										break;
+										/* Now check we have a matching bind address, if defined */
+										if(config->listeners[i].host){
+											if(token && !strcmp(config->listeners[i].host, token)){
+												/* They both have a bind address, and they match */
+												cur_listener = &config->listeners[i];
+												break;
+											}
+										}else{
+											if(token == NULL){
+												/* Neither this config nor the new config have a bind address,
+												 * so they match. */
+												cur_listener = &config->listeners[i];
+												break;
+											}
+										}
 									}
 								}
 							}
@@ -1683,6 +1696,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					}
 					memory__set_limit((size_t)lim);
 				}else if(!strcmp(token, "message_size_limit")){
+					log__printf(NULL, MOSQ_LOG_NOTICE, "Note: It is recommended to replace `message_size_limit` with `max_packet_size`.");
 					if(conf__parse_int(&token, "message_size_limit", (int *)&config->message_size_limit, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->message_size_limit > MQTT_MAX_PAYLOAD){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid message_size_limit value (%u).", config->message_size_limit);

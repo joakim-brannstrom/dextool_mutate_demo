@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
 
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -625,8 +625,6 @@ static int callback_http(
 			HASH_FIND(hh_sock, db.contexts_by_sock, &pollargs->fd, sizeof(pollargs->fd), mosq);
 			if(mosq){
 				mux__delete(mosq);
-			}else{
-				return 1;
 			}
 			break;
 
@@ -641,8 +639,6 @@ static int callback_http(
 				}else{
 					mux__remove_out(mosq);
 				}
-			}else{
-				return 1;
 			}
 			break;
 

@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
 
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -215,10 +215,6 @@ int packet__write(struct mosquitto *mosq)
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
-#ifdef WITH_BROKER
-	mux__add_out(mosq);
-#endif
-
 	pthread_mutex_lock(&mosq->current_out_packet_mutex);
 	pthread_mutex_lock(&mosq->out_packet_mutex);
 	if(mosq->out_packet && !mosq->current_out_packet){
@@ -229,6 +225,12 @@ int packet__write(struct mosquitto *mosq)
 		}
 	}
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
+
+#ifdef WITH_BROKER
+	if(mosq->current_out_packet){
+	   mux__add_out(mosq);
+	}
+#endif
 
 	state = mosquitto__get_state(mosq);
 #if defined(WITH_TLS) && !defined(WITH_BROKER)

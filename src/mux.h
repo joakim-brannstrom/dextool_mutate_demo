@@ -10,7 +10,7 @@ The Eclipse Public License is available at
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
 
-SPDX-License-Identifier: EPL-2.0 OR EDL-1.0
+SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Contributors:
    Roger Light - initial implementation and documentation.
@@ -26,7 +26,7 @@ int mux_epoll__add_out(struct mosquitto *context);
 int mux_epoll__remove_out(struct mosquitto *context);
 int mux_epoll__add_in(struct mosquitto *context);
 int mux_epoll__delete(struct mosquitto *context);
-int mux_epoll__handle(struct mosquitto__listener_sock *listensock, int listensock_count);
+int mux_epoll__handle(void);
 int mux_epoll__cleanup(void);
 
 int mux_poll__init(struct mosquitto__listener_sock *listensock, int listensock_count);
