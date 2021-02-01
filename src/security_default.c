@@ -182,6 +182,8 @@ int mosquitto_security_cleanup_default(bool reload)
 			if(db.config->listeners[i].security_options.pid){
 				mosquitto_callback_unregister(db.config->listeners[i].security_options.pid,
 						MOSQ_EVT_BASIC_AUTH, mosquitto_unpwd_check_default, NULL);
+				mosquitto_callback_unregister(db.config->listeners[i].security_options.pid,
+						MOSQ_EVT_ACL_CHECK, mosquitto_acl_check_default, NULL);
 
 				mosquitto__free(db.config->listeners[i].security_options.pid);
 			}
@@ -190,6 +192,8 @@ int mosquitto_security_cleanup_default(bool reload)
 		if(db.config->security_options.pid){
 			mosquitto_callback_unregister(db.config->security_options.pid,
 					MOSQ_EVT_BASIC_AUTH, mosquitto_unpwd_check_default, NULL);
+			mosquitto_callback_unregister(db.config->security_options.pid,
+					MOSQ_EVT_ACL_CHECK, mosquitto_acl_check_default, NULL);
 
 			mosquitto__free(db.config->security_options.pid);
 		}
