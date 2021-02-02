@@ -1,6 +1,12 @@
 Broker:
 - Fix exporting of executable symbols on BSD when building via makefile.
 
+Build:
+- Fix man page building to not absolutely require xsltproc when using CMake.
+  This now handles the case where we are building from the released tar, or
+  building from git if xsltproc is available, or building from git if xsltproc
+  is not available.
+
 
 2.0.6 - 2021-01-28
 ==================
