@@ -1,3 +1,7 @@
+Broker:
+- Fix exporting of executable symbols on BSD when building via makefile.
+
+
 2.0.6 - 2021-01-28
 ==================
 
