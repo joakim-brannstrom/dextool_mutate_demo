@@ -12,7 +12,7 @@
 # Place this script in /etc/letsencrypt/renewal-hooks/deploy/ and make it
 # executable after editing it to your needs.
 
-if [ ${RENEWED_DOMAINS} == "my-mosquitto-domain" ]; then
+if [ ${RENEWED_DOMAINS} = "my-mosquitto-domain" ]; then
 	# Copy new certificate to Mosquitto directory
 	cp ${RENEWED_LINEAGE}/fullchain.pem /etc/mosquitto/certs/server.pem
 	cp ${RENEWED_LINEAGE}/privkey.pem /etc/mosquitto/certs/server.key
