@@ -351,7 +351,6 @@ static int will__read(struct mosquitto *context, const char *client_id, struct m
 			}else{
 				send__connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
 			}
-			context__disconnect(context);
 			rc = MOSQ_ERR_PAYLOAD_SIZE;
 			goto error_cleanup;
 		}
@@ -835,6 +834,7 @@ int handle__connect(struct mosquitto *context)
 	if(context->auth_method){
 		rc = mosquitto_security_auth_start(context, false, auth_data, auth_data_len, &auth_data_out, &auth_data_out_len);
 		mosquitto__free(auth_data);
+		auth_data = NULL;
 		if(rc == MOSQ_ERR_SUCCESS){
 			return connect__on_authorised(context, auth_data_out, auth_data_out_len);
 		}else if(rc == MOSQ_ERR_AUTH_CONTINUE){
@@ -844,22 +844,23 @@ int handle__connect(struct mosquitto *context)
 			return rc;
 		}else{
 			free(auth_data_out);
+			auth_data_out = NULL;
 			will__clear(context);
 			if(rc == MOSQ_ERR_AUTH){
 				send__connack(context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
 				mosquitto__free(context->id);
 				context->id = NULL;
-				return MOSQ_ERR_PROTOCOL;
+				goto handle_connect_error;
 			}else if(rc == MOSQ_ERR_NOT_SUPPORTED){
 				/* Client has requested extended authentication, but we don't support it. */
 				send__connack(context, 0, MQTT_RC_BAD_AUTHENTICATION_METHOD, NULL);
 				mosquitto__free(context->id);
 				context->id = NULL;
-				return MOSQ_ERR_PROTOCOL;
+				goto handle_connect_error;
 			}else{
 				mosquitto__free(context->id);
 				context->id = NULL;
-				return rc;
+				goto handle_connect_error;
 			}
 		}
 	}else{
@@ -885,12 +886,11 @@ int handle__connect(struct mosquitto *context)
 					}else{
 						send__connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
 					}
-					context__disconnect(context);
 					rc = MOSQ_ERR_AUTH;
 					goto handle_connect_error;
 					break;
 				default:
-					context__disconnect(context);
+					rc = MOSQ_ERR_UNKNOWN;
 					goto handle_connect_error;
 					break;
 			}
