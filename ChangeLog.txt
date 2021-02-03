@@ -5,6 +5,8 @@ Broker:
   because plugins should never be allocating their own instance of this
   struct, and currently none of the struct members are used for anything, so a
   plugin should not be accessing them.
+- Give compile time warning if libwebsockets compiled without external poll
+  support. Closes #2060.
 
 Clients:
 - Fix possible loss of data in `mosquitto_pub -l` when sending multiple long
