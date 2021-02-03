@@ -357,7 +357,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 				 * program name as the first entry. */
 				args[1] = strtok(line, " ");
 				if(args[1]){
-					args[2] = strtok(NULL, " ");
+					args[2] = strtok(NULL, "");
 					if(args[2]){
 						count = 3;
 					}else{

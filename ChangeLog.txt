@@ -1,6 +1,9 @@
 Broker:
 - Fix exporting of executable symbols on BSD when building via makefile.
 
+Clients:
+- Fix config files truncating options after the first space. Closes #2059.
+
 Build:
 - Fix man page building to not absolutely require xsltproc when using CMake.
   This now handles the case where we are building from the released tar, or
