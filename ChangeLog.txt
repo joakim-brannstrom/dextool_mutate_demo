@@ -2,6 +2,7 @@ Broker:
 - Fix exporting of executable symbols on BSD when building via makefile.
 - Fix some minor memory leaks on exit only.
 - Fix possible memory leak on connect. Closes #2057.
+- Fix openssl engine not being able to load private key. Closes #2066.
 
 Clients:
 - Fix config files truncating options after the first space. Closes #2059.
