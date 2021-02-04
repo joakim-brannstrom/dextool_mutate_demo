@@ -5,7 +5,11 @@ include ../../config.mk
 ifeq ($(WITH_SHARED_LIBRARIES),yes)
 LIBMOSQ:=../../lib/libmosquitto.so.${SOVERSION}
 else
+ifeq ($(WITH_THREADING),yes)
+LIBMOSQ:=../../lib/libmosquitto.a -lpthread -lssl -lcrypto
+else
 LIBMOSQ:=../../lib/libmosquitto.a
+endif
 endif
 
 LOCAL_CPPFLAGS:=-I../mosquitto_passwd
@@ -25,7 +29,6 @@ OBJS=	mosquitto_ctrl.o \
 EXAMPLE_OBJS= example.o
 
 ifeq ($(WITH_TLS),yes)
-
 ifeq ($(WITH_CJSON),yes)
 TARGET:=mosquitto_ctrl mosquitto_ctrl_example.so
 else

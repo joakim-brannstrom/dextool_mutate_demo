@@ -458,11 +458,6 @@ int net__load_crl_file(struct mosquitto__listener *listener)
 int net__load_certificates(struct mosquitto__listener *listener)
 {
 #ifdef WITH_TLS
-	ENGINE *engine = NULL;
-#  if !defined(OPENSSL_NO_ENGINE)
-	UI_METHOD *ui_method;
-	EVP_PKEY *pkey;
-#  endif
 	int rc;
 
 	if(listener->require_certificate){
@@ -474,51 +469,13 @@ int net__load_certificates(struct mosquitto__listener *listener)
 	if(rc != 1){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server certificate \"%s\". Check certfile.", listener->certfile);
 		net__print_ssl_error(NULL);
-#if !defined(OPENSSL_NO_ENGINE)
-		ENGINE_FINISH(engine);
-#endif
 		return MOSQ_ERR_TLS;
 	}
-	if(listener->tls_engine && listener->tls_keyform == mosq_k_engine){
-#if !defined(OPENSSL_NO_ENGINE)
-		ui_method = net__get_ui_method();
-		if(listener->tls_engine_kpass_sha1){
-			if(!ENGINE_ctrl_cmd(engine, ENGINE_SECRET_MODE, ENGINE_SECRET_MODE_SHA, NULL, NULL, 0)){
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set engine secret mode sha");
-				net__print_ssl_error(NULL);
-				ENGINE_FINISH(engine);
-				return MOSQ_ERR_TLS;
-			}
-			if(!ENGINE_ctrl_cmd(engine, ENGINE_PIN, 0, listener->tls_engine_kpass_sha1, NULL, 0)){
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set engine pin");
-				net__print_ssl_error(NULL);
-				ENGINE_FINISH(engine);
-				return MOSQ_ERR_TLS;
-			}
-			ui_method = NULL;
-		}
-		pkey = ENGINE_load_private_key(engine, listener->keyfile, ui_method, NULL);
-		if(!pkey){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load engine private key file \"%s\".", listener->keyfile);
-			net__print_ssl_error(NULL);
-			ENGINE_FINISH(engine);
-			return MOSQ_ERR_TLS;
-		}
-		if(SSL_CTX_use_PrivateKey(listener->ssl_ctx, pkey) <= 0){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to use engine private key file \"%s\".", listener->keyfile);
-			net__print_ssl_error(NULL);
-			ENGINE_FINISH(engine);
-			return MOSQ_ERR_TLS;
-		}
-#endif
-	}else{
+	if(listener->tls_engine == NULL){
 		rc = SSL_CTX_use_PrivateKey_file(listener->ssl_ctx, listener->keyfile, SSL_FILETYPE_PEM);
 		if(rc != 1){
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server key file \"%s\". Check keyfile.", listener->keyfile);
 			net__print_ssl_error(NULL);
-#if !defined(OPENSSL_NO_ENGINE)
-			ENGINE_FINISH(engine);
-#endif
 			return MOSQ_ERR_TLS;
 		}
 	}
@@ -526,18 +483,12 @@ int net__load_certificates(struct mosquitto__listener *listener)
 	if(rc != 1){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Server certificate/key are inconsistent.");
 		net__print_ssl_error(NULL);
-#if !defined(OPENSSL_NO_ENGINE)
-		ENGINE_FINISH(engine);
-#endif
 		return MOSQ_ERR_TLS;
 	}
 	/* Load CRLs if they exist. */
 	if(listener->crlfile){
 		rc = net__load_crl_file(listener);
 		if(rc){
-#if !defined(OPENSSL_NO_ENGINE)
-			ENGINE_FINISH(engine);
-#endif
 			return rc;
 		}
 	}
@@ -546,10 +497,67 @@ int net__load_certificates(struct mosquitto__listener *listener)
 }
 
 
+static int net__load_engine(struct mosquitto__listener *listener)
+{
+#if defined(WITH_TLS) && !defined(OPENSSL_NO_ENGINE)
+	ENGINE *engine = NULL;
+	UI_METHOD *ui_method;
+	EVP_PKEY *pkey;
+
+	if(!listener->tls_engine){
+		return MOSQ_ERR_SUCCESS;
+	}
+
+	engine = ENGINE_by_id(listener->tls_engine);
+	if(!engine){
+		log__printf(NULL, MOSQ_LOG_ERR, "Error loading %s engine\n", listener->tls_engine);
+		net__print_ssl_error(NULL);
+		return MOSQ_ERR_TLS;
+	}
+	if(!ENGINE_init(engine)){
+		log__printf(NULL, MOSQ_LOG_ERR, "Failed engine initialisation\n");
+		net__print_ssl_error(NULL);
+		return MOSQ_ERR_TLS;
+	}
+	ENGINE_set_default(engine, ENGINE_METHOD_ALL);
+
+	if(listener->tls_keyform == mosq_k_engine){
+		ui_method = net__get_ui_method();
+		if(listener->tls_engine_kpass_sha1){
+			if(!ENGINE_ctrl_cmd(engine, ENGINE_SECRET_MODE, ENGINE_SECRET_MODE_SHA, NULL, NULL, 0)){
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set engine secret mode sha");
+				net__print_ssl_error(NULL);
+				return MOSQ_ERR_TLS;
+			}
+			if(!ENGINE_ctrl_cmd(engine, ENGINE_PIN, 0, listener->tls_engine_kpass_sha1, NULL, 0)){
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set engine pin");
+				net__print_ssl_error(NULL);
+				return MOSQ_ERR_TLS;
+			}
+			ui_method = NULL;
+		}
+		pkey = ENGINE_load_private_key(engine, listener->keyfile, ui_method, NULL);
+		if(!pkey){
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load engine private key file \"%s\".", listener->keyfile);
+			net__print_ssl_error(NULL);
+			return MOSQ_ERR_TLS;
+		}
+		if(SSL_CTX_use_PrivateKey(listener->ssl_ctx, pkey) <= 0){
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to use engine private key file \"%s\".", listener->keyfile);
+			net__print_ssl_error(NULL);
+			return MOSQ_ERR_TLS;
+		}
+	}
+	ENGINE_free(engine); /* release the structural reference from ENGINE_by_id() */
+#endif
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 int net__tls_load_verify(struct mosquitto__listener *listener)
 {
 #ifdef WITH_TLS
-	ENGINE *engine = NULL;
 	int rc;
 
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
@@ -584,23 +592,8 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 	}
 #endif
 
-	if(listener->tls_engine){
-#if !defined(OPENSSL_NO_ENGINE)
-		engine = ENGINE_by_id(listener->tls_engine);
-		if(!engine){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error loading %s engine\n", listener->tls_engine);
-			net__print_ssl_error(NULL);
-			return MOSQ_ERR_TLS;
-		}
-		if(!ENGINE_init(engine)){
-			log__printf(NULL, MOSQ_LOG_ERR, "Failed engine initialisation\n");
-			net__print_ssl_error(NULL);
-			ENGINE_free(engine);
-			return MOSQ_ERR_TLS;
-		}
-		ENGINE_set_default(engine, ENGINE_METHOD_ALL);
-		ENGINE_free(engine); /* release the structural reference from ENGINE_by_id() */
-#endif
+	if(net__load_engine(listener)){
+		return MOSQ_ERR_TLS;
 	}
 #endif
 	return net__load_certificates(listener);
