@@ -1,3 +1,7 @@
+Clients:
+- Fix possible loss of data in `mosquitto_pub -l` when sending multiple long
+  lines. Closes #2078.
+
 2.0.7 - 2021-02-04
 ==================
 
