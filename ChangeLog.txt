@@ -1,3 +1,11 @@
+Broker:
+- Fix incorrect datatypes in `struct mosquitto_evt_tick`. This changes the
+  size and offset of two of the members of this struct, and changes the size
+  of the struct. This is an ABI break, but is considered to be acceptable
+  because plugins should never be allocating their own instance of this
+  struct, and currently none of the struct members are used for anything, so a
+  plugin should not be accessing them.
+
 Clients:
 - Fix possible loss of data in `mosquitto_pub -l` when sending multiple long
   lines. Closes #2078.
