@@ -624,23 +624,37 @@ static int net__bind_interface(struct mosquitto__listener *listener, struct addr
 				&& ifa->ifa_addr->sa_family == rp->ai_addr->sa_family){
 
 			if(rp->ai_addr->sa_family == AF_INET){
-				memcpy(&((struct sockaddr_in *)rp->ai_addr)->sin_addr,
-						&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
-						sizeof(struct in_addr));
+				if(listener->host &&
+						memcmp(&((struct sockaddr_in *)rp->ai_addr)->sin_addr,
+							&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+							sizeof(struct in_addr))){
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface address does not match specified listener host.");
+				}else{
+					memcpy(&((struct sockaddr_in *)rp->ai_addr)->sin_addr,
+							&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+							sizeof(struct in_addr));
 
-				freeifaddrs(ifaddr);
-				return MOSQ_ERR_SUCCESS;
+					freeifaddrs(ifaddr);
+					return MOSQ_ERR_SUCCESS;
+				}
 			}else if(rp->ai_addr->sa_family == AF_INET6){
-				memcpy(&((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
-						&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
-						 sizeof(struct in6_addr));
-				freeifaddrs(ifaddr);
-				return MOSQ_ERR_SUCCESS;
+				if(listener->host &&
+						memcmp(&((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
+							&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
+							sizeof(struct in6_addr))){
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface address does not match specified listener host.");
+				}else{
+					memcpy(&((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
+							&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
+							sizeof(struct in6_addr));
+					freeifaddrs(ifaddr);
+					return MOSQ_ERR_SUCCESS;
+				}
 			}
 		}
 	}
 	freeifaddrs(ifaddr);
-	log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface %s does not support %s.",
+	log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface %s does not support %s configuration.",
 	            listener->bind_interface, rp->ai_addr->sa_family == AF_INET ? "ipv4" : "ipv6");
 	return MOSQ_ERR_NOT_FOUND;
 }
