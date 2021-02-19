@@ -918,7 +918,6 @@ int db__message_remove_incoming(struct mosquitto* context, uint16_t mid)
 	}
 }
 
-
 int db__message_release_incoming(struct mosquitto *context, uint16_t mid)
 {
 	struct mosquitto_client_msg *tail, *tmp;

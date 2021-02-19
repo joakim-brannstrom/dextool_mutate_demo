@@ -286,9 +286,9 @@ int handle__publish(struct mosquitto *context)
 		db__message_store_find(context, msg->source_mid, &stored);
 	}
 
-	if (stored && (stored->qos != msg->qos || stored->payloadlen != msg->payloadlen || strcmp(stored->topic, msg->topic) || memcmp(stored->payload, msg->payload, msg->payloadlen))){
-		log__printf(NULL, MOSQ_LOG_WARNING, "Reused message ID from %s detected. Clearing from storage.", context->id);
-		db__message_remove_incoming(context, stored->mid);
+	if (stored && msg->source_mid != 0 && (stored->qos != msg->qos || stored->payloadlen != msg->payloadlen || strcmp(stored->topic, msg->topic) || memcmp(stored->payload, msg->payload, msg->payloadlen) )){
+		log__printf(NULL, MOSQ_LOG_WARNING, "Reused message ID %u from %s detected. Clearing from storage.", msg->source_mid, context->id);
+		db__message_remove_incoming(context, msg->source_mid);
 		stored = NULL;
 	}
 
