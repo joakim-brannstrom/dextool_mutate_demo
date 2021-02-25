@@ -7,6 +7,7 @@ Broker:
   plugin should not be accessing them.
 - Give compile time warning if libwebsockets compiled without external poll
   support. Closes #2060.
+- Fix memory tracking not being available on FreeBSD or macOS. Closes #2096.
 
 Client library:
 - Fix mosquitto_{pub|sub}_topic_check() functions not returning MOSQ_ERR_INVAL
