@@ -4,7 +4,8 @@ Broker:
   of the struct. This is an ABI break, but is considered to be acceptable
   because plugins should never be allocating their own instance of this
   struct, and currently none of the struct members are used for anything, so a
-  plugin should not be accessing them.
+  plugin should not be accessing them. It would also be safe to read/write
+  from the existing struct parameters.
 - Give compile time warning if libwebsockets compiled without external poll
   support. Closes #2060.
 - Fix memory tracking not being available on FreeBSD or macOS. Closes #2096.
