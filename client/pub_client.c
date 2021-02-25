@@ -275,7 +275,7 @@ int pub_stdin_line_loop(struct mosquitto *mosq)
 					break;
 				}else{
 					line_buf_len += 1024;
-					pos += 1023;
+					pos += read_len-1;
 					read_len = 1024;
 					buf2 = realloc(line_buf, (size_t )line_buf_len);
 					if(!buf2){

@@ -37,6 +37,7 @@ extern "C" {
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <time.h>
 
 struct mosquitto;
 typedef struct mqtt5__property mosquitto_property;
@@ -157,8 +158,8 @@ struct mosquitto_evt_tick {
 	void *future;
 	long now_ns;
 	long next_ns;
-	int now_s;
-	int next_s;
+	time_t now_s;
+	time_t next_s;
 	void *future2[4];
 };
 

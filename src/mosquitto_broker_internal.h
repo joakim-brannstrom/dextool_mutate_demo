@@ -25,6 +25,9 @@ Contributors:
 
 #ifdef WITH_WEBSOCKETS
 #  include <libwebsockets.h>
+#  if LWS_LIBRARY_VERSION_NUMBER >= 3002000 && !defined(LWS_WITH_EXTERNAL_POLL)
+#    warning "libwebsockets is not compiled with LWS_WITH_EXTERNAL_POLL support. Websocket performance will be unusable."
+#  endif
 #endif
 
 #include "mosquitto_internal.h"

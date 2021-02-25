@@ -18,11 +18,51 @@ Two docker volumes have been created in the image to be used for persistent stor
 The image runs mosquitto under the mosquitto user and group, which are created
 with a uid and gid of 1883.
 
+## Running without a configuration file
+Mosquitto 2.0 requires you to configure listeners and authentication before it
+will allow connections from anything other than the loopback interface. In the
+context of a container, this means you would normally need to provide a
+configuration file with your settings.
+
+If you wish to run mosquitto without any authentication, and without setting
+any other configuration options, you can do so by setting an environment
+variable when creating the container: `NO_AUTHENTICATION=1`. Doing this will
+ignore any configuration file you provide.
+
+```
+docker run -it -p 1883:1883 -e NO_AUTHENTICATION=1 eclipse-mosquitto:<version>
+```
+
 ## Configuration
-When creating a container from the image, the default configuration values are used.
 To use a custom configuration file, mount a **local** configuration file to `/mosquitto/config/mosquitto.conf`
+
 ```
 docker run -it -p 1883:1883 -v <absolute-path-to-configuration-file>:/mosquitto/config/mosquitto.conf eclipse-mosquitto:<version>
+```
+
+Your configuration file must include a `listener`, and you must configure some
+form of authentication or allow unauthenticated access. If you do not do this,
+clients will be unable to connect.
+
+
+File based authentication and authorisation:
+```
+listener 1883
+password_file /mosquitto/data/mosquitto.password_file
+acl_file /mosquitto/data/mosquitto.aclfile
+```
+
+Plugin based authentication and authorisation:
+```
+listener 1883
+plugin /usr/lib/mosquitto_dynamic_security.so
+plugin_opt_config_file /mosquitto/data/mosquitto-dynsec.json
+```
+
+Unauthenticated access:
+```
+listener 1883
+allow_anonymous true
 ```
 
 :boom: if the mosquitto configuration (mosquitto.conf) was modified
