@@ -1,3 +1,6 @@
+2.0.8 - 2021-02-25
+==================
+
 Broker:
 - Fix incorrect datatypes in `struct mosquitto_evt_tick`. This changes the
   size and offset of two of the members of this struct, and changes the size
