@@ -313,10 +313,8 @@ int bridge__connect_step3(struct mosquitto *context)
 
 	rc = send__connect(context, context->keepalive, context->clean_start, NULL);
 	if(rc == MOSQ_ERR_SUCCESS){
-		bridge__backoff_reset(context);
 		return MOSQ_ERR_SUCCESS;
 	}else if(rc == MOSQ_ERR_ERRNO && errno == ENOTCONN){
-		bridge__backoff_reset(context);
 		return MOSQ_ERR_SUCCESS;
 	}else{
 		if(rc == MOSQ_ERR_TLS){
@@ -454,10 +452,8 @@ int bridge__connect(struct mosquitto *context)
 
 	rc2 = send__connect(context, context->keepalive, context->clean_start, NULL);
 	if(rc2 == MOSQ_ERR_SUCCESS){
-		bridge__backoff_reset(context);
 		return rc;
 	}else if(rc2 == MOSQ_ERR_ERRNO && errno == ENOTCONN){
-		bridge__backoff_reset(context);
 		return MOSQ_ERR_SUCCESS;
 	}else{
 		if(rc2 == MOSQ_ERR_TLS){
@@ -561,6 +557,8 @@ int bridge__on_connect(struct mosquitto *context)
 					qos, 0);
 		}
 	}
+
+	bridge__backoff_reset(context);
 
 	return MOSQ_ERR_SUCCESS;
 }
