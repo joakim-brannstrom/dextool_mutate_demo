@@ -25,12 +25,10 @@ context of a container, this means you would normally need to provide a
 configuration file with your settings.
 
 If you wish to run mosquitto without any authentication, and without setting
-any other configuration options, you can do so by setting an environment
-variable when creating the container: `NO_AUTHENTICATION=1`. Doing this will
-ignore any configuration file you provide.
-
+any other configuration options, you can do so by using a configuration
+provided in the container for this purpose:
 ```
-docker run -it -p 1883:1883 -e NO_AUTHENTICATION=1 eclipse-mosquitto:<version>
+docker run -it -p 1883:1883 eclipse-mosquitto:<version> mosquitto -c /mosquitto-no-auth.conf
 ```
 
 ## Configuration
