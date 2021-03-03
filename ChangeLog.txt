@@ -1,3 +1,11 @@
+2.0.9 - 2021-03-xx
+==================
+
+Broker:
+- Fix `tls_version` behaviour not matching documentation. It was setting the
+  exact TLS version to use, not the minimium TLS version to use. Closes #2110.
+
+
 2.0.8 - 2021-02-25
 ==================
 
