@@ -77,6 +77,11 @@ if (WITH_BUNDLED_DEPS)
 	include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/deps)
 endif (WITH_BUNDLED_DEPS)
 
+find_path(HAVE_SYS_EPOLL_H sys/epoll.h)
+if (HAVE_SYS_EPOLL_H)
+	add_definitions("-DWITH_EPOLL")
+endif()
+
 option(INC_BRIDGE_SUPPORT
 	"Include bridge support for connecting to other brokers?" ON)
 if (INC_BRIDGE_SUPPORT)

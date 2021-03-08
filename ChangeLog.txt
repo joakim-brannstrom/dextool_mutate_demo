@@ -8,6 +8,9 @@ Broker:
 - Fix QoS 0 messages not being delivered when max_queued_bytes was configured.
   Closes #2123.
 
+Build:
+- Fix cmake epoll detection.
+
 
 2.0.8 - 2021-02-25
 ==================
