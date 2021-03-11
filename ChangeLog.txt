@@ -1,3 +1,39 @@
+2.0.9 - 2021-03-11
+==================
+
+Security:
+- If an empty or invalid CA file was provided to the client library for
+  verifying the remote broker, then the initial connection would fail but
+  subsequent connections would succeed without verifying the remote broker
+  certificate. Closes #2130.
+- If an empty or invalid CA file was provided to the broker for verifying the
+  remote broker for an outgoing bridge connection then the initial connection
+  would fail but subsequent connections would succeed without verifying the
+  remote broker certificate. Closes #2130.
+
+Broker:
+- Fix encrypted bridge connections incorrectly connecting when `bridge_cafile`
+  is empty or invalid. Closes #2130.
+- Fix `tls_version` behaviour not matching documentation. It was setting the
+  exact TLS version to use, not the minimium TLS version to use. Closes #2110.
+- Fix messages to `$` prefixed topics being rejected. Closes #2111.
+- Fix QoS 0 messages not being delivered when max_queued_bytes was configured.
+  Closes #2123.
+- Fix bridge increasing backoff calculation.
+- Improve handling of invalid combinations of listener address and bind
+  interface configurations. Closes #2081.
+- Fix `max_keepalive` option not applying to clients connecting with keepalive
+  set to 0. Closes #2117.
+
+Client library:
+- Fix encrypted connections incorrectly connecting when the CA file passed to
+  `mosquitto_tls_set()` is empty or invalid. Closes #2130.
+- Fix connections retrying very rapidly in some situations.
+
+Build:
+- Fix cmake epoll detection.
+
+
 2.0.8 - 2021-02-25
 ==================
 

@@ -642,6 +642,7 @@ int persist__restore(void);
 int db__message_count(int *count);
 int db__message_delete_outgoing(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_state expect_state, int qos);
 int db__message_insert(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, uint8_t qos, bool retain, struct mosquitto_msg_store *stored, mosquitto_property *properties, bool update);
+int db__message_remove_incoming(struct mosquitto* context, uint16_t mid);
 int db__message_release_incoming(struct mosquitto *context, uint16_t mid);
 int db__message_update_outgoing(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_state state, int qos);
 void db__message_dequeue_first(struct mosquitto *context, struct mosquitto_msg_data *msg_data);

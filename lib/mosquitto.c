@@ -196,6 +196,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_st
 #ifdef WITH_TLS
 	mosq->ssl = NULL;
 	mosq->ssl_ctx = NULL;
+	mosq->ssl_ctx_defaults = true;
 	mosq->tls_cert_reqs = SSL_VERIFY_PEER;
 	mosq->tls_insecure = false;
 	mosq->want_write = false;

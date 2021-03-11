@@ -190,8 +190,8 @@ struct mosquitto_msg_data{
 #ifdef WITH_BROKER
 	struct mosquitto_client_msg *inflight;
 	struct mosquitto_client_msg *queued;
-	unsigned long msg_bytes;
-	unsigned long msg_bytes12;
+	long msg_bytes;
+	long msg_bytes12;
 	int msg_count;
 	int msg_count12;
 #else

@@ -335,14 +335,14 @@ int net__tls_server_ctx(struct mosquitto__listener *listener)
 	}else if(!strcmp(listener->tls_version, "tlsv1.3")){
 		SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2);
 	}else if(!strcmp(listener->tls_version, "tlsv1.2")){
-		SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_3);
+		SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1);
 	}else if(!strcmp(listener->tls_version, "tlsv1.1")){
-		SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_2 | SSL_OP_NO_TLSv1_3);
+		SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1);
 #else
 	}else if(!strcmp(listener->tls_version, "tlsv1.2")){
 		SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1);
 	}else if(!strcmp(listener->tls_version, "tlsv1.1")){
-		SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_2);
+		SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1);
 #endif
 	}else{
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unsupported tls_version \"%s\".", listener->tls_version);
@@ -624,23 +624,44 @@ static int net__bind_interface(struct mosquitto__listener *listener, struct addr
 				&& ifa->ifa_addr->sa_family == rp->ai_addr->sa_family){
 
 			if(rp->ai_addr->sa_family == AF_INET){
-				memcpy(&((struct sockaddr_in *)rp->ai_addr)->sin_addr,
-						&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
-						sizeof(struct in_addr));
+				if(listener->host &&
+						memcmp(&((struct sockaddr_in *)rp->ai_addr)->sin_addr,
+							&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+							sizeof(struct in_addr))){
 
-				freeifaddrs(ifaddr);
-				return MOSQ_ERR_SUCCESS;
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface address for %s does not match specified listener address (%s).",
+							listener->bind_interface, listener->host);
+					return MOSQ_ERR_INVAL;
+				}else{
+					memcpy(&((struct sockaddr_in *)rp->ai_addr)->sin_addr,
+							&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+							sizeof(struct in_addr));
+
+					freeifaddrs(ifaddr);
+					return MOSQ_ERR_SUCCESS;
+				}
 			}else if(rp->ai_addr->sa_family == AF_INET6){
-				memcpy(&((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
-						&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
-						 sizeof(struct in6_addr));
-				freeifaddrs(ifaddr);
-				return MOSQ_ERR_SUCCESS;
+				if(listener->host &&
+						memcmp(&((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
+							&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
+							sizeof(struct in6_addr))){
+
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface address for %s does not match specified listener address (%s).",
+							listener->bind_interface, listener->host);
+					return MOSQ_ERR_INVAL;
+				}else{
+					memcpy(&((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
+							&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
+							sizeof(struct in6_addr));
+					freeifaddrs(ifaddr);
+					return MOSQ_ERR_SUCCESS;
+				}
 			}
 		}
 	}
 	freeifaddrs(ifaddr);
-	log__printf(NULL, MOSQ_LOG_ERR, "Error: Interface %s not found.", listener->bind_interface);
+	log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface %s does not support %s configuration.",
+	            listener->bind_interface, rp->ai_addr->sa_family == AF_INET ? "IPv4" : "IPv6");
 	return MOSQ_ERR_NOT_FOUND;
 }
 #endif
@@ -654,6 +675,9 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 	char service[10];
 	int rc;
 	int ss_opt = 1;
+#ifndef WIN32
+	bool interface_bound = false;
+#endif
 
 	if(!listener) return MOSQ_ERR_INVAL;
 
@@ -718,12 +742,14 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 
 #ifndef WIN32
 		if(listener->bind_interface){
+			/* It might be possible that an interface does not support all relevant sa_families.
+			 * We should successfully find at least one. */
 			if(net__bind_interface(listener, rp)){
 				COMPAT_CLOSE(sock);
-				freeaddrinfo(ainfo);
-				mosquitto__free(listener->socks);
-				return 1;
+				listener->sock_count--;
+				continue;
 			}
+			interface_bound = true;
 		}
 #endif
 
@@ -744,6 +770,13 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 		}
 	}
 	freeaddrinfo(ainfo);
+
+#ifndef WIN32
+	if(listener->bind_interface && !interface_bound){
+		mosquitto__free(listener->socks);
+		return 1;
+	}
+#endif
 
 	return 0;
 }

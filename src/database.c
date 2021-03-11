@@ -53,7 +53,7 @@ bool db__ready_for_flight(struct mosquitto_msg_data *msgs, int qos)
 		if(db.config->max_queued_messages == 0 && db.config->max_inflight_bytes == 0){
 			return true;
 		}
-		valid_bytes = msgs->msg_bytes - db.config->max_inflight_bytes < db.config->max_queued_bytes;
+		valid_bytes = ((msgs->msg_bytes - (ssize_t)db.config->max_inflight_bytes) < (ssize_t)db.config->max_queued_bytes);
 		valid_count = msgs->msg_count - msgs->inflight_maximum < db.config->max_queued_messages;
 
 		if(db.config->max_queued_messages == 0){
@@ -90,8 +90,8 @@ bool db__ready_for_queue(struct mosquitto *context, int qos, struct mosquitto_ms
 {
 	int source_count;
 	int adjust_count;
-	size_t source_bytes;
-	size_t adjust_bytes = db.config->max_inflight_bytes;
+	long source_bytes;
+	ssize_t adjust_bytes = (ssize_t)db.config->max_inflight_bytes;
 	bool valid_bytes;
 	bool valid_count;
 
@@ -890,6 +890,26 @@ int db__message_reconnect_reset(struct mosquitto *context)
 	rc = db__message_reconnect_reset_outgoing(context);
 	if(rc) return rc;
 	return db__message_reconnect_reset_incoming(context);
+}
+
+
+int db__message_remove_incoming(struct mosquitto* context, uint16_t mid)
+{
+	struct mosquitto_client_msg *tail, *tmp;
+
+	if(!context) return MOSQ_ERR_INVAL;
+
+	DL_FOREACH_SAFE(context->msgs_in.inflight, tail, tmp){
+		if(tail->mid == mid) {
+			if(tail->store->qos != 2){
+				return MOSQ_ERR_PROTOCOL;
+			}
+			db__message_remove(&context->msgs_in, tail);
+			return MOSQ_ERR_SUCCESS;
+		}
+	}
+
+	return MOSQ_ERR_NOT_FOUND;
 }
 
 
