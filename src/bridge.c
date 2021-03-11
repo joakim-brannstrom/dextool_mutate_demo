@@ -645,11 +645,11 @@ void bridge__packet_cleanup(struct mosquitto *context)
 	packet__cleanup(&(context->in_packet));
 }
 
-static int rand_between(int base, int cap)
+static int rand_between(int low, int high)
 {
 	int r;
 	util__random_bytes(&r, sizeof(int));
-	return (r % (cap - base)) + base;
+	return (abs(r) % (high - low)) + low;
 }
 
 static void bridge__backoff_step(struct mosquitto *context)
@@ -684,6 +684,33 @@ static void bridge__backoff_reset(struct mosquitto *context)
 	}
 }
 
+
+static void bridge_check_pending(struct mosquitto *context)
+{
+	int err;
+	socklen_t len;
+
+	if(context->state == mosq_cs_connect_pending){
+		len = sizeof(int);
+		if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
+			if(err == 0){
+				mosquitto__set_state(context, mosq_cs_new);
+#if defined(WITH_ADNS) && defined(WITH_BRIDGE)
+				if(context->bridge){
+					bridge__connect_step3(context);
+				}
+#endif
+			}else if(err == ECONNREFUSED){
+				do_disconnect(context, MOSQ_ERR_CONN_LOST);
+				return;
+			}
+		}else{
+			do_disconnect(context, MOSQ_ERR_CONN_LOST);
+			return;
+		}
+	}
+}
+
 void bridge_check(void)
 {
 	static time_t last_check = 0;
@@ -702,6 +729,7 @@ void bridge_check(void)
 
 		if(context->sock != INVALID_SOCKET){
 			mosquitto__check_keepalive(context);
+			bridge_check_pending(context);
 
 			/* Check for bridges that are not round robin and not currently
 			 * connected to their primary broker. */

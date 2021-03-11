@@ -19,6 +19,7 @@ Broker:
 - Fix messages to `$` prefixed topics being rejected. Closes #2111.
 - Fix QoS 0 messages not being delivered when max_queued_bytes was configured.
   Closes #2123.
+- Fix bridge increasing backoff calculation.
 
 Client library:
 - Fix encrypted connections incorrectly connecting when the CA file passed to
