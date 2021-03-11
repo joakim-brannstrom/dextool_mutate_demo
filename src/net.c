@@ -624,23 +624,38 @@ static int net__bind_interface(struct mosquitto__listener *listener, struct addr
 				&& ifa->ifa_addr->sa_family == rp->ai_addr->sa_family){
 
 			if(rp->ai_addr->sa_family == AF_INET){
-				memcpy(&((struct sockaddr_in *)rp->ai_addr)->sin_addr,
-						&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
-						sizeof(struct in_addr));
+				if(listener->host &&
+						memcmp(&((struct sockaddr_in *)rp->ai_addr)->sin_addr,
+							&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+							sizeof(struct in_addr))){
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface address does not match specified listener host.");
+				}else{
+					memcpy(&((struct sockaddr_in *)rp->ai_addr)->sin_addr,
+							&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+							sizeof(struct in_addr));
 
-				freeifaddrs(ifaddr);
-				return MOSQ_ERR_SUCCESS;
+					freeifaddrs(ifaddr);
+					return MOSQ_ERR_SUCCESS;
+				}
 			}else if(rp->ai_addr->sa_family == AF_INET6){
-				memcpy(&((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
-						&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
-						 sizeof(struct in6_addr));
-				freeifaddrs(ifaddr);
-				return MOSQ_ERR_SUCCESS;
+				if(listener->host &&
+						memcmp(&((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
+							&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
+							sizeof(struct in6_addr))){
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface address does not match specified listener host.");
+				}else{
+					memcpy(&((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
+							&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
+							sizeof(struct in6_addr));
+					freeifaddrs(ifaddr);
+					return MOSQ_ERR_SUCCESS;
+				}
 			}
 		}
 	}
 	freeifaddrs(ifaddr);
-	log__printf(NULL, MOSQ_LOG_ERR, "Error: Interface %s not found.", listener->bind_interface);
+	log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface %s does not support %s configuration.",
+	            listener->bind_interface, rp->ai_addr->sa_family == AF_INET ? "ipv4" : "ipv6");
 	return MOSQ_ERR_NOT_FOUND;
 }
 #endif
@@ -654,6 +669,9 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 	char service[10];
 	int rc;
 	int ss_opt = 1;
+#ifndef WIN32
+	bool interface_bound = false;
+#endif
 
 	if(!listener) return MOSQ_ERR_INVAL;
 
@@ -718,12 +736,14 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 
 #ifndef WIN32
 		if(listener->bind_interface){
+			/* It might be possible that an interface does not support all relevant sa_families.
+			 * We should successfully find at least one. */
 			if(net__bind_interface(listener, rp)){
 				COMPAT_CLOSE(sock);
-				freeaddrinfo(ainfo);
-				mosquitto__free(listener->socks);
-				return 1;
+				listener->sock_count--;
+				continue;
 			}
+			interface_bound = true;
 		}
 #endif
 
@@ -744,6 +764,13 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 		}
 	}
 	freeaddrinfo(ainfo);
+
+#ifndef WIN32
+	if(listener->bind_interface && !interface_bound){
+		mosquitto__free(listener->socks);
+		return 1;
+	}
+#endif
 
 	return 0;
 }
