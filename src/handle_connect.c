@@ -244,7 +244,9 @@ int connect__on_authorised(struct mosquitto *context, void *auth_data_out, uint1
 				goto error;
 			}
 		}
-		if(context->keepalive > db.config->max_keepalive){
+		if(db.config->max_keepalive &&
+				(context->keepalive > db.config->max_keepalive || context->keepalive == 0)){
+
 			context->keepalive = db.config->max_keepalive;
 			if(mosquitto_property_add_int16(&connack_props, MQTT_PROP_SERVER_KEEP_ALIVE, context->keepalive)){
 				rc = MOSQ_ERR_NOMEM;

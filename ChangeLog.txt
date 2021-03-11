@@ -22,6 +22,8 @@ Broker:
 - Fix bridge increasing backoff calculation.
 - Improve handling of invalid combinations of listener address and bind
   interface configurations. Closes #2081.
+- Fix `max_keepalive` option not applying to clients connecting with keepalive
+  set to 0. Closes #2117.
 
 Client library:
 - Fix encrypted connections incorrectly connecting when the CA file passed to
