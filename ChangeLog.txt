@@ -28,6 +28,7 @@ Broker:
 Client library:
 - Fix encrypted connections incorrectly connecting when the CA file passed to
   `mosquitto_tls_set()` is empty or invalid. Closes #2130.
+- Fix connections retrying very rapidly in some situations.
 
 Build:
 - Fix cmake epoll detection.
