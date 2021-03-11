@@ -628,7 +628,10 @@ static int net__bind_interface(struct mosquitto__listener *listener, struct addr
 						memcmp(&((struct sockaddr_in *)rp->ai_addr)->sin_addr,
 							&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
 							sizeof(struct in_addr))){
-					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface address does not match specified listener host.");
+
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface address for %s does not match specified listener address (%s).",
+							listener->bind_interface, listener->host);
+					return MOSQ_ERR_INVAL;
 				}else{
 					memcpy(&((struct sockaddr_in *)rp->ai_addr)->sin_addr,
 							&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
@@ -642,7 +645,10 @@ static int net__bind_interface(struct mosquitto__listener *listener, struct addr
 						memcmp(&((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
 							&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
 							sizeof(struct in6_addr))){
-					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface address does not match specified listener host.");
+
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface address for %s does not match specified listener address (%s).",
+							listener->bind_interface, listener->host);
+					return MOSQ_ERR_INVAL;
 				}else{
 					memcpy(&((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
 							&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
@@ -655,7 +661,7 @@ static int net__bind_interface(struct mosquitto__listener *listener, struct addr
 	}
 	freeifaddrs(ifaddr);
 	log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Interface %s does not support %s configuration.",
-	            listener->bind_interface, rp->ai_addr->sa_family == AF_INET ? "ipv4" : "ipv6");
+	            listener->bind_interface, rp->ai_addr->sa_family == AF_INET ? "IPv4" : "IPv6");
 	return MOSQ_ERR_NOT_FOUND;
 }
 #endif

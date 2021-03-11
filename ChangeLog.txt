@@ -20,6 +20,8 @@ Broker:
 - Fix QoS 0 messages not being delivered when max_queued_bytes was configured.
   Closes #2123.
 - Fix bridge increasing backoff calculation.
+- Improve handling of invalid combinations of listener address and bind
+  interface configurations. Closes #2081.
 
 Client library:
 - Fix encrypted connections incorrectly connecting when the CA file passed to
