@@ -1321,6 +1321,13 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 	if(cfg->tcp_nodelay){
 		mosquitto_int_option(mosq, MOSQ_OPT_TCP_NODELAY, 1);
 	}
+
+	if(cfg->msg_count > 0 && cfg->msg_count < 20){
+		/* 20 is the default "receive maximum"
+		 * If we don't set this, then we can receive > msg_count messages
+		 * before we quit.*/
+		mosquitto_int_option(mosq, MOSQ_OPT_RECEIVE_MAXIMUM, cfg->msg_count);
+	}
 	return MOSQ_ERR_SUCCESS;
 }
 
