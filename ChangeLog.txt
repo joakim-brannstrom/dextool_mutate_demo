@@ -1,6 +1,10 @@
 2.0.10 - 2021-xx-xx
 ==================
 
+Broker:
+- Don't over write new receive-maximum if a v5 client connects and takes over
+  an old session. Closes #2134.
+
 Clients:
 - Set `receive-maximum` to not exceed the `-C` message count in mosquitto_sub
   and mosquitto_rr, to avoid potentially lost messages. Closes #2134.
