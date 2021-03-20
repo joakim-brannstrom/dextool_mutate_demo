@@ -34,6 +34,7 @@ Contributors:
 #include <dlt/dlt.h>
 #endif
 
+#include "logging_mosq.h"
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
 #include "misc_mosq.h"

@@ -23,11 +23,12 @@ Contributors:
 #include <stdio.h>
 #include <string.h>
 
+#include "logging_mosq.h"
 #include "mosquitto_internal.h"
 #include "mosquitto.h"
 #include "memory_mosq.h"
 
-int log__printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
+int log__printf(struct mosquitto *mosq, unsigned int priority, const char *fmt, ...)
 {
 	va_list va;
 	char *s;
@@ -50,7 +51,7 @@ int log__printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
 		va_end(va);
 		s[len-1] = '\0'; /* Ensure string is null terminated. */
 
-		mosq->on_log(mosq, mosq->userdata, priority, s);
+		mosq->on_log(mosq, mosq->userdata, (int)priority, s);
 
 		mosquitto__free(s);
 	}
