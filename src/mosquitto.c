@@ -313,6 +313,7 @@ int listeners__start_local_only(void)
 
 	log__printf(NULL, MOSQ_LOG_WARNING, "Starting in local only mode. Connections will only be possible from clients running on this machine.");
 	log__printf(NULL, MOSQ_LOG_WARNING, "Create a configuration file which defines a listener to allow remote access.");
+	log__printf(NULL, MOSQ_LOG_WARNING, "For more details see https://mosquitto.org/documentation/authentication-methods/");
 	if(db.config->cmd_port_count == 0){
 		rc = listeners__add_local("127.0.0.1", 1883);
 		if(rc == MOSQ_ERR_NOMEM) return MOSQ_ERR_NOMEM;
