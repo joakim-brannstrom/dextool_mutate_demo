@@ -106,12 +106,6 @@ int mux_epoll__init(struct mosquitto__listener_sock *listensock, int listensock_
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mux_epoll__loop_setup(void)
-{
-	return MOSQ_ERR_SUCCESS;
-}
-
-
 int mux_epoll__add_out(struct mosquitto *context)
 {
 	struct epoll_event ev;

@@ -50,7 +50,7 @@ Contributors:
 #include "mqtt_protocol.h"
 
 
-int scmp_p(const void *p1, const void *p2)
+static int scmp_p(const void *p1, const void *p2)
 {
 	const char *s1 = *(const char **)p1;
 	const char *s2 = *(const char **)p2;

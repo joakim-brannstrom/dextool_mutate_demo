@@ -19,6 +19,8 @@ Contributors:
 #ifndef PERSIST_H
 #define PERSIST_H
 
+#include "mosquitto_broker_internal.h"
+
 #define MOSQ_DB_VERSION 6
 
 /* DB read/write */

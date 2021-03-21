@@ -29,6 +29,8 @@ Contributors:
 #include <stdbool.h>
 #include <signal.h>
 
+#include "mosquitto_broker_internal.h"
+
 #ifdef WITH_PERSISTENCE
 extern bool flag_db_backup;
 #endif

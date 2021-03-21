@@ -427,7 +427,7 @@ int net__tls_server_ctx(struct mosquitto__listener *listener)
 #endif
 
 
-int net__load_crl_file(struct mosquitto__listener *listener)
+static int net__load_crl_file(struct mosquitto__listener *listener)
 {
 #ifdef WITH_TLS
 	X509_STORE *store;

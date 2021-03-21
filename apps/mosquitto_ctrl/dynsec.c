@@ -689,7 +689,7 @@ static cJSON *init_create(const char *username, const char *password, const char
 }
 
 /* mosquitto_ctrl dynsec init <filename> <admin-user> <admin-password> [role-name] */
-int dynsec_init(int argc, char *argv[])
+static int dynsec_init(int argc, char *argv[])
 {
 	char *filename;
 	char *admin_user;

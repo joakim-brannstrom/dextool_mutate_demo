@@ -12,7 +12,7 @@ LIBMOSQ:=../../lib/libmosquitto.a
 endif
 endif
 
-LOCAL_CPPFLAGS:=-I../mosquitto_passwd
+LOCAL_CPPFLAGS:=-I../mosquitto_passwd -DWITH_CJSON
 
 OBJS=	mosquitto_ctrl.o \
 		client.o \

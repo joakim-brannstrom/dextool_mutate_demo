@@ -187,7 +187,7 @@ DltLogLevelType get_dlt_level(unsigned int priority)
 }
 #endif
 
-int log__vprintf(unsigned int priority, const char *fmt, va_list va)
+static int log__vprintf(unsigned int priority, const char *fmt, va_list va)
 {
 	const char *topic;
 	int syslog_priority;

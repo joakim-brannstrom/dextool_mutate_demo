@@ -83,7 +83,7 @@ static char *client_id_gen(uint16_t *idlen, const char *auto_id_prefix, uint16_t
 
 /* Remove any queued messages that are no longer allowed through ACL,
  * assuming a possible change of username. */
-void connection_check_acl(struct mosquitto *context, struct mosquitto_client_msg **head)
+static void connection_check_acl(struct mosquitto *context, struct mosquitto_client_msg **head)
 {
 	struct mosquitto_client_msg *msg_tail, *tmp;
 

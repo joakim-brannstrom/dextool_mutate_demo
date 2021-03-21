@@ -183,7 +183,7 @@ static int check_format(const char *str)
 }
 
 
-void init_config(struct mosq_config *cfg, int pub_or_sub)
+static void init_config(struct mosq_config *cfg, int pub_or_sub)
 {
 	memset(cfg, 0, sizeof(*cfg));
 	cfg->port = PORT_UNDEFINED;
@@ -485,7 +485,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	return MOSQ_ERR_SUCCESS;
 }
 
-int cfg_add_topic(struct mosq_config *cfg, int type, char *topic, const char *arg)
+static int cfg_add_topic(struct mosq_config *cfg, int type, char *topic, const char *arg)
 {
 	if(mosquitto_validate_utf8(topic, (int )strlen(topic))){
 		fprintf(stderr, "Error: Malformed UTF-8 in %s argument.\n\n", arg);

@@ -202,7 +202,7 @@ int mosquitto_security_cleanup_default(bool reload)
 }
 
 
-int add__acl(struct mosquitto__security_options *security_opts, const char *user, const char *topic, int access)
+static int add__acl(struct mosquitto__security_options *security_opts, const char *user, const char *topic, int access)
 {
 	struct mosquitto__acl_user *acl_user=NULL, *user_tail;
 	struct mosquitto__acl *acl, *acl_tail;
@@ -298,7 +298,7 @@ int add__acl(struct mosquitto__security_options *security_opts, const char *user
 	return MOSQ_ERR_SUCCESS;
 }
 
-int add__acl_pattern(struct mosquitto__security_options *security_opts, const char *topic, int access)
+static int add__acl_pattern(struct mosquitto__security_options *security_opts, const char *topic, int access)
 {
 	struct mosquitto__acl *acl, *acl_tail;
 	char *local_topic;

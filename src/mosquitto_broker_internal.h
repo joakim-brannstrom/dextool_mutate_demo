@@ -820,6 +820,16 @@ void session_expiry__check(void);
 void session_expiry__send_all(void);
 
 /* ============================================================
+ * Signals
+ * ============================================================ */
+void handle_sigint(int signal);
+void handle_sigusr1(int signal);
+void handle_sigusr2(int signal);
+#ifdef SIGHUP
+void handle_sighup(int signal);
+#endif
+
+/* ============================================================
  * Window service and signal related functions
  * ============================================================ */
 #if defined(WIN32) || defined(__CYGWIN__)
@@ -855,4 +865,3 @@ void xtreport(void);
 #endif
 
 #endif
-

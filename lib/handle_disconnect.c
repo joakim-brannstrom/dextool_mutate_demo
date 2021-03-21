@@ -27,6 +27,7 @@ Contributors:
 #include "net_mosq.h"
 #include "packet_mosq.h"
 #include "property_mosq.h"
+#include "read_handle.h"
 #include "send_mosq.h"
 #include "util_mosq.h"
 

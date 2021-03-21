@@ -148,7 +148,7 @@ ifeq ($(UNAME),SunOS)
 		CFLAGS?=-Wall -ggdb -O2
 	endif
 else
-	CFLAGS?=-Wall -ggdb -O2 -Wconversion
+	CFLAGS?=-Wall -ggdb -O2 -Wconversion -Wextra
 endif
 
 STATIC_LIB_DEPS:=
