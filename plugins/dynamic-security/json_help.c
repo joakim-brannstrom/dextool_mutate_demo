@@ -23,6 +23,7 @@ Contributors:
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "json_help.h"
 #include "mosquitto.h"
 
 

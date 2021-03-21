@@ -51,7 +51,7 @@ static int rolelist_cmp(void *a, void *b)
 }
 
 
-void dynsec_rolelist__free_item(struct dynsec__rolelist **base_rolelist, struct dynsec__rolelist *rolelist)
+static void dynsec_rolelist__free_item(struct dynsec__rolelist **base_rolelist, struct dynsec__rolelist *rolelist)
 {
 	HASH_DELETE(hh, *base_rolelist, rolelist);
 	mosquitto_free(rolelist->rolename);
@@ -67,7 +67,7 @@ void dynsec_rolelist__cleanup(struct dynsec__rolelist **base_rolelist)
 	}
 }
 
-int dynsec_rolelist__remove_role(struct dynsec__rolelist **base_rolelist, const struct dynsec__role *role)
+static int dynsec_rolelist__remove_role(struct dynsec__rolelist **base_rolelist, const struct dynsec__role *role)
 {
 	struct dynsec__rolelist *found_rolelist;
 

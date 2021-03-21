@@ -209,7 +209,7 @@ static int insert_acl_cmp(struct dynsec__acl *a, struct dynsec__acl *b)
 }
 
 
-int dynsec_roles__acl_load(cJSON *j_acls, const char *key, struct dynsec__acl **acllist)
+static int dynsec_roles__acl_load(cJSON *j_acls, const char *key, struct dynsec__acl **acllist)
 {
 	cJSON *j_acl, *j_type, *jtmp;
 	struct dynsec__acl *acl;
