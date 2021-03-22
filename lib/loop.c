@@ -204,10 +204,9 @@ static int interruptible_sleep(struct mosquitto *mosq, time_t reconnect_delay)
 	int maxfd = 0;
 
 #ifndef WIN32
-	if(read(mosq->sockpairR, &pairbuf, 1) == 0){
-	}
+	while(read(mosq->sockpairR, &pairbuf, 1) > 0);
 #else
-	recv(mosq->sockpairR, &pairbuf, 1, 0);
+	while(recv(mosq->sockpairR, &pairbuf, 1, 0) > 0);
 #endif
 
 	local_timeout.tv_sec = reconnect_delay;
