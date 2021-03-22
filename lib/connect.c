@@ -189,7 +189,7 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
 
 	packet__cleanup_all(mosq);
 
-	message__reconnect_reset(mosq);
+	message__reconnect_reset(mosq, false);
 
 	if(mosq->sock != INVALID_SOCKET){
         net__socket_close(mosq); //close socket

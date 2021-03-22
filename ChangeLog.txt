@@ -1787,6 +1787,8 @@ Client library:
 - Add support for MQTT v3.1.1.
 - Don't quit mosquitto_loop_forever() if broker not available on first
   connect. Closes bug #453293, but requires more work.
+- Don't reset queued messages state on CONNACK. Fixes bug with duplicate
+  messages on connection.
 
 
 1.3.5 - 20141008
