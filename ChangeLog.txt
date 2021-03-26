@@ -8,6 +8,7 @@ Broker:
 Clients:
 - Set `receive-maximum` to not exceed the `-C` message count in mosquitto_sub
   and mosquitto_rr, to avoid potentially lost messages. Closes #2134.
+- Fix TLS-PSK mode not working with port 8883. Closes #2152.
 
 Build:
 - A variety of minor build related fixes, like functions not having previous
