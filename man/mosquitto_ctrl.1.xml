@@ -17,7 +17,7 @@
 	<refsynopsisdiv>
 		<cmdsynopsis>
 			<command>mosquitto_ctrl</command>
-			<arg choice='opt'>connection-options</arg>
+			<arg choice='opt'>connection-options | -o config-file</arg>
 			<arg choice='plain'>module-name</arg>
 			<arg choice='plain'>module-command</arg>
 			<arg choice='opt'>command-options</arg>
@@ -132,7 +132,11 @@
 		<para>The options below may be given on the command line, but may also
 			be placed in a config file located at
 			<option>$XDG_CONFIG_HOME/mosquitto_ctrl</option> or
-			<option>$HOME/.config/mosquitto_ctrl</option> with one pair of
+			<option>$HOME/.config/mosquitto_ctrl</option>.</para>
+		<para>The config file may be specified manually with the
+			<option>-o <replaceable>config-file</replaceable></option>
+			option.</para>
+		<para>The config file should have one pair of
 			<option>-option <replaceable>value</replaceable></option>
 			per line. The values in the config file will be used as defaults
 			and can be overridden by using the command line. The exceptions to
@@ -318,6 +322,20 @@
 						particularly noticable for small, reasonably infrequent
 						messages. Using this option may result in more packets
 						being sent than would normally be necessary.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-o</option> <replaceable>config-file</replaceable></term>
+				<listitem>
+					<para>Provide a path to a config file to load options from. The config file should have one pair of
+						<option>-option <replaceable>value</replaceable></option>
+						per line. The values in the config file will be used as defaults
+						and can be overridden by using the command line. The exceptions to
+						this are the message type options, of which only one can be
+						specified. Note also that currently some options cannot be negated,
+						e.g. <option>-S</option>. Config file lines that have a
+						<option>#</option> as the first character are treated as comments
+						and not processed any further.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

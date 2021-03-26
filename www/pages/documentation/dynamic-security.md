@@ -343,7 +343,9 @@ application.
 The initial configuration is the only time that `mosquitto_ctrl` does not
 connect to a broker to carry out the configuration. All other commands require
 a connection to a broker, and hence a username, password, and whatever else is
-required for that particular connection.
+required for that particular connection. It is strongly recommended that your
+broker connection uses encryption so that your configuration, including new
+passwords, is not transmitted in plain text.
 
 The connection options must be given before the `dynsec` part of the command
 line:
@@ -357,8 +359,36 @@ For example:
 mosquitto_ctrl -u admin -h localhost dynsec <command> ...
 ```
 
-It is possible to provide the admin password on the command line, but this is
-not recommended.
+It is possible to provide the admin password on the command line using `-P
+password`, but this is not recommended. If you do not provide a password,
+mosquitto_ctrl will ask you to enter the password when it is needed.
+
+### Using an options file
+
+For convenience, mosquitto_ctrl can load an options file which contains a list
+of options it should use. This means you can set the encryption options, host,
+admin username and any other options once and not have to add them to the
+command line every time.
+
+mosquitto_ctrl will try to load a configuration file from a default location.
+For Windows this is at `%USER_PROFILE%\mosquitto_ctrl.conf`. For other systems,
+it will try `$XDG_CONFIG_HOME/mosquitto_ctrl.conf` or
+`$HOME/.config/mosquitto_ctrl.conf`.
+
+You may override this behaviour by manually specifying an options file with
+`-o <path to options file>`.
+
+The options file should contain a list of options, one per line, exactly as
+they would be provided on the command line. For example:
+
+```
+--cafile /path/to/my/CA.crt
+--certfile /path/to/my/client.crt
+--keyfile /path/to/my/client.key
+-u admin
+-h mosquitto.example.com
+
+```
 
 ### mosquitto_ctrl options
 

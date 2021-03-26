@@ -43,7 +43,8 @@ static void print_usage(void)
 	printf("\nGeneral usage: mosquitto_ctrl <module> <module-command> <command-options>\n");
 	printf("For module specific help use: mosquitto_ctrl <module> help\n");
 	printf("\nModules available: dynsec\n");
-	printf("\nSee https://mosquitto.org/man/mosquitto_ctrl-1.html for more information.\n\n");
+	printf("\nFor more information see:\n");
+	printf("    https://mosquitto.org/man/mosquitto_ctrl-1.html\n\n");
 }
 
 

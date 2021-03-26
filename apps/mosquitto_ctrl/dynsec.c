@@ -79,6 +79,8 @@ void dynsec__print_usage(void)
 	printf("acltype:                     publishClientSend|publishClientReceive\n");
 	printf("                              |subscribeLiteral|subscribePattern\n");
 	printf("                              |unsubscribeLiteral|unsubscribePattern\n");
+	printf("\nFor more information see:\n");
+	printf("    https://mosquitto.org/documentation/dynamic-security/\n\n");
 }
 
 cJSON *cJSON_AddIntToObject(cJSON * const object, const char * const name, int number)
