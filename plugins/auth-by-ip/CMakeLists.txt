@@ -1,5 +1,5 @@
 include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/include
-			${STDBOOL_H_PATH} ${STDINT_H_PATH})
+			${OPENSSL_INCLUDE_DIR} ${STDBOOL_H_PATH} ${STDINT_H_PATH})
 
 add_library(mosquitto_auth_by_ip SHARED mosquitto_auth_by_ip.c)
 set_target_properties(mosquitto_auth_by_ip PROPERTIES
