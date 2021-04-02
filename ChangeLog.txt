@@ -10,6 +10,12 @@ Clients:
   and mosquitto_rr, to avoid potentially lost messages. Closes #2134.
 - Fix TLS-PSK mode not working with port 8883. Closes #2152.
 
+Client library:
+- Fix possible socket leak. This would occur if a client was using
+  `mosquitto_loop_start()`, then if the connection failed due to the remote
+  server being inaccessible they called `mosquitto_loop_stop(, true)` and
+  recreated the mosquitto object.
+
 Build:
 - A variety of minor build related fixes, like functions not having previous
   declarations.
