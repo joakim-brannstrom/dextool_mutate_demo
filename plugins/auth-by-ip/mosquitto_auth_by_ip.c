@@ -32,7 +32,7 @@ Contributors:
  *
  * Note that this only works on Mosquitto 2.0 or later.
  */
-
+#include "config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -48,6 +48,9 @@ static int basic_auth_callback(int event, void *event_data, void *userdata)
 {
 	struct mosquitto_evt_basic_auth *ed = event_data;
 	const char *ip_address;
+
+	UNUSED(event);
+	UNUSED(userdata);
 
 	ip_address = mosquitto_client_address(ed->client);
 	if(!strcmp(ip_address, "127.0.0.1")){
@@ -72,11 +75,19 @@ int mosquitto_plugin_version(int supported_version_count, const int *supported_v
 
 int mosquitto_plugin_init(mosquitto_plugin_id_t *identifier, void **user_data, struct mosquitto_opt *opts, int opt_count)
 {
+	UNUSED(user_data);
+	UNUSED(opts);
+	UNUSED(opt_count);
+
 	mosq_pid = identifier;
 	return mosquitto_callback_register(mosq_pid, MOSQ_EVT_BASIC_AUTH, basic_auth_callback, NULL, NULL);
 }
 
 int mosquitto_plugin_cleanup(void *user_data, struct mosquitto_opt *opts, int opt_count)
 {
+	UNUSED(user_data);
+	UNUSED(opts);
+	UNUSED(opt_count);
+
 	return mosquitto_callback_unregister(mosq_pid, MOSQ_EVT_BASIC_AUTH, basic_auth_callback, NULL);
 }

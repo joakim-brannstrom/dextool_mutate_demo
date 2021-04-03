@@ -137,7 +137,7 @@ int message__queue(struct mosquitto *mosq, struct mosquitto_message_all *message
 	return message__release_to_inflight(mosq, dir);
 }
 
-void message__reconnect_reset(struct mosquitto *mosq)
+void message__reconnect_reset(struct mosquitto *mosq, bool update_quota_only)
 {
 	struct mosquitto_message_all *message, *tmp;
 	assert(mosq);
@@ -169,15 +169,17 @@ void message__reconnect_reset(struct mosquitto *mosq)
 		message->timestamp = 0;
 		if(mosq->msgs_out.inflight_quota != 0){
 			util__decrement_send_quota(mosq);
-			if(message->msg.qos == 1){
-				message->state = mosq_ms_publish_qos1;
-			}else if(message->msg.qos == 2){
-				if(message->state == mosq_ms_wait_for_pubrec){
-					message->state = mosq_ms_publish_qos2;
-				}else if(message->state == mosq_ms_wait_for_pubcomp){
-					message->state = mosq_ms_resend_pubrel;
+			if (update_quota_only == false){
+				if(message->msg.qos == 1){
+					message->state = mosq_ms_publish_qos1;
+				}else if(message->msg.qos == 2){
+					if(message->state == mosq_ms_wait_for_pubrec){
+						message->state = mosq_ms_publish_qos2;
+					}else if(message->state == mosq_ms_wait_for_pubcomp){
+						message->state = mosq_ms_resend_pubrel;
+					}
+					/* Should be able to preserve state. */
 				}
-				/* Should be able to preserve state. */
 			}
 		}else{
 			message->state = mosq_ms_invalid;

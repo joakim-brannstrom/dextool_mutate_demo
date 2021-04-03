@@ -127,7 +127,7 @@ WITH_XTREPORT=no
 
 # Also bump lib/mosquitto.h, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto64.nsi
-VERSION=2.0.9
+VERSION=2.0.10
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
 SOVERSION=1
@@ -140,6 +140,7 @@ DB_HTML_XSL=man/html.xsl
 #MANCOUNTRIES=en_GB
 
 UNAME:=$(shell uname -s)
+ARCH:=$(shell uname -p)
 
 ifeq ($(UNAME),SunOS)
 	ifeq ($(CC),cc)
@@ -148,7 +149,7 @@ ifeq ($(UNAME),SunOS)
 		CFLAGS?=-Wall -ggdb -O2
 	endif
 else
-	CFLAGS?=-Wall -ggdb -O2 -Wconversion
+	CFLAGS?=-Wall -ggdb -O2 -Wconversion -Wextra
 endif
 
 STATIC_LIB_DEPS:=
@@ -199,9 +200,15 @@ ifeq ($(WITH_SHARED_LIBRARIES),yes)
 endif
 
 ifeq ($(UNAME),SunOS)
-	ifeq ($(CC),cc)
-		LIB_CFLAGS:=$(LIB_CFLAGS) -xc99 -KPIC
-	else
+	SEDINPLACE:=
+	ifeq ($(ARCH),sparc)
+		ifeq ($(CC),cc)
+			LIB_CFLAGS:=$(LIB_CFLAGS) -xc99 -KPIC
+		else
+			LIB_CFLAGS:=$(LIB_CFLAGS) -fPIC
+		endif
+	endif
+	ifeq ($(ARCH),i386)
 		LIB_CFLAGS:=$(LIB_CFLAGS) -fPIC
 	endif
 

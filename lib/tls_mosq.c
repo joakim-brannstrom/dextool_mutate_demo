@@ -84,7 +84,7 @@ int mosquitto__server_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 	}
 }
 
-int mosquitto__cmp_hostname_wildcard(char *certname, const char *hostname)
+static int mosquitto__cmp_hostname_wildcard(char *certname, const char *hostname)
 {
 	size_t i;
 	size_t len;

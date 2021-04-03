@@ -3,7 +3,7 @@ include ../../config.mk
 .PHONY : all binary check clean reallyclean test install uninstall
 
 PLUGIN_NAME=mosquitto_dynamic_security
-LOCAL_CPPFLAGS=-I../../src/
+LOCAL_CPPFLAGS=-I../../src/ -DWITH_CJSON
 
 OBJS=	\
 		acl.o \

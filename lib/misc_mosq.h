@@ -19,6 +19,7 @@ Contributors:
 #define MISC_MOSQ_H
 
 #include <stdbool.h>
+#include <stdio.h>
 
 FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read);
 char *misc__trimblanks(char *str);

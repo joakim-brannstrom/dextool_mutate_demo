@@ -232,7 +232,7 @@ int pub_shared_init(void)
 }
 
 
-int pub_stdin_line_loop(struct mosquitto *mosq)
+static int pub_stdin_line_loop(struct mosquitto *mosq)
 {
 	char *buf2;
 	int buf_len_actual = 0;
@@ -334,7 +334,7 @@ int pub_stdin_line_loop(struct mosquitto *mosq)
 }
 
 
-int pub_other_loop(struct mosquitto *mosq)
+static int pub_other_loop(struct mosquitto *mosq)
 {
 	int rc;
 	int loop_delay = 1000;
@@ -387,7 +387,7 @@ void pub_shared_cleanup(void)
 }
 
 
-void print_version(void)
+static void print_version(void)
 {
 	int major, minor, revision;
 
@@ -395,7 +395,7 @@ void print_version(void)
 	printf("mosquitto_pub version %s running on libmosquitto %d.%d.%d.\n", VERSION, major, minor, revision);
 }
 
-void print_usage(void)
+static void print_usage(void)
 {
 	int major, minor, revision;
 

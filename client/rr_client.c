@@ -50,8 +50,6 @@ enum rr__state {
 
 static enum rr__state client_state = rr_s_new;
 
-extern struct mosq_config cfg;
-
 bool process_messages = true;
 int msg_count = 0;
 struct mosquitto *g_mosq = NULL;
@@ -59,7 +57,7 @@ static bool timed_out = false;
 static int connack_result = 0;
 
 #ifndef WIN32
-void my_signal_handler(int signum)
+static void my_signal_handler(int signum)
 {
 	if(signum == SIGALRM){
 		process_messages = false;
@@ -80,7 +78,7 @@ int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadl
 }
 
 
-void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message, const mosquitto_property *properties)
+static void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message, const mosquitto_property *properties)
 {
 	UNUSED(mosq);
 	UNUSED(obj);
@@ -151,7 +149,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 }
 
 
-void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
+static void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
 	UNUSED(obj);
 	UNUSED(mid);
@@ -179,7 +177,7 @@ void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_
 }
 
 
-void print_version(void)
+static void print_version(void)
 {
 	int major, minor, revision;
 
@@ -187,7 +185,7 @@ void print_version(void)
 	printf("mosquitto_rr version %s running on libmosquitto %d.%d.%d.\n", VERSION, major, minor, revision);
 }
 
-void print_usage(void)
+static void print_usage(void)
 {
 	int major, minor, revision;
 

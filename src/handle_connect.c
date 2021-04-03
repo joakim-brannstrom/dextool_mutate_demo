@@ -83,7 +83,7 @@ static char *client_id_gen(uint16_t *idlen, const char *auto_id_prefix, uint16_t
 
 /* Remove any queued messages that are no longer allowed through ACL,
  * assuming a possible change of username. */
-void connection_check_acl(struct mosquitto *context, struct mosquitto_client_msg **head)
+static void connection_check_acl(struct mosquitto *context, struct mosquitto_client_msg **head)
 {
 	struct mosquitto_client_msg *msg_tail, *tmp;
 
@@ -111,6 +111,8 @@ int connect__on_authorised(struct mosquitto *context, void *auth_data_out, uint1
 	uint8_t connect_ack = 0;
 	int i;
 	int rc;
+	int in_quota, out_quota;
+	uint16_t in_maximum, out_maximum;
 
 	/* Find if this client already has an entry. This must be done *after* any security checks. */
 	HASH_FIND(hh_id, db.contexts_by_id, context->id, strlen(context->id), found_context);
@@ -135,11 +137,21 @@ int connect__on_authorised(struct mosquitto *context, void *auth_data_out, uint1
 			if(found_context->msgs_in.inflight || found_context->msgs_in.queued
 					|| found_context->msgs_out.inflight || found_context->msgs_out.queued){
 
+				in_quota = context->msgs_in.inflight_quota;
+				out_quota = context->msgs_out.inflight_quota;
+				in_maximum = context->msgs_in.inflight_maximum;
+				out_maximum = context->msgs_out.inflight_maximum;
+
 				memcpy(&context->msgs_in, &found_context->msgs_in, sizeof(struct mosquitto_msg_data));
 				memcpy(&context->msgs_out, &found_context->msgs_out, sizeof(struct mosquitto_msg_data));
 
 				memset(&found_context->msgs_in, 0, sizeof(struct mosquitto_msg_data));
 				memset(&found_context->msgs_out, 0, sizeof(struct mosquitto_msg_data));
+
+				context->msgs_in.inflight_quota = in_quota;
+				context->msgs_out.inflight_quota = out_quota;
+				context->msgs_in.inflight_maximum = in_maximum;
+				context->msgs_out.inflight_maximum = out_maximum;
 
 				db__message_reconnect_reset(context);
 			}

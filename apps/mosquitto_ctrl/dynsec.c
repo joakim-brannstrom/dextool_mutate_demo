@@ -79,6 +79,8 @@ void dynsec__print_usage(void)
 	printf("acltype:                     publishClientSend|publishClientReceive\n");
 	printf("                              |subscribeLiteral|subscribePattern\n");
 	printf("                              |unsubscribeLiteral|unsubscribePattern\n");
+	printf("\nFor more information see:\n");
+	printf("    https://mosquitto.org/documentation/dynamic-security/\n\n");
 }
 
 cJSON *cJSON_AddIntToObject(cJSON * const object, const char * const name, int number)
@@ -689,7 +691,7 @@ static cJSON *init_create(const char *username, const char *password, const char
 }
 
 /* mosquitto_ctrl dynsec init <filename> <admin-user> <admin-password> [role-name] */
-int dynsec_init(int argc, char *argv[])
+static int dynsec_init(int argc, char *argv[])
 {
 	char *filename;
 	char *admin_user;

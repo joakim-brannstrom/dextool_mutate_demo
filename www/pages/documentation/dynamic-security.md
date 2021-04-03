@@ -343,7 +343,9 @@ application.
 The initial configuration is the only time that `mosquitto_ctrl` does not
 connect to a broker to carry out the configuration. All other commands require
 a connection to a broker, and hence a username, password, and whatever else is
-required for that particular connection.
+required for that particular connection. It is strongly recommended that your
+broker connection uses encryption so that your configuration, including new
+passwords, is not transmitted in plain text.
 
 The connection options must be given before the `dynsec` part of the command
 line:
@@ -357,10 +359,118 @@ For example:
 mosquitto_ctrl -u admin -h localhost dynsec <command> ...
 ```
 
-It is possible to provide the admin password on the command line, but this is
-not recommended.
+It is possible to provide the admin password on the command line using `-P
+password`, but this is not recommended. If you do not provide a password,
+mosquitto_ctrl will ask you to enter the password when it is needed.
 
-See **FIXME** for the full list of options available for `mosquitto_ctrl`.
+### Using an options file
+
+For convenience, mosquitto_ctrl can load an options file which contains a list
+of options it should use. This means you can set the encryption options, host,
+admin username and any other options once and not have to add them to the
+command line every time.
+
+mosquitto_ctrl will try to load a configuration file from a default location.
+For Windows this is at `%USER_PROFILE%\mosquitto_ctrl.conf`. For other systems,
+it will try `$XDG_CONFIG_HOME/mosquitto_ctrl.conf` or
+`$HOME/.config/mosquitto_ctrl.conf`.
+
+You may override this behaviour by manually specifying an options file with
+`-o <path to options file>`.
+
+The options file should contain a list of options, one per line, exactly as
+they would be provided on the command line. For example:
+
+```
+--cafile /path/to/my/CA.crt
+--certfile /path/to/my/client.crt
+--keyfile /path/to/my/client.key
+-u admin
+-h mosquitto.example.com
+
+```
+
+### mosquitto_ctrl options
+
+* `-A address` : Bind the outgoing connection to a local ip address/hostname.
+  Use this argument if you need to restrict network communication to a
+  particular interface.
+* `--cafile path-to-ca.crt` : Define the path to a file containing PEM encoded
+  CA certificates that are trusted. Used to enable SSL communication.  See also
+  `--capath`
+* `--capath` : Define the path to a directory containing PEM encoded CA
+  certificates that are trusted. Used to enable SSL communication. For
+  `--capath` to work correctly, the certificate files must have ".crt" as the
+  file ending and you must run `openssl rehash <path to capath>` each time you
+  add/remove a certificate. See also `--cafile`.
+* `--cert path-to-client.crt` : Define the path to a file containing a PEM
+  encoded certificate for this client, if required by the server. See also
+  `--key`.
+* `--ciphers` : An openssl compatible list of TLS ciphers to support in the
+  client. See ciphers(1) for more information.
+* `-d` : Enable debug messages.
+* `--help` : Display usage information.
+* `-h hostname` : Specify the host to connect to. Defaults to localhost.
+* `-i client-id` : The id to use for this client. If not given, a client id
+  will be generated depending on the MQTT version being used. For v3.1.1/v3.1,
+  the client generates a client id in the format mosq-XXXXXXXXXXXXXXXXXX, where
+  the X are replaced with random alphanumeric characters.  For v5.0, the client
+  sends a zero length client id, and the server will generate a client id for
+  the client.
+* `--insecure` : When using certificate based encryption, this option disables
+  verification of the server hostname in the server certificate. This can be
+  useful when testing initial server configurations but makes it possible for a
+  malicious third party to impersonate your server through DNS spoofing, for
+  example. Use this option in testing only. If you need to resort to using this
+  option in a production environment, your setup is at fault and there is no
+  point using encryption.
+* `--key path-to-client.key` : Define the path to a file containing a PEM
+  encoded private key for this client, if required by the server. See also
+  `--cert`.
+* `-L url` : Specify specify user, password, hostname, port and topic at once
+  as a URL. The URL must be in the form:
+  `mqtt(s)://[username[:password]@]host[:port]`. If the scheme is mqtt:// then
+  the port defaults to 1883. If the scheme is mqtts:// then the port defaults
+  to 8883.
+* `--nodelay` : Disable Nagle's algorithm for the socket. This means that
+  latency of sent messages is reduced, which is particularly noticable for
+  small, reasonably infrequent messages. Using this option may result in more
+  packets being sent than would normally be necessary.
+* `-p port` : Connect to the port specified. If not given, the default of 1883
+  for plain MQTT or 8883 for MQTT over TLS will be used.
+* `-P password` : Provide a password to be used for authenticating with the
+  broker. Using this argument without also specifying a username is invalid
+  when using MQTT v3.1 or v3.1.1. See also the `-u` option.
+* `--proxy proxy-url` : Specify a SOCKS5 proxy to connect through. "None" and
+  "username" authentication types are supported. The socks-url must be of the
+  form `socks5h://[username[:password]@]host[:port]`. The protocol prefix
+  socks5h means that hostnames are resolved by the proxy. The symbols %25, %3A
+  and %40 are URL decoded into %, : and @ respectively, if present in the
+  username or password.  If username is not given, then no authentication is
+  attempted. If the port is not given, then the default of 1080 is used.
+* `--psk key` : Provide the hexadecimal (no leading 0x) pre-shared-key matching
+  the one used on the broker to use TLS-PSK encryption support.
+  `--psk-identity` must also be provided to enable TLS-PSK.
+* `--psk-identity identify` : The client identity to use with TLS-PSK support.
+  This may be used instead of a username if the broker is configured to do so.
+* `-q qos` : Specify the quality of service to use for messages, from 0, 1 and
+  2. Defaults to 1.
+* `--quiet` :  If this argument is given, no runtime errors will be printed.
+  This excludes any error messages given in case of invalid user input (e.g.
+  using `-p` without a port).
+* `--tls-version version` : Choose which TLS protocol version to use when
+  communicating with the broker. Valid options are tlsv1.3, tlsv1.2 and
+  tlsv1.1. The default value is tlsv1.2. Must match the protocol version used
+  by the broker.
+* `-u username` : Provide a username to be used for authenticating with the
+  broker. See also the `-P` argument.
+* `--unix path` : Connect to a broker through a local unix domain socket
+  instead of a TCP socket. This is a replacement for `-h` and `-L`. For
+  example: `mosquitto_ctrl --unix /tmp/mosquitto.sock ...`.
+* `-V protocol-version` : Specify which version of the MQTT protocol should be
+  used when connecting to the remote broker. Can be `5`, `311`, `31`, or the
+  more verbose `mqttv5`, `mqttv311`, or `mqttv31`. Defaults to `311`.
+
 
 ## Configuring default access
 

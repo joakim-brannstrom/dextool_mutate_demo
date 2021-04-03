@@ -183,7 +183,7 @@ static int check_format(const char *str)
 }
 
 
-void init_config(struct mosq_config *cfg, int pub_or_sub)
+static void init_config(struct mosq_config *cfg, int pub_or_sub)
 {
 	memset(cfg, 0, sizeof(*cfg));
 	cfg->port = PORT_UNDEFINED;
@@ -485,7 +485,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	return MOSQ_ERR_SUCCESS;
 }
 
-int cfg_add_topic(struct mosq_config *cfg, int type, char *topic, const char *arg)
+static int cfg_add_topic(struct mosq_config *cfg, int type, char *topic, const char *arg)
 {
 	if(mosquitto_validate_utf8(topic, (int )strlen(topic))){
 		fprintf(stderr, "Error: Malformed UTF-8 in %s argument.\n\n", arg);
@@ -1263,6 +1263,14 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 			mosquitto_lib_cleanup();
 			return 1;
 		}
+#  ifdef FINAL_WITH_TLS_PSK
+	}else if(cfg->psk){
+		if(mosquitto_tls_psk_set(mosq, cfg->psk, cfg->psk_identity, NULL)){
+			err_printf(cfg, "Error: Problem setting TLS-PSK options.\n");
+			mosquitto_lib_cleanup();
+			return 1;
+		}
+#  endif
 	}else if(cfg->port == 8883){
 		mosquitto_int_option(mosq, MOSQ_OPT_TLS_USE_OS_CERTS, 1);
 	}
@@ -1295,13 +1303,6 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		mosquitto_lib_cleanup();
 		return 1;
 	}
-#  ifdef FINAL_WITH_TLS_PSK
-	if(cfg->psk && mosquitto_tls_psk_set(mosq, cfg->psk, cfg->psk_identity, NULL)){
-		err_printf(cfg, "Error: Problem setting TLS-PSK options.\n");
-		mosquitto_lib_cleanup();
-		return 1;
-	}
-#  endif
 	if((cfg->tls_version || cfg->ciphers) && mosquitto_tls_opts_set(mosq, 1, cfg->tls_version, cfg->ciphers)){
 		err_printf(cfg, "Error: Problem setting TLS options, check the options are valid.\n");
 		mosquitto_lib_cleanup();
@@ -1320,6 +1321,13 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 #endif
 	if(cfg->tcp_nodelay){
 		mosquitto_int_option(mosq, MOSQ_OPT_TCP_NODELAY, 1);
+	}
+
+	if(cfg->msg_count > 0 && cfg->msg_count < 20){
+		/* 20 is the default "receive maximum"
+		 * If we don't set this, then we can receive > msg_count messages
+		 * before we quit.*/
+		mosquitto_int_option(mosq, MOSQ_OPT_RECEIVE_MAXIMUM, cfg->msg_count);
 	}
 	return MOSQ_ERR_SUCCESS;
 }

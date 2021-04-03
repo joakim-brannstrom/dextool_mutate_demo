@@ -32,10 +32,11 @@ Contributors:
 #include "mqtt_protocol.h"
 #include "packet_mosq.h"
 #include "property_mosq.h"
+#include "send_mosq.h"
 #include "util_mosq.h"
 
 
-int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const char **topic, int topic_qos, const mosquitto_property *properties)
+int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, char *const *const topic, int topic_qos, const mosquitto_property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
 	uint32_t packetlen;

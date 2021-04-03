@@ -52,7 +52,7 @@ Contributors:
 #  include <sys/stat.h>
 #endif
 
-#define MAX_BUFFER_LEN 65536
+#define MAX_BUFFER_LEN 65500
 #define SALT_LEN 12
 
 #include "misc_mosq.h"
@@ -107,7 +107,7 @@ static FILE *mpw_tmpfile(void)
 #endif
 
 
-void print_usage(void)
+static void print_usage(void)
 {
 	printf("mosquitto_passwd is a tool for managing password files for mosquitto.\n\n");
 	printf("Usage: mosquitto_passwd [-H sha512 | -H sha512-pbkdf2] [-c | -D] passwordfile username\n");
@@ -122,7 +122,7 @@ void print_usage(void)
 	printf("\nSee https://mosquitto.org/ for more information.\n\n");
 }
 
-int output_new_password(FILE *fptr, const char *username, const char *password, int iterations)
+static int output_new_password(FILE *fptr, const char *username, const char *password, int iterations)
 {
 	int rc;
 	char *salt64 = NULL, *hash64 = NULL;
@@ -255,7 +255,7 @@ static int delete_pwuser_cb(FILE *fptr, FILE *ftmp, const char *username, const 
 	return 0;
 }
 
-int delete_pwuser(FILE *fptr, FILE *ftmp, const char *username)
+static int delete_pwuser(FILE *fptr, FILE *ftmp, const char *username)
 {
 	struct cb_helper helper;
 	int rc;
@@ -288,7 +288,7 @@ static int update_file_cb(FILE *fptr, FILE *ftmp, const char *username, const ch
 	}
 }
 
-int update_file(FILE *fptr, FILE *ftmp)
+static int update_file(FILE *fptr, FILE *ftmp)
 {
 	return pwfile_iterate(fptr, ftmp, update_file_cb, NULL);
 }
@@ -315,7 +315,7 @@ static int update_pwuser_cb(FILE *fptr, FILE *ftmp, const char *username, const 
 	return rc;
 }
 
-int update_pwuser(FILE *fptr, FILE *ftmp, const char *username, const char *password, int iterations)
+static int update_pwuser(FILE *fptr, FILE *ftmp, const char *username, const char *password, int iterations)
 {
 	struct cb_helper helper;
 	int rc;
@@ -334,7 +334,7 @@ int update_pwuser(FILE *fptr, FILE *ftmp, const char *username, const char *pass
 }
 
 
-int copy_contents(FILE *src, FILE *dest)
+static int copy_contents(FILE *src, FILE *dest)
 {
 	char buf[MAX_BUFFER_LEN];
 	size_t len;
@@ -361,7 +361,7 @@ int copy_contents(FILE *src, FILE *dest)
 	return 0;
 }
 
-int create_backup(const char *backup_file, FILE *fptr)
+static int create_backup(const char *backup_file, FILE *fptr)
 {
 	FILE *fbackup;
 
@@ -380,7 +380,7 @@ int create_backup(const char *backup_file, FILE *fptr)
 	return 0;
 }
 
-void handle_sigint(int signal)
+static void handle_sigint(int signal)
 {
 	get_password__reset_term();
 

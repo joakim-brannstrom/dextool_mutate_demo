@@ -23,7 +23,7 @@ Contributors:
 #include <limits.h>
 #ifdef WIN32
 #  include <ws2tcpip.h>
-#elif __QNX__
+#elif defined(__QNX__)
 #  include <sys/socket.h>
 #  include <arpa/inet.h>
 #  include <netinet/in.h>
@@ -40,6 +40,7 @@ Contributors:
 #include "net_mosq.h"
 #include "packet_mosq.h"
 #include "send_mosq.h"
+#include "socks_mosq.h"
 #include "util_mosq.h"
 
 #define SOCKS_AUTH_NONE 0x00U

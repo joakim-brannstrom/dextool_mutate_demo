@@ -1,7 +1,7 @@
 <!--
 .. title: Security
 .. slug: security
-.. date: 2018-02-07 10:52:50 UTC
+.. date: 2021-04-03 11:55:50 UTC+1
 .. tags:
 .. category:
 .. link:
@@ -19,6 +19,8 @@ follow the steps on [Eclipse Security] page to report it.
 Listed with most recent first. Further information on security related issues
 can be found in the [security category].
 
+* April 2021: CVE-xxxx-xxxx Affecting versions **2.0.0** to **2.0.9**
+  inclusive, fixed in **2.0.10**.
 * December 2020: Running mosquitto_passwd with the following arguments only
   `mosquitto_passwd -b password_file username password` would cause the
   username to be used as the password. Affecting versions **2.0.0** to

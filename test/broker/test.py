@@ -7,6 +7,7 @@ tests = [
     #(ports required, 'path'),
     (1, './01-connect-allow-anonymous.py'),
     (1, './01-connect-bad-packet.py'),
+    (1, './01-connect-connack-2163.py'),
     (1, './01-connect-disconnect-v5.py'),
     (1, './01-connect-duplicate.py'),
     (1, './01-connect-invalid-id-0.py'),

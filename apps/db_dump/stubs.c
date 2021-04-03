@@ -1,8 +1,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "misc_mosq.h"
 #include "mosquitto_broker_internal.h"
 #include "mosquitto_internal.h"
+#include "util_mosq.h"
+
+#ifndef UNUSED
+#  define UNUSED(A) (void)(A)
+#endif
 
 struct mosquitto *context__init(mosq_sock_t sock)
 {

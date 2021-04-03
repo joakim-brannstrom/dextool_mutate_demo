@@ -131,7 +131,7 @@ static int dynsec_control_callback(int event, void *event_data, void *userdata)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int dynsec__process_set_default_acl_access(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data)
+static int dynsec__process_set_default_acl_access(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data)
 {
 	cJSON *j_actions, *j_action, *j_acltype, *j_allow;
 	bool allow;
@@ -174,7 +174,7 @@ int dynsec__process_set_default_acl_access(cJSON *j_responses, struct mosquitto 
 }
 
 
-int dynsec__process_get_default_acl_access(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data)
+static int dynsec__process_get_default_acl_access(cJSON *j_responses, struct mosquitto *context, cJSON *command, char *correlation_data)
 {
 	cJSON *tree, *jtmp, *j_data, *j_acls, *j_acl;
 	const char *admin_clientid, *admin_username;

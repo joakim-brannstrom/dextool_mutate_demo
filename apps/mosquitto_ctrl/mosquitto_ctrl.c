@@ -28,7 +28,7 @@ Contributors:
 #include "mosquitto.h"
 #include "mosquitto_ctrl.h"
 
-void print_version(void)
+static void print_version(void)
 {
 	int major, minor, revision;
 
@@ -36,14 +36,15 @@ void print_version(void)
 	printf("mosquitto_ctrl version %s running on libmosquitto %d.%d.%d.\n", VERSION, major, minor, revision);
 }
 
-void print_usage(void)
+static void print_usage(void)
 {
 	printf("mosquitto_ctrl is a tool for administering certain Mosquitto features.\n");
 	print_version();
 	printf("\nGeneral usage: mosquitto_ctrl <module> <module-command> <command-options>\n");
 	printf("For module specific help use: mosquitto_ctrl <module> help\n");
 	printf("\nModules available: dynsec\n");
-	printf("\nSee https://mosquitto.org/man/mosquitto_ctrl-1.html for more information.\n\n");
+	printf("\nFor more information see:\n");
+	printf("    https://mosquitto.org/man/mosquitto_ctrl-1.html\n\n");
 }
 
 
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
 {
 	struct mosq_ctrl ctrl;
 	int rc = MOSQ_ERR_SUCCESS;
-	FUNC_ctrl_main ctrl_main = NULL;
+	FUNC_ctrl_main l_ctrl_main = NULL;
 	void *lib = NULL;
 	char lib_name[200];
 
@@ -76,22 +77,22 @@ int main(int argc, char *argv[])
  
 	/* In built modules */
 	if(!strcasecmp(argv[0], "dynsec")){
-		ctrl_main = dynsec__main;
+		l_ctrl_main = dynsec__main;
 	}else{
 		/* Attempt external module */
 		snprintf(lib_name, sizeof(lib_name), "mosquitto_ctrl_%s.so", argv[0]);
 		lib = LIB_LOAD(lib_name);
 		if(lib){
-			ctrl_main = (FUNC_ctrl_main)LIB_SYM(lib, "ctrl_main");
+			l_ctrl_main = (FUNC_ctrl_main)LIB_SYM(lib, "ctrl_main");
 		}
 	}
-	if(ctrl_main == NULL){
+	if(l_ctrl_main == NULL){
 		fprintf(stderr, "Error: Module '%s' not supported.\n", argv[0]);
 		rc = MOSQ_ERR_NOT_SUPPORTED;
 	}
 
-	if(ctrl_main){
-		rc = ctrl_main(argc-1, &argv[1], &ctrl);
+	if(l_ctrl_main){
+		rc = l_ctrl_main(argc-1, &argv[1], &ctrl);
 		if(rc < 0){
 			/* Usage print */
 			rc = 0;

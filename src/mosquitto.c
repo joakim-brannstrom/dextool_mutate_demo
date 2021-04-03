@@ -74,13 +74,6 @@ int allow_severity = LOG_INFO;
 int deny_severity = LOG_INFO;
 #endif
 
-void handle_sigint(int signal);
-void handle_sigusr1(int signal);
-void handle_sigusr2(int signal);
-#ifdef SIGHUP
-void handle_sighup(int signal);
-#endif
-
 /* mosquitto shouldn't run as root.
  * This function will attempt to change to an unprivileged user and group if
  * running as root. The user is given in config->user.
@@ -146,7 +139,7 @@ int drop_privileges(struct mosquitto__config *config)
 	return MOSQ_ERR_SUCCESS;
 }
 
-void mosquitto__daemonise(void)
+static void mosquitto__daemonise(void)
 {
 #ifndef WIN32
 	char *err;
@@ -208,7 +201,7 @@ void listeners__reload_all_certificates(void)
 }
 
 
-int listeners__start_single_mqtt(struct mosquitto__listener *listener)
+static int listeners__start_single_mqtt(struct mosquitto__listener *listener)
 {
 	int i;
 	struct mosquitto__listener_sock *listensock_new;
@@ -275,7 +268,7 @@ void listeners__add_websockets(struct lws_context *ws_context, mosq_sock_t fd)
 }
 #endif
 
-int listeners__add_local(const char *host, uint16_t port)
+static int listeners__add_local(const char *host, uint16_t port)
 {
 	struct mosquitto__listener *listeners;
 	listeners = db.config->listeners;
@@ -296,7 +289,7 @@ int listeners__add_local(const char *host, uint16_t port)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int listeners__start_local_only(void)
+static int listeners__start_local_only(void)
 {
 	/* Attempt to open listeners bound to 127.0.0.1 and ::1 only */
 	int i;
@@ -313,6 +306,7 @@ int listeners__start_local_only(void)
 
 	log__printf(NULL, MOSQ_LOG_WARNING, "Starting in local only mode. Connections will only be possible from clients running on this machine.");
 	log__printf(NULL, MOSQ_LOG_WARNING, "Create a configuration file which defines a listener to allow remote access.");
+	log__printf(NULL, MOSQ_LOG_WARNING, "For more details see https://mosquitto.org/documentation/authentication-methods/");
 	if(db.config->cmd_port_count == 0){
 		rc = listeners__add_local("127.0.0.1", 1883);
 		if(rc == MOSQ_ERR_NOMEM) return MOSQ_ERR_NOMEM;
@@ -335,7 +329,7 @@ int listeners__start_local_only(void)
 }
 
 
-int listeners__start(void)
+static int listeners__start(void)
 {
 	int i;
 
@@ -379,7 +373,7 @@ int listeners__start(void)
 }
 
 
-void listeners__stop(void)
+static void listeners__stop(void)
 {
 	int i;
 
@@ -406,7 +400,7 @@ void listeners__stop(void)
 }
 
 
-void signal__setup(void)
+static void signal__setup(void)
 {
 	signal(SIGINT, handle_sigint);
 	signal(SIGTERM, handle_sigint);
@@ -424,7 +418,7 @@ void signal__setup(void)
 }
 
 
-int pid__write(void)
+static int pid__write(void)
 {
 	FILE *pid;
 

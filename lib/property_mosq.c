@@ -33,7 +33,7 @@ Contributors:
 #include "property_mosq.h"
 
 
-int property__read(struct mosquitto__packet *packet, uint32_t *len, mosquitto_property *property)
+static int property__read(struct mosquitto__packet *packet, uint32_t *len, mosquitto_property *property)
 {
 	int rc;
 	uint32_t property_identifier;
@@ -355,7 +355,7 @@ unsigned int property__get_remaining_length(const mosquitto_property *props)
 }
 
 
-int property__write(struct mosquitto__packet *packet, const mosquitto_property *property)
+static int property__write(struct mosquitto__packet *packet, const mosquitto_property *property)
 {
 	int rc;
 
@@ -975,7 +975,7 @@ int mosquitto_property_check_all(int command, const mosquitto_property *properti
 	return MOSQ_ERR_SUCCESS;
 }
 
-const mosquitto_property *property__get_property(const mosquitto_property *proplist, int identifier, bool skip_first)
+static const mosquitto_property *property__get_property(const mosquitto_property *proplist, int identifier, bool skip_first)
 {
 	const mosquitto_property *p;
 	bool is_first = true;

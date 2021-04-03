@@ -48,7 +48,7 @@ static int connack_result = 0;
 bool connack_received = false;
 
 #ifndef WIN32
-void my_signal_handler(int signum)
+static void my_signal_handler(int signum)
 {
 	if(signum == SIGALRM || signum == SIGTERM || signum == SIGINT){
 		if(connack_received){
@@ -65,19 +65,7 @@ void my_signal_handler(int signum)
 #endif
 
 
-void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
-{
-	UNUSED(obj);
-	UNUSED(reason_code);
-	UNUSED(properties);
-
-	if(process_messages == false && (mid == last_mid || last_mid == 0)){
-		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
-	}
-}
-
-
-void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message, const mosquitto_property *properties)
+static void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message, const mosquitto_property *properties)
 {
 	int i;
 	bool res;
@@ -120,7 +108,7 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 	}
 }
 
-void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flags, const mosquitto_property *properties)
+static void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flags, const mosquitto_property *properties)
 {
 	int i;
 
@@ -153,7 +141,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 	}
 }
 
-void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
+static void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
 	int i;
 	bool some_sub_allowed = (granted_qos[0] < 128);
@@ -177,7 +165,7 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_c
 	}
 }
 
-void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
+static void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
 {
 	UNUSED(mosq);
 	UNUSED(obj);
@@ -186,7 +174,7 @@ void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *s
 	printf("%s\n", str);
 }
 
-void print_version(void)
+static void print_version(void)
 {
 	int major, minor, revision;
 
@@ -194,7 +182,7 @@ void print_version(void)
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n", VERSION, major, minor, revision);
 }
 
-void print_usage(void)
+static void print_usage(void)
 {
 	int major, minor, revision;
 

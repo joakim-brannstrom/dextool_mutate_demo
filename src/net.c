@@ -427,7 +427,7 @@ int net__tls_server_ctx(struct mosquitto__listener *listener)
 #endif
 
 
-int net__load_crl_file(struct mosquitto__listener *listener)
+static int net__load_crl_file(struct mosquitto__listener *listener)
 {
 #ifdef WITH_TLS
 	X509_STORE *store;
@@ -754,6 +754,12 @@ static int net__socket_listen_tcp(struct mosquitto__listener *listener)
 #endif
 
 		if(bind(sock, rp->ai_addr, rp->ai_addrlen) == -1){
+#if defined(__linux__)
+			if(errno == EACCES){
+				log__printf(NULL, MOSQ_LOG_ERR, "If you are trying to bind to a privileged port (<1024), try using setcap and do not start the broker as root:");
+				log__printf(NULL, MOSQ_LOG_ERR, "    sudo setcap 'CAP_NET_BIND_SERVICE=+ep /usr/sbin/mosquitto'");
+			}
+#endif
 			net__print_error(MOSQ_LOG_ERR, "Error: %s");
 			COMPAT_CLOSE(sock);
 			freeaddrinfo(ainfo);

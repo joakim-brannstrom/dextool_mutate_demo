@@ -47,7 +47,7 @@ void LIB_ERROR(void)
 }
 
 
-int security__load_v2(struct mosquitto__auth_plugin *plugin, struct mosquitto_auth_opt *auth_options, int auth_option_count, void *lib)
+static int security__load_v2(struct mosquitto__auth_plugin *plugin, struct mosquitto_auth_opt *auth_options, int auth_option_count, void *lib)
 {
 	int rc;
 
@@ -121,7 +121,7 @@ int security__load_v2(struct mosquitto__auth_plugin *plugin, struct mosquitto_au
 }
 
 
-int security__load_v3(struct mosquitto__auth_plugin *plugin, struct mosquitto_opt *auth_options, int auth_option_count, void *lib)
+static int security__load_v3(struct mosquitto__auth_plugin *plugin, struct mosquitto_opt *auth_options, int auth_option_count, void *lib)
 {
 	int rc;
 
@@ -194,7 +194,7 @@ int security__load_v3(struct mosquitto__auth_plugin *plugin, struct mosquitto_op
 }
 
 
-int security__load_v4(struct mosquitto__auth_plugin *plugin, struct mosquitto_opt *auth_options, int auth_option_count, void *lib)
+static int security__load_v4(struct mosquitto__auth_plugin *plugin, struct mosquitto_opt *auth_options, int auth_option_count, void *lib)
 {
 	int rc;
 

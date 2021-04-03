@@ -36,6 +36,8 @@ Contributors:
 #  include <sys/stat.h>
 #endif
 
+#include "misc_mosq.h"
+
 
 FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read)
 {

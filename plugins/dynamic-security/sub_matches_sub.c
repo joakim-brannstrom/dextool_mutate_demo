@@ -21,6 +21,8 @@ Contributors:
 #include <stdlib.h>
 #include <string.h>
 
+#include "dynamic_security.h"
+
 static char *strtok_hier(char *str, char **saveptr)
 {
 	char *c;

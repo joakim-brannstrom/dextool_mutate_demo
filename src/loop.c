@@ -133,7 +133,7 @@ static void read_message_expiry_interval(mosquitto_property **proplist, uint32_t
 	}
 }
 
-void queue_plugin_msgs(void)
+static void queue_plugin_msgs(void)
 {
 	struct mosquitto_message_v5 *msg, *tmp;
 	struct mosquitto *context;
@@ -279,7 +279,7 @@ int mosquitto_main_loop(struct mosquitto__listener_sock *listensock, int listens
 
 void do_disconnect(struct mosquitto *context, int reason)
 {
-	char *id;
+	const char *id;
 #ifdef WITH_WEBSOCKETS
 	bool is_duplicate = false;
 #endif

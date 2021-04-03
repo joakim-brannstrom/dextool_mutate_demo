@@ -27,6 +27,10 @@ Contributors:
 #  include <sys/time.h>
 #endif
 
+#ifndef __GNUC__
+#define __attribute__(attrib)
+#endif
+
 /* pub_client.c modes */
 #define MSGMODE_NONE 0
 #define MSGMODE_CMD 1
@@ -136,6 +140,5 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg);
 
 int cfg_parse_property(struct mosq_config *cfg, int argc, char *argv[], int *idx);
 
-void err_printf(const struct mosq_config *cfg, const char *fmt, ...);
-
+void err_printf(const struct mosq_config *cfg, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 #endif

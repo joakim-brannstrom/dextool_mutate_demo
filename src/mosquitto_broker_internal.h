@@ -34,6 +34,7 @@ Contributors:
 #include "mosquitto_broker.h"
 #include "mosquitto_plugin.h"
 #include "mosquitto.h"
+#include "logging_mosq.h"
 #include "password_mosq.h"
 #include "tls_mosq.h"
 #include "uthash.h"
@@ -709,7 +710,6 @@ int control__unregister_callback(struct mosquitto__security_options *opts, MOSQ_
  * ============================================================ */
 int log__init(struct mosquitto__config *config);
 int log__close(struct mosquitto__config *config);
-int log__printf(struct mosquitto *mosq, unsigned int level, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
 void log__internal(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
 /* ============================================================
@@ -820,6 +820,16 @@ void session_expiry__check(void);
 void session_expiry__send_all(void);
 
 /* ============================================================
+ * Signals
+ * ============================================================ */
+void handle_sigint(int signal);
+void handle_sigusr1(int signal);
+void handle_sigusr2(int signal);
+#ifdef SIGHUP
+void handle_sighup(int signal);
+#endif
+
+/* ============================================================
  * Window service and signal related functions
  * ============================================================ */
 #if defined(WIN32) || defined(__CYGWIN__)
@@ -855,4 +865,3 @@ void xtreport(void);
 #endif
 
 #endif
-

@@ -26,6 +26,7 @@ Contributors:
 #include "mqtt_protocol.h"
 #include "packet_mosq.h"
 #include "property_mosq.h"
+#include "read_handle.h"
 
 
 int handle__auth(struct mosquitto *mosq)
