@@ -42,7 +42,8 @@
 		<title>Authentication</title>
 		<para>The authentication options described below allow a wide range of
 			possibilities in conjunction with the listener options. This
-			section aims to clarify the possibilities.</para>
+			section aims to clarify the possibilities. An overview is also available at
+			<ulink url="https://mosquitto.org/documentation/authentication-methods/"/></para>
 		<para>The simplest option is to have no authentication at all. This is
 			the default if no other options are given. Unauthenticated
 			encrypted support is provided by using the certificate based
@@ -54,6 +55,11 @@
 			vulnerable to interception. Use the
 			<option>per_listener_settings</option> to control whether passwords
 			are required globally or on a per-listener basis.</para>
+		<para>Mosquitto provides the Dynamic Security plugin which handles
+			username/password authentication and access control in a much
+			more flexible way than a password file. See
+			<ulink url="https://mosquitto.org/documentation/dynamic-security/"/>
+			</para>
 		<para>When using certificate based encryption there are three options
 			that affect authentication. The first is require_certificate, which
 			may be set to true or false. If false, the SSL/TLS component of the
@@ -164,6 +170,9 @@
 					<para>Reloaded on reload signal. The currently loaded ACLs
 						will be freed and reloaded. Existing subscriptions will
 						be affected after the reload.</para>
+					<para>See also 
+						<ulink url="https://mosquitto.org/documentation/dynamic-security/"/>
+					</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -267,6 +276,9 @@
 						alongsize <option>auth_plugin</option>, the plugin
 						checks will run after the built in checks.</para>
 					<para>Not currently reloaded on reload signal.</para>
+					<para>See also 
+						<ulink url="https://mosquitto.org/documentation/dynamic-security/"/>
+					</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -753,7 +765,9 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 						Clients that are already connected will not be
 						affected.</para>
 					<para>See also
-						<citerefentry><refentrytitle>mosquitto_passwd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+						<citerefentry><refentrytitle>mosquitto_passwd</refentrytitle><manvolnum>1</manvolnum></citerefentry> and
+						<ulink url="https://mosquitto.org/documentation/dynamic-security/"/>
+					</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
