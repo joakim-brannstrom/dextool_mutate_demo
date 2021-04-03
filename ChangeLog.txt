@@ -28,6 +28,7 @@ Build:
 - A variety of minor build related fixes, like functions not having previous
   declarations.
 - Fix CMake cross compile builds not finding opensslconf.h. Closes #2160.
+- Fix build on Solaris non-sparc. Closes #2136.
 
 
 2.0.9 - 2021-03-11
