@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.0)
 cmake_policy(SET CMP0042 NEW)
 
 project(mosquitto)
-set (VERSION 2.0.9)
+set (VERSION 2.0.10)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
 
