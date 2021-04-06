@@ -1,18 +1,16 @@
 Mosquitto for Windows
 =====================
 
-Mosquitto for Windows comes in 32-bit and 64-bit flavours.
-
-In both cases, the dependencies are not provided in this installer and must be
-installed separately in the case that they are not already available.
-
+Mosquitto for Windows comes in 64-bit and 32-bit flavours. All dependencies are
+provided in the installer.
 
 Capabilities
 ------------
 
 Some versions of Windows have limitations on the number of concurrent
-connections, set at approximately 2048 connections depending on the version of
-Windows you are using.
+connections. In modern versions of Windows, e.g. Windows 10 or Windows Server
+2019, this is approximately 8192 connections. In earlier versions of Windows,
+this limit is 2048 connections.
 
 
 Websockets
@@ -23,7 +21,6 @@ through a statically compiled version of libwebsockets and is being distributed
 under the Static Linking Exception (Section 2) of the License. As a result, the
 content is not subject to the LGPL 2.1.
 
-Please note that on Windows, libwebsockets limits connections to a maximum of 64 clients.
 
 Library Thread Support
 ----------------------
@@ -35,16 +32,6 @@ A better solution that the old pthreads-win32 is being looked into, so support
 will return in the future. If you need thread support, the code still supports
 it just fine. Support has been dropped to simplify installation.
 
-Dependencies
-------------
-
-* OpenSSL
-    Link: http://slproweb.com/products/Win32OpenSSL.html
-    Install "Win32 OpenSSL 1.1.0* Light" or "Win64 OpenSSL 1.1.0* Light"
-    Required DLLs: libssl-1_1.dll, libcrypto-1_1.dll or libssl-1_1-x64.dll, libcrypto-1_1-x64.dll
-
-Please ensure that the required DLLs are on the system path, or are in the same directory as
-the mosquitto executable - usually C:\Program Files (x86)\mosquitto or C:\Program Files\mosquitto.
 
 Windows Service
 ---------------
