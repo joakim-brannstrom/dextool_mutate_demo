@@ -19,7 +19,7 @@ follow the steps on [Eclipse Security] page to report it.
 Listed with most recent first. Further information on security related issues
 can be found in the [security category].
 
-* April 2021: CVE-xxxx-xxxx Affecting versions **2.0.0** to **2.0.9**
+* April 2021: [CVE-2021-28166] Affecting versions **2.0.0** to **2.0.9**
   inclusive, fixed in **2.0.10**.
 * December 2020: Running mosquitto_passwd with the following arguments only
   `mosquitto_passwd -b password_file username password` would cause the
@@ -69,6 +69,7 @@ can be found in the [security category].
 [Eclipse Security]: https://www.eclipse.org/security/
 [security category]: /blog/categories/security/
 
+[CVE-2021-28166]: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-28166
 [CVE-2019-11779]: https://nvd.nist.gov/vuln/detail/CVE-2019-11779
 [CVE-2019-11778]: https://nvd.nist.gov/vuln/detail/CVE-2019-11778
 [CVE-2018-20145]: https://nvd.nist.gov/vuln/detail/CVE-2018-20145

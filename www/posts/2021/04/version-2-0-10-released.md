@@ -13,7 +13,7 @@ Versions 2.0.10 of Mosquitto has been released. This is a security and bugfix
 release.
 
 # Security
-- CVE-xxxx-xxxx: If an authenticated client connected with MQTT v5 sent a
+- [CVE-2021-23980]: If an authenticated client connected with MQTT v5 sent a
   malformed CONNACK message to the broker a NULL pointer dereference occurred,
   most likely resulting in a segfault. This will be updated with the CVE
   number when it is assigned.
@@ -41,6 +41,7 @@ release.
 - Fix CMake cross compile builds not finding opensslconf.h. Closes [#2160].
 - Fix build on Solaris non-sparc. Closes [#2136].
 
+[CVE-2021-23980]: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-28166
 [#2134]: https://github.com/eclipse/mosquitto/issues/2134
 [#2136]: https://github.com/eclipse/mosquitto/issues/2136
 [#2152]: https://github.com/eclipse/mosquitto/issues/2152

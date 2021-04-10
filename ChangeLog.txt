@@ -2,10 +2,9 @@
 ==================
 
 Security:
-- CVE-xxxx-xxxx: If an authenticated client connected with MQTT v5 sent a
+- CVE-2021-23980: If an authenticated client connected with MQTT v5 sent a
   malformed CONNACK message to the broker a NULL pointer dereference occurred,
-  most likely resulting in a segfault. This will be updated with the CVE
-  number when it is assigned.
+  most likely resulting in a segfault.
   Affects versions 2.0.0 to 2.0.9 inclusive.
 
 Broker:
