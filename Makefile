@@ -36,7 +36,7 @@ DISTFILES= \
 	libmosquitto.pc.in \
 	libmosquittopp.pc.in \
 	mosquitto.conf \
-	notice.html \
+	NOTICE.md \
 	pskfile.example \
 	pwfile.example \
 	README-compiling.md \

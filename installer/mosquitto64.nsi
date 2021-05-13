@@ -54,6 +54,7 @@ Section "Files" SecInstall
 	File "..\aclfile.example"
 	File "..\ChangeLog.txt"
 	File "..\mosquitto.conf"
+	File "..\NOTICE.md"
 	File "..\pwfile.example"
 	File "..\README.md"
 	File "..\README-windows.txt"
