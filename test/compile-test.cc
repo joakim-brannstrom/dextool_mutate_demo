@@ -5,133 +5,51 @@
 //
 // For the license information refer to format.h.
 
-#include <string>
+#include "fmt/compile.h"
+
 #include <type_traits>
 
-// Check that fmt/compile.h compiles with windows.h included before it.
-#ifdef _WIN32
-#  include <windows.h>
-#endif
-
 #include "fmt/chrono.h"
-#include "fmt/compile.h"
-#include "gmock.h"
-#include "gtest-extra.h"
-#include "util.h"
+#include "gmock/gmock.h"
 
-TEST(IteratorTest, TruncatingIterator) {
+TEST(iterator_test, counting_iterator) {
+  auto it = fmt::detail::counting_iterator();
+  auto prev = it++;
+  EXPECT_EQ(prev.count(), 0);
+  EXPECT_EQ(it.count(), 1);
+  EXPECT_EQ((it + 41).count(), 42);
+}
+
+TEST(iterator_test, truncating_iterator) {
   char* p = nullptr;
-  fmt::detail::truncating_iterator<char*> it(p, 3);
+  auto it = fmt::detail::truncating_iterator<char*>(p, 3);
   auto prev = it++;
   EXPECT_EQ(prev.base(), p);
   EXPECT_EQ(it.base(), p + 1);
 }
 
-TEST(IteratorTest, TruncatingIteratorDefaultConstruct) {
-  static_assert(std::is_default_constructible<
-                    fmt::detail::truncating_iterator<char*>>::value,
-                "");
-
-  fmt::detail::truncating_iterator<char*> it;
+TEST(iterator_test, truncating_iterator_default_construct) {
+  auto it = fmt::detail::truncating_iterator<char*>();
   EXPECT_EQ(nullptr, it.base());
   EXPECT_EQ(std::size_t{0}, it.count());
 }
 
 #ifdef __cpp_lib_ranges
-TEST(IteratorTest, TruncatingIteratorOutputIterator) {
+TEST(iterator_test, truncating_iterator_is_output_iterator) {
   static_assert(
       std::output_iterator<fmt::detail::truncating_iterator<char*>, char>);
 }
 #endif
 
-TEST(IteratorTest, TruncatingBackInserter) {
-  std::string buffer;
+TEST(iterator_test, truncating_back_inserter) {
+  auto buffer = std::string();
   auto bi = std::back_inserter(buffer);
-  fmt::detail::truncating_iterator<decltype(bi)> it(bi, 2);
+  auto it = fmt::detail::truncating_iterator<decltype(bi)>(bi, 2);
   *it++ = '4';
   *it++ = '2';
   *it++ = '1';
   EXPECT_EQ(buffer.size(), 2);
   EXPECT_EQ(buffer, "42");
-}
-
-// compiletime_prepared_parts_type_provider is useful only with relaxed
-// constexpr.
-#if FMT_USE_CONSTEXPR
-template <unsigned EXPECTED_PARTS_COUNT, typename Format>
-void check_prepared_parts_type(Format format) {
-  typedef fmt::detail::compiled_format_base<decltype(format)> provider;
-  typedef fmt::detail::format_part<char>
-      expected_parts_type[EXPECTED_PARTS_COUNT];
-  static_assert(std::is_same<typename provider::parts_container,
-                             expected_parts_type>::value,
-                "CompileTimePreparedPartsTypeProvider test failed");
-}
-
-TEST(CompileTest, CompileTimePreparedPartsTypeProvider) {
-  check_prepared_parts_type<1u>(FMT_STRING("text"));
-  check_prepared_parts_type<1u>(FMT_STRING("{}"));
-  check_prepared_parts_type<2u>(FMT_STRING("text{}"));
-  check_prepared_parts_type<2u>(FMT_STRING("{}text"));
-  check_prepared_parts_type<3u>(FMT_STRING("text{}text"));
-  check_prepared_parts_type<3u>(FMT_STRING("{:{}.{}} {:{}}"));
-
-  check_prepared_parts_type<3u>(FMT_STRING("{{{}}}"));   // '{', 'argument', '}'
-  check_prepared_parts_type<2u>(FMT_STRING("text{{"));   // 'text', '{'
-  check_prepared_parts_type<3u>(FMT_STRING("text{{ "));  // 'text', '{', ' '
-  check_prepared_parts_type<2u>(FMT_STRING("}}text"));   // '}', text
-  check_prepared_parts_type<2u>(FMT_STRING("text}}text"));  // 'text}', 'text'
-  check_prepared_parts_type<4u>(
-      FMT_STRING("text{{}}text"));  // 'text', '{', '}', 'text'
-}
-#endif
-
-TEST(CompileTest, PassStringLiteralFormat) {
-  const auto prepared = fmt::detail::compile<int>("test {}");
-  EXPECT_EQ("test 42", fmt::format(prepared, 42));
-  const auto wprepared = fmt::detail::compile<int>(L"test {}");
-  EXPECT_EQ(L"test 42", fmt::format(wprepared, 42));
-}
-
-TEST(CompileTest, FormatToArrayOfChars) {
-  char buffer[32] = {0};
-  const auto prepared = fmt::detail::compile<int>("4{}");
-  fmt::format_to(fmt::detail::make_checked(buffer, 32), prepared, 2);
-  EXPECT_EQ(std::string("42"), buffer);
-  wchar_t wbuffer[32] = {0};
-  const auto wprepared = fmt::detail::compile<int>(L"4{}");
-  fmt::format_to(fmt::detail::make_checked(wbuffer, 32), wprepared, 2);
-  EXPECT_EQ(std::wstring(L"42"), wbuffer);
-}
-
-TEST(CompileTest, FormatToIterator) {
-  std::string s(2, ' ');
-  const auto prepared = fmt::detail::compile<int>("4{}");
-  fmt::format_to(s.begin(), prepared, 2);
-  EXPECT_EQ("42", s);
-  std::wstring ws(2, L' ');
-  const auto wprepared = fmt::detail::compile<int>(L"4{}");
-  fmt::format_to(ws.begin(), wprepared, 2);
-  EXPECT_EQ(L"42", ws);
-}
-
-TEST(CompileTest, FormatToN) {
-  char buf[5];
-  auto f = fmt::detail::compile<int>("{:10}");
-  auto result = fmt::format_to_n(buf, 5, f, 42);
-  EXPECT_EQ(result.size, 10);
-  EXPECT_EQ(result.out, buf + 5);
-  EXPECT_EQ(fmt::string_view(buf, 5), "     ");
-}
-
-TEST(CompileTest, FormattedSize) {
-  auto f = fmt::detail::compile<int>("{:10}");
-  EXPECT_EQ(fmt::formatted_size(f, 42), 10);
-}
-
-TEST(CompileTest, MultipleTypes) {
-  auto f = fmt::detail::compile<int, int>("{} {}");
-  EXPECT_EQ(fmt::format(f, 42, 42), "42 42");
 }
 
 struct test_formattable {};
@@ -145,18 +63,14 @@ template <> struct formatter<test_formattable> : formatter<const char*> {
 };
 FMT_END_NAMESPACE
 
-TEST(CompileTest, FormatUserDefinedType) {
-  auto f = fmt::detail::compile<test_formattable>("{}");
-  EXPECT_EQ(fmt::format(f, test_formattable()), "foo");
-}
-
-TEST(CompileTest, EmptyFormatString) {
-  auto f = fmt::detail::compile<>("");
-  EXPECT_EQ(fmt::format(f), "");
+TEST(compile_test, compile_fallback) {
+  // FMT_COMPILE should fallback on runtime formatting when `if constexpr` is
+  // not available.
+  EXPECT_EQ("42", fmt::format(FMT_COMPILE("{}"), 42));
 }
 
 #ifdef __cpp_if_constexpr
-TEST(CompileTest, FormatDefault) {
+TEST(compile_test, format_default) {
   EXPECT_EQ("42", fmt::format(FMT_COMPILE("{}"), 42));
   EXPECT_EQ("42", fmt::format(FMT_COMPILE("{}"), 42u));
   EXPECT_EQ("42", fmt::format(FMT_COMPILE("{}"), 42ll));
@@ -172,18 +86,18 @@ TEST(CompileTest, FormatDefault) {
 #  endif
 }
 
-TEST(CompileTest, FormatWideString) {
+TEST(compile_test, format_wide_string) {
   EXPECT_EQ(L"42", fmt::format(FMT_COMPILE(L"{}"), 42));
 }
 
-TEST(CompileTest, FormatSpecs) {
+TEST(compile_test, format_specs) {
   EXPECT_EQ("42", fmt::format(FMT_COMPILE("{:x}"), 0x42));
   EXPECT_EQ("1.2 ms ",
             fmt::format(FMT_COMPILE("{:7.1%Q %q}"),
                         std::chrono::duration<double, std::milli>(1.234)));
 }
 
-TEST(CompileTest, DynamicFormatSpecs) {
+TEST(compile_test, dynamic_format_specs) {
   EXPECT_EQ("foo  ", fmt::format(FMT_COMPILE("{:{}}"), "foo", 5));
   EXPECT_EQ("  3.14", fmt::format(FMT_COMPILE("{:{}.{}f}"), 3.141592, 6, 2));
   EXPECT_EQ(
@@ -192,7 +106,7 @@ TEST(CompileTest, DynamicFormatSpecs) {
                   std::chrono::duration<double, std::milli>(1.234), 9, 3));
 }
 
-TEST(CompileTest, ManualOrdering) {
+TEST(compile_test, manual_ordering) {
   EXPECT_EQ("42", fmt::format(FMT_COMPILE("{0}"), 42));
   EXPECT_EQ(" -42", fmt::format(FMT_COMPILE("{0:4}"), -42));
   EXPECT_EQ("41 43", fmt::format(FMT_COMPILE("{0} {1}"), 41, 43));
@@ -209,7 +123,12 @@ TEST(CompileTest, ManualOrdering) {
   EXPECT_EQ(L"42", fmt::format(FMT_COMPILE(L"{0}"), 42));
 }
 
-TEST(CompileTest, Named) {
+TEST(compile_test, named) {
+  auto runtime_named_field_compiled =
+      fmt::detail::compile<decltype(fmt::arg("arg", 42))>(FMT_COMPILE("{arg}"));
+  static_assert(std::is_same_v<decltype(runtime_named_field_compiled),
+                               fmt::detail::runtime_named_field<char>>);
+
   EXPECT_EQ("42", fmt::format(FMT_COMPILE("{}"), fmt::arg("arg", 42)));
   EXPECT_EQ("41 43", fmt::format(FMT_COMPILE("{} {}"), fmt::arg("arg", 41),
                                  fmt::arg("arg", 43)));
@@ -237,9 +156,22 @@ TEST(CompileTest, Named) {
 
   EXPECT_THROW(fmt::format(FMT_COMPILE("{invalid}"), fmt::arg("valid", 42)),
                fmt::format_error);
+
+#  if FMT_USE_NONTYPE_TEMPLATE_PARAMETERS
+  using namespace fmt::literals;
+  auto statically_named_field_compiled =
+      fmt::detail::compile<decltype("arg"_a = 42)>(FMT_COMPILE("{arg}"));
+  static_assert(std::is_same_v<decltype(statically_named_field_compiled),
+                               fmt::detail::field<char, int, 0>>);
+
+  EXPECT_EQ("41 43",
+            fmt::format(FMT_COMPILE("{a0} {a1}"), "a0"_a = 41, "a1"_a = 43));
+  EXPECT_EQ("41 43",
+            fmt::format(FMT_COMPILE("{a1} {a0}"), "a0"_a = 43, "a1"_a = 41));
+#  endif
 }
 
-TEST(CompileTest, FormatTo) {
+TEST(compile_test, format_to) {
   char buf[8];
   auto end = fmt::format_to(buf, FMT_COMPILE("{}"), 42);
   *end = '\0';
@@ -249,7 +181,7 @@ TEST(CompileTest, FormatTo) {
   EXPECT_STREQ("2a", buf);
 }
 
-TEST(CompileTest, FormatToNWithCompileMacro) {
+TEST(compile_test, format_to_n) {
   constexpr auto buffer_size = 8;
   char buffer[buffer_size];
   auto res = fmt::format_to_n(buffer, buffer_size, FMT_COMPILE("{}"), 42);
@@ -260,17 +192,17 @@ TEST(CompileTest, FormatToNWithCompileMacro) {
   EXPECT_STREQ("2a", buffer);
 }
 
-TEST(CompileTest, FormattedSizeWithCompileMacro) {
+TEST(compile_test, formatted_size) {
   EXPECT_EQ(2, fmt::formatted_size(FMT_COMPILE("{0}"), 42));
   EXPECT_EQ(5, fmt::formatted_size(FMT_COMPILE("{0:<4.2f}"), 42.0));
 }
 
-TEST(CompileTest, TextAndArg) {
+TEST(compile_test, text_and_arg) {
   EXPECT_EQ(">>>42<<<", fmt::format(FMT_COMPILE(">>>{}<<<"), 42));
   EXPECT_EQ("42!", fmt::format(FMT_COMPILE("{}!"), 42));
 }
 
-TEST(CompileTest, UnknownFormatFallback) {
+TEST(compile_test, unknown_format_fallback) {
   EXPECT_EQ(" 42 ",
             fmt::format(FMT_COMPILE("{name:^4}"), fmt::arg("name", 42)));
 
@@ -287,7 +219,7 @@ TEST(CompileTest, UnknownFormatFallback) {
   EXPECT_EQ(" 42 ", fmt::string_view(buffer, 4));
 }
 
-TEST(CompileTest, Empty) { EXPECT_EQ("", fmt::format(FMT_COMPILE(""))); }
+TEST(compile_test, empty) { EXPECT_EQ("", fmt::format(FMT_COMPILE(""))); }
 
 struct to_stringable {
   friend fmt::string_view to_string_view(to_stringable) { return {}; }
@@ -306,16 +238,17 @@ template <> struct formatter<to_stringable> {
 };
 FMT_END_NAMESPACE
 
-TEST(CompileTest, ToStringAndFormatter) {
+TEST(compile_test, to_string_and_formatter) {
   fmt::format(FMT_COMPILE("{}"), to_stringable());
 }
 #endif
 
 #if FMT_USE_NONTYPE_TEMPLATE_PARAMETERS
-TEST(CompileTest, CompileFormatStringLiteral) {
+TEST(compile_test, compile_format_string_literal) {
   using namespace fmt::literals;
   EXPECT_EQ("", fmt::format(""_cf));
   EXPECT_EQ("42", fmt::format("{}"_cf, 42));
+  EXPECT_EQ(L"42", fmt::format(L"{}"_cf, 42));
 }
 #endif
 
@@ -335,14 +268,14 @@ consteval auto test_format(auto format, const Args&... args) {
   return string;
 }
 
-TEST(CompileTimeFormattingTest, Bool) {
+TEST(compile_time_formatting_test, bool) {
   EXPECT_EQ("true", test_format<5>(FMT_COMPILE("{}"), true));
   EXPECT_EQ("false", test_format<6>(FMT_COMPILE("{}"), false));
   EXPECT_EQ("true ", test_format<6>(FMT_COMPILE("{:5}"), true));
   EXPECT_EQ("1", test_format<2>(FMT_COMPILE("{:d}"), true));
 }
 
-TEST(CompileTimeFormattingTest, Integer) {
+TEST(compile_time_formatting_test, integer) {
   EXPECT_EQ("42", test_format<3>(FMT_COMPILE("{}"), 42));
   EXPECT_EQ("420", test_format<4>(FMT_COMPILE("{}"), 420));
   EXPECT_EQ("42 42", test_format<6>(FMT_COMPILE("{} {}"), 42, 42));
@@ -372,14 +305,14 @@ TEST(CompileTimeFormattingTest, Integer) {
   EXPECT_EQ("**-42", test_format<6>(FMT_COMPILE("{:*>5}"), -42));
 }
 
-TEST(CompileTimeFormattingTest, Char) {
+TEST(compile_time_formatting_test, char) {
   EXPECT_EQ("c", test_format<2>(FMT_COMPILE("{}"), 'c'));
 
   EXPECT_EQ("c  ", test_format<4>(FMT_COMPILE("{:3}"), 'c'));
   EXPECT_EQ("99", test_format<3>(FMT_COMPILE("{:d}"), 'c'));
 }
 
-TEST(CompileTimeFormattingTest, String) {
+TEST(compile_time_formatting_test, string) {
   EXPECT_EQ("42", test_format<3>(FMT_COMPILE("{}"), "42"));
   EXPECT_EQ("The answer is 42",
             test_format<17>(FMT_COMPILE("{} is {}"), "The answer", "42"));
@@ -388,14 +321,14 @@ TEST(CompileTimeFormattingTest, String) {
   EXPECT_EQ("**🤡**", test_format<9>(FMT_COMPILE("{:*^6}"), "🤡"));
 }
 
-TEST(CompileTimeFormattingTest, Combination) {
+TEST(compile_time_formatting_test, combination) {
   EXPECT_EQ("420, true, answer",
             test_format<18>(FMT_COMPILE("{}, {}, {}"), 420, true, "answer"));
 
   EXPECT_EQ(" -42", test_format<5>(FMT_COMPILE("{:{}}"), -42, 4));
 }
 
-TEST(CompileTimeFormattingTest, MultiByteFill) {
+TEST(compile_time_formatting_test, multibyte_fill) {
   EXPECT_EQ("жж42", test_format<8>(FMT_COMPILE("{:ж>4}"), 42));
 }
 #endif

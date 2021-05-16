@@ -289,6 +289,8 @@ inline null<> gmtime_r(...) { return null<>(); }
 inline null<> gmtime_s(...) { return null<>(); }
 }  // namespace detail
 
+FMT_MODULE_EXPORT_BEGIN
+
 /**
   Converts given time since epoch as ``std::time_t`` value into calendar time,
   expressed in local time. Unlike ``std::localtime``, this function is
@@ -380,7 +382,8 @@ inline std::tm gmtime(
   return gmtime(std::chrono::system_clock::to_time_t(time_point));
 }
 
-namespace detail {
+FMT_BEGIN_DETAIL_NAMESPACE
+
 inline size_t strftime(char* str, size_t count, const char* format,
                        const std::tm* time) {
   // Assign to a pointer to suppress GCCs -Wformat-nonliteral
@@ -399,7 +402,8 @@ inline size_t strftime(wchar_t* str, size_t count, const wchar_t* format,
   wcsftime = std::wcsftime;
   return wcsftime(str, count, format, time);
 }
-}  // namespace detail
+
+FMT_END_DETAIL_NAMESPACE
 
 template <typename Char, typename Duration>
 struct formatter<std::chrono::time_point<std::chrono::system_clock, Duration>,
@@ -428,6 +432,10 @@ template <typename Char> struct formatter<std::tm, Char> {
       -> decltype(ctx.out()) {
     basic_memory_buffer<Char> tm_format;
     tm_format.append(specs.begin(), specs.end());
+    // By appending an extra space we can distinguish an empty result that
+    // indicates insufficient buffer size from a guaranteed non-empty result
+    // https://github.com/fmtlib/fmt/issues/2238
+    tm_format.push_back(' ');
     tm_format.push_back('\0');
     basic_memory_buffer<Char> buf;
     size_t start = buf.size();
@@ -438,23 +446,18 @@ template <typename Char> struct formatter<std::tm, Char> {
         buf.resize(start + count);
         break;
       }
-      if (size >= tm_format.size() * 256) {
-        // If the buffer is 256 times larger than the format string, assume
-        // that `strftime` gives an empty result. There doesn't seem to be a
-        // better way to distinguish the two cases:
-        // https://github.com/fmtlib/fmt/issues/367
-        break;
-      }
       const size_t MIN_GROWTH = 10;
       buf.reserve(buf.capacity() + (size > MIN_GROWTH ? size : MIN_GROWTH));
     }
-    return std::copy(buf.begin(), buf.end(), ctx.out());
+    // Remove the extra space.
+    return std::copy(buf.begin(), buf.end() - 1, ctx.out());
   }
 
   basic_string_view<Char> specs;
 };
 
-namespace detail {
+FMT_BEGIN_DETAIL_NAMESPACE
+
 template <typename Period> FMT_CONSTEXPR const char* get_units() {
   return nullptr;
 }
@@ -859,6 +862,7 @@ struct chrono_formatter {
   FormatContext& context;
   OutputIt out;
   int precision;
+  bool localized = false;
   // rep is unsigned to avoid overflow.
   using rep =
       conditional_t<std::is_integral<Rep>::value && sizeof(Rep) < sizeof(int),
@@ -953,7 +957,8 @@ struct chrono_formatter {
 
   void format_localized(const tm& time, char format, char modifier = 0) {
     if (isnan(val)) return write_nan();
-    auto locale = context.locale().template get<std::locale>();
+    auto locale = localized ? context.locale().template get<std::locale>()
+                            : std::locale::classic();
     auto& facet = std::use_facet<std::time_put<char_type>>(locale);
     std::basic_ostringstream<char_type> os;
     os.imbue(locale);
@@ -1072,7 +1077,8 @@ struct chrono_formatter {
     out = format_duration_unit<char_type, Period>(out);
   }
 };
-}  // namespace detail
+
+FMT_END_DETAIL_NAMESPACE
 
 template <typename Rep, typename Period, typename Char>
 struct formatter<std::chrono::duration<Rep, Period>, Char> {
@@ -1082,6 +1088,7 @@ struct formatter<std::chrono::duration<Rep, Period>, Char> {
   using arg_ref_type = detail::arg_ref<Char>;
   arg_ref_type width_ref;
   arg_ref_type precision_ref;
+  bool localized = false;
   basic_string_view<Char> format_str;
   using duration = std::chrono::duration<Rep, Period>;
 
@@ -1144,6 +1151,10 @@ struct formatter<std::chrono::duration<Rep, Period>, Char> {
       else
         handler.on_error("precision not allowed for this argument type");
     }
+    if (begin != end && *begin == 'L') {
+      ++begin;
+      localized = true;
+    }
     end = parse_chrono_format(begin, end, detail::chrono_format_checker());
     return {begin, end};
   }
@@ -1178,6 +1189,7 @@ struct formatter<std::chrono::duration<Rep, Period>, Char> {
       detail::chrono_formatter<FormatContext, decltype(out), Rep, Period> f(
           ctx, out, d);
       f.precision = precision_copy;
+      f.localized = localized;
       parse_chrono_format(begin, end, f);
     }
     return detail::write(
@@ -1185,6 +1197,7 @@ struct formatter<std::chrono::duration<Rep, Period>, Char> {
   }
 };
 
+FMT_MODULE_EXPORT_END
 FMT_END_NAMESPACE
 
 #endif  // FMT_CHRONO_H_

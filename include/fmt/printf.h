@@ -10,8 +10,9 @@
 
 #include <algorithm>  // std::max
 #include <limits>     // std::numeric_limits
+#include <ostream>
 
-#include "ostream.h"
+#include "format.h"
 
 FMT_BEGIN_NAMESPACE
 namespace detail {
@@ -194,11 +195,15 @@ FMT_DEPRECATED void printf(detail::buffer<Char>& buf,
 }
 using detail::vprintf;
 
+FMT_MODULE_EXPORT_BEGIN
+
 template <typename Char>
 class basic_printf_parse_context : public basic_format_parse_context<Char> {
   using basic_format_parse_context<Char>::basic_format_parse_context;
 };
 template <typename OutputIt, typename Char> class basic_printf_context;
+
+FMT_MODULE_EXPORT_END
 
 /**
   \rst
@@ -242,7 +247,8 @@ class printf_arg_formatter : public detail::arg_formatter_base<OutputIt, Char> {
       // ignored for non-numeric types
       if (fmt_specs.align == align::none || fmt_specs.align == align::numeric)
         fmt_specs.align = align::right;
-      return write_char(this->out(), static_cast<Char>(value), fmt_specs);
+      return detail::write<Char>(this->out(), static_cast<Char>(value),
+                                 fmt_specs);
     }
     return base::operator()(value);
   }
@@ -289,8 +295,7 @@ template <typename T> struct printf_formatter {
   }
 
   template <typename FormatContext>
-  auto format(const T& value, FormatContext& ctx) -> decltype(ctx.out()) {
-    detail::format_value(detail::get_container(ctx.out()), value);
+  auto format(const T&, FormatContext& ctx) -> decltype(ctx.out()) {
     return ctx.out();
   }
 };
@@ -567,6 +572,8 @@ OutputIt basic_printf_context<OutputIt, Char>::format() {
       out, basic_string_view<Char>(start, detail::to_unsigned(it - start)));
 }
 
+FMT_MODULE_EXPORT_BEGIN
+
 template <typename Char>
 using basic_printf_context_t =
     basic_printf_context<detail::buffer_appender<Char>, Char>;
@@ -685,7 +692,7 @@ inline int vfprintf(
     basic_format_args<basic_printf_context_t<type_identity_t<Char>>> args) {
   basic_memory_buffer<Char> buffer;
   vprintf(buffer, to_string_view(format), args);
-  detail::write_buffer(os, buffer);
+  os.write(buffer.data(), static_cast<std::streamsize>(buffer.size()));
   return static_cast<int>(buffer.size());
 }
 
@@ -717,6 +724,8 @@ inline int fprintf(std::basic_ostream<Char>& os, const S& format_str,
   return vfprintf(os, to_string_view(format_str),
                   make_format_args<context>(args...));
 }
+
+FMT_MODULE_EXPORT_END
 FMT_END_NAMESPACE
 
 #endif  // FMT_PRINTF_H_
