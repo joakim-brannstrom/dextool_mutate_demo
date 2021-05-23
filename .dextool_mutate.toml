@@ -137,7 +137,7 @@ test_cmd = ["./tests", "./exhaustive_tests"]
 # analyze_cmd = "analyze.sh"
 
 # built-in analyzer of output from testing frameworks to find failing test cases
-# analyze_using_builtin = ["gtest", "ctest", "makefile"]
+analyze_using_builtin = ["makefile"]
 
 # determine in what order mutants are chosen
 # available options are: "random" "consecutive" "bySize"
