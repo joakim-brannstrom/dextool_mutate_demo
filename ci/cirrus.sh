@@ -12,53 +12,40 @@ valgrind --version || true
 
 ./autogen.sh
 
-# Nix doesn't store GNU file in /usr/bin, see https://lists.gnu.org/archive/html/bug-libtool/2015-09/msg00000.html .
-# The -i'' is necessary for macOS portability, see https://stackoverflow.com/a/4247319 .
-sed -i'' -e 's@/usr/bin/file@$(which file)@g' configure
-
 ./configure \
     --enable-experimental="$EXPERIMENTAL" \
-    --with-test-override-wide-multiply="$WIDEMUL" --with-bignum="$BIGNUM" --with-asm="$ASM" \
+    --with-test-override-wide-multiply="$WIDEMUL" --with-asm="$ASM" \
     --enable-ecmult-static-precomputation="$STATICPRECOMPUTATION" --with-ecmult-gen-precision="$ECMULTGENPRECISION" \
     --enable-module-ecdh="$ECDH" --enable-module-recovery="$RECOVERY" \
     --enable-module-schnorrsig="$SCHNORRSIG" \
     --with-valgrind="$WITH_VALGRIND" \
     --host="$HOST" $EXTRAFLAGS
 
-if [ -n "$BUILD" ]
-then
-    make -j2 "$BUILD"
-fi
+# We have set "-j<n>" in MAKEFLAGS.
+make
 
-if [ "$RUN_VALGRIND" = "yes" ]
-then
-    make -j2
-    # the `--error-exitcode` is required to make the test fail if valgrind found errors, otherwise it'll return 0 (https://www.valgrind.org/docs/manual/manual-core.html)
-    valgrind --error-exitcode=42 ./tests 16
-    valgrind --error-exitcode=42 ./exhaustive_tests
-fi
+# Print information about binaries so that we can see that the architecture is correct
+file *tests* || true
+file bench_* || true
+file .libs/* || true
 
-if [ -n "$QEMU_CMD" ]
-then
-    make -j2
-    $QEMU_CMD ./tests 16
-    $QEMU_CMD ./exhaustive_tests
-fi
+# This tells `make check` to wrap test invocations.
+export LOG_COMPILER="$WRAPPER_CMD"
+
+# This limits the iterations in the tests and benchmarks.
+export SECP256K1_TEST_ITERS="$TEST_ITERS"
+export SECP256K1_BENCH_ITERS="$BENCH_ITERS"
+
+make "$BUILD"
 
 if [ "$BENCH" = "yes" ]
 then
     # Using the local `libtool` because on macOS the system's libtool has nothing to do with GNU libtool
     EXEC='./libtool --mode=execute'
-    if [ -n "$QEMU_CMD" ]
+    if [ -n "$WRAPPER_CMD" ]
     then
-       EXEC="$EXEC $QEMU_CMD"
+        EXEC="$EXEC $WRAPPER_CMD"
     fi
-    if [ "$RUN_VALGRIND" = "yes" ]
-    then
-        EXEC="$EXEC valgrind --error-exitcode=42"
-    fi
-    # This limits the iterations in the benchmarks below to ITER iterations.
-    export SECP256K1_BENCH_ITERS="$ITERS"
     {
         $EXEC ./bench_ecmult
         $EXEC ./bench_internal
