@@ -19,3 +19,22 @@ Unfortantly, as with all mutation testing, it can take a while to run the tool.
 Googletest exhibit the classic C++ tendencies of a long compilation time for a
 minor change to a header. If you want a quick overview I recommend running with
 the flag `--schema-only`.
+
+### Setup Notes
+
+Clone the repo. Create a `build` directory, run cmake:
+
+```sh
+mkdir -p build
+pushd build
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dgtest_build_tests=ON -Dgmock_build_tests=ON ..
+popd build
+```
+
+Run dextool:
+
+```sh
+dextool mutate analyze
+dextool mutate test --schema-only
+dextool mutate report --style html --section summary --section tc_stat --section tc_killed_no_mutants --section tc_unique --section trend
+```
