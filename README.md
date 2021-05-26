@@ -149,3 +149,31 @@ dextool mutate analyze
 dextool mutate test --schema-only
 dextool mutate report --style html --section summary --section tc_stat --section tc_killed_no_mutants --section tc_unique --section trend
 ```
+
+## [libzmq](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/fmtlib)
+
+The library in itself do not present any specific problems when it comes to
+using the tool. There are some failing tests but those are found and excluded
+pretty fast by using the provided `test_cmd` generator. It executes each test one
+by one to see which ones pass. This is needed because libzmq by default, it
+seems, compile and produce tests that only execute OK on *appropriately
+configured* Linux systems.
+
+The `test_cmd` filter:
+
+```sh
+dextool_git_repo/tools/dextool_mutate_test_cmd.d --filter-failing --test-cmd-dir build/ --conf .dextool_mutate.toml
+```
+
+## Setup Notes
+
+I cannot explain why we need to link both with the library and inject the code
+in all tests but ohh well. I am probably misunderstanding cmake in some way.
+Buildsystems.... Throw symbols at the problem until the linker stops complaining!
+
+```sh
+export DEXTOOL_INSTALL=where/you/installed/dextool
+pushd build
+cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWITH_PERF_TOOL=OFF -DZMQ_BUILD_TESTS=ON -DENABLE_CPACK=OFF -DCMAKE_EXE_LINKER_FLAGS="-L$DEXTOOL_INSTALL/lib -Wl,--whole-archive -ldextool_coverage_runtime -ldextool_schema_runtime -Wl,--no-whole-archive"
+popd
+```
