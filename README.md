@@ -3,15 +3,15 @@
 This is a demonstration of using [dextool mutate](https://github.com/joakim-brannstrom/dextool/tree/master/plugin/mutate) on open source projects.
 
 The intention is to demonstrate that the tool is usable on a wide range of open
-source projects in practise and to serve as example of how to use it to others.
+source projects in practice and to serve as example of how to use it to others.
 I hope it will help you, as a reader, to get started.
 
 ## Warning Note
 
-Because this is a demo repo the repos will always be somewhat out of sync with
-the master versions. Maybe in the future if the demos can be automatically
+Because this is a demo the projects/demos will always be somewhat out of sync
+with the master versions. Maybe in the future if the demos can be automatically
 tested via CI integration it will be possible to always keep them in sync. But
-there is no time and budget for that.
+there is no time and budget for that at the moment.
 
 If you find any problem with the demos then please create an issue.
 
@@ -24,7 +24,7 @@ This tracking thus allow the tool to score the tests, find those that kill zero
 mutants, *know* when mutants need to be re-tested because tests have changed
 etc.
 
-Unfortantly, as with all mutation testing, it can take a while to run the tool.
+Unfortunately, as with all mutation testing, it can take a while to run the tool.
 Googletest exhibit the classic C++ tendencies of a long compilation time for a
 minor change to a header. If you want a quick overview I recommend running with
 the flag `--schema-only`.
@@ -63,7 +63,7 @@ easy. Install it, hug the bear.
 The second thing is that dextools automatic injection of the coverage and
 schema runtimes lead to link errors. This is easily solved by, as you can see
 in the configuration, tell dextol to not inject the runtime. Instead we link
-manually to the precompiled verisions. Actually, if you can, always prefer the
+manually to the precompiled versions. Actually, if you can, always prefer the
 precompiled because it reduces the compilation time.
 
 ```
