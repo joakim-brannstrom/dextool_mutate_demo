@@ -6,6 +6,15 @@ The intention is to demonstrate that the tool is usable on a wide range of open
 source projects in practise and to serve as example of how to use it to others.
 I hope it will help you, as a reader, to get started.
 
+## Warning Note
+
+Because this is a demo repo the repos will always be somewhat out of sync with
+the master versions. Maybe in the future if the demos can be automatically
+tested via CI integration it will be possible to always keep them in sync. But
+there is no time and budget for that.
+
+If you find any problem with the demos then please create an issue.
+
 ## [GoogleTest](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/googletest)
 
 Googletest is a nice candidate to show the tool because of the extensive test
