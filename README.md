@@ -121,3 +121,22 @@ A C++ template heavy library, or so it seems to me. It uses googletest thus the
 full test case tracking work out of the box. The interesting factor here is
 that the test cases need to be analyzed because a lot of the mutants are
 derived from template instantiations.
+
+### Setup Notes
+
+Clone the repo. Create a `build` directory, run cmake:
+
+```sh
+mkdir -p build
+pushd build
+cmake -Dgmock_build_tests=ON ..
+popd build
+```
+
+Run dextool:
+
+```sh
+dextool mutate analyze
+dextool mutate test --schema-only
+dextool mutate report --style html --section summary --section tc_stat --section tc_killed_no_mutants --section tc_unique --section trend
+```
