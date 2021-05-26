@@ -114,3 +114,10 @@ they're false positives or to improve the tests.
 
 No tool existed that could do what he needed. Now, as I have demonstrated here,
 there is such a tool.
+
+## [fmtlib](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/fmtlib)
+
+A C++ template heavy library, or so it seems to me. It uses googletest thus the
+full test case tracking work out of the box. The interesting factor here is
+that the test cases need to be analyzed because a lot of the mutants are
+derived from template instantiations.
