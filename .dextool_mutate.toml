@@ -190,7 +190,7 @@ inject_runtime_impl = [
 ["tests/test_xpub_verbose.cpp", "cpp"],
 ["tests/test_xpub_welcome_msg.cpp", "cpp"],
 ["tests/test_z85_decode_fuzzer.cpp", "cpp"],
-["test_zmq_poll_fd.cpp", "cpp"],
+["tests/test_zmq_poll_fd.cpp", "cpp"],
 ["unittests/unittest_curve_encoding.cpp", "cpp"],
 ["unittests/unittest_ip_resolver.cpp", "cpp"],
 ["unittests/unittest_mtrie.cpp", "cpp"],
