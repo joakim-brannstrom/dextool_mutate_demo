@@ -15,7 +15,7 @@ there is no time and budget for that at the moment.
 
 If you find any problem with the demos then please create an issue.
 
-## [GoogleTest](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/googletest)
+# [GoogleTest](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/googletest)
 
 Googletest is a nice candidate to show the tool because of the extensive test
 suite together with the tools builtin googletest test case parser. The parser
@@ -29,7 +29,7 @@ Googletest exhibit the classic C++ tendencies of a long compilation time for a
 minor change to a header. If you want a quick overview I recommend running with
 the flag `--schema-only`.
 
-### Setup Notes
+## Setup Notes
 
 Clone the repo. Create a `build` directory, run cmake:
 
@@ -48,14 +48,14 @@ dextool mutate test --schema-only
 dextool mutate report --style html --section summary --section tc_stat --section tc_killed_no_mutants --section tc_unique --section trend
 ```
 
-## [secp256k1](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/secp256k1)
+# [secp256k1](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/secp256k1)
 
 This project is a bit harder than googletest. There are no test case analyzer
 which mean the fine grained test case tracking is lost and the tool uses
 autotools which lead to a harder time setting it up. But do not dispare, it is
 still doable and mutation testing will be useful.
 
-### Setup Notes
+## Setup Notes
 
 First we need a `compile_commands.json`. Thanks to the tool `bear` this is
 easy. Install it, hug the bear.
@@ -78,7 +78,7 @@ dextool mutate test
 dextool mutate report --style html --section summary --section tc_stat --section tc_killed_no_mutants --section tc_unique --section trend
 ```
 
-### Note
+## Note
 
 I hope this answers nullc's hackernews comment. When he wrote the following:
 
@@ -131,7 +131,7 @@ full test case tracking work out of the box. The interesting factor here is
 that the test cases need to be analyzed because a lot of the mutants are
 derived from template instantiations.
 
-### Setup Notes
+## Setup Notes
 
 Clone the repo. Create a `build` directory, run cmake:
 
@@ -150,7 +150,7 @@ dextool mutate test --schema-only
 dextool mutate report --style html --section summary --section tc_stat --section tc_killed_no_mutants --section tc_unique --section trend
 ```
 
-## [libzmq](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/fmtlib)
+# [libzmq](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/fmtlib)
 
 The library in itself do not present any specific problems when it comes to
 using the tool. There are some failing tests but those are found and excluded
@@ -176,4 +176,26 @@ export DEXTOOL_INSTALL=where/you/installed/dextool
 pushd build
 cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWITH_PERF_TOOL=OFF -DZMQ_BUILD_TESTS=ON -DENABLE_CPACK=OFF -DCMAKE_EXE_LINKER_FLAGS="-L$DEXTOOL_INSTALL/lib -Wl,--whole-archive -ldextool_coverage_runtime -ldextool_schema_runtime -Wl,--no-whole-archive"
 popd
+```
+
+# [readerwriterqueue](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/readerwriterqueue)
+
+A header only library. It is widely used and used by, from what I can see, used
+by many. Lets see how good the test suite is. Maybe we will find some googides
+here and an opportunity to contribute back.
+
+## Setup Notes
+
+I have modified the cmake build system to make it easier to perform mutation
+testing with dextool. The modification mean that the tests are build by cmake
+thus a simple `make -j` is all that is needed in the build directory. A side
+effect is that cmake generate a complete `compile_commands.json` for us.
+Otherwise we would probably need to analyze the tests separately. Because the
+library is mostly C++ templates they need to be instantiated for an analysis to
+be *complete*.
+
+```sh
+mkdir build
+pushd build
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 ```
