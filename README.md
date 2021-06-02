@@ -198,4 +198,30 @@ be *complete*.
 mkdir build
 pushd build
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+popd
+```
+
+# [mosquitto](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/mosquitto)
+
+Interesting project wherein most tests are written in python. This is all fine
+and not a problem when running mutation testing.
+
+The improvements that can be made to the configuration is to:
+
+* either enhance `ptest` to exit on first failed test OR change the
+  system/configuration in such a way that dextool can run the tests. Then
+  dextool will halt testing on the first failing test.
+* add a test case analyzer.
+
+## Setup Notes
+
+Dextool need a compile_commands.json in order to analyze the source code. This
+is easiest created by letting cmake do its magic. So the cmake build directory
+is only used for anything else than analyzing the source code.
+
+```sh
+mkdir build
+pushd build
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+popd
 ```
