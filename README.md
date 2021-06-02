@@ -15,6 +15,26 @@ there is no time and budget for that at the moment.
 
 If you find any problem with the demos then please create an issue.
 
+## Generic
+
+After the setup all demos use dextool mutate as follows:
+
+```sh
+dextool mutate analyze
+dextool mutate test
+dextool mutate report --style html --section summary --section tc_stat --section tc_killed_no_mutants --section tc_unique --section trend
+```
+
+You can use the flag `--schema-only` during the test phase to only run the
+"fast" mode, e.g. scheman. This leave out a considerable amount of mutants but
+if this is the first time you run dextool it is probably good enough because
+you will *cough* find enough interesting facts in the report that will keep you
+busy for a while. And this *while* can be while the tool is running the
+complete test phase.
+
+The tool is incremental thus it will reuse previous results as long as you
+re-use the database between runs.
+
 # [GoogleTest](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/googletest)
 
 Googletest is a nice candidate to show the tool because of the extensive test
@@ -40,14 +60,6 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dgtest_build_tests=ON -Dgmock_build_te
 popd build
 ```
 
-Run dextool:
-
-```sh
-dextool mutate analyze
-dextool mutate test --schema-only
-dextool mutate report --style html --section summary --section tc_stat --section tc_killed_no_mutants --section tc_unique --section trend
-```
-
 # [secp256k1](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/secp256k1)
 
 This project is a bit harder than googletest. There are no test case analyzer
@@ -66,16 +78,12 @@ in the configuration, tell dextol to not inject the runtime. Instead we link
 manually to the precompiled versions. Actually, if you can, always prefer the
 precompiled because it reduces the compilation time.
 
-```
+```sh
 export DEXTOOL_INSTALL=where/you/installed/dextool
 ./autogen.sh
 LDFLAGS="-L$DEXTOOL_INSTALL/lib -Wl,--whole-archive -ldextool_coverage_runtime -ldextool_schema_runtime -Wl,--no-whole-archive" ./configure
 
 bear -- make check
-
-dextool mutate analyze
-dextool mutate test
-dextool mutate report --style html --section summary --section tc_stat --section tc_killed_no_mutants --section tc_unique --section trend
 ```
 
 ## Note
@@ -212,6 +220,10 @@ The improvements that can be made to the configuration is to:
   system/configuration in such a way that dextool can run the tests. Then
   dextool will halt testing on the first failing test.
 * add a test case analyzer.
+
+Note that the test suite of `mosquitto` is flaky which is really bad for
+mutation testing. I have removed the two test cases that kept on failing in my
+branch. Thus another improvement would be to fix these test cases.
 
 ## Setup Notes
 
