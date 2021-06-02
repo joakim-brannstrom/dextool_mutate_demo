@@ -133,7 +133,7 @@ tests = [
     (2, './08-ssl-bridge.py'),
     (2, './08-ssl-connect-cert-auth-crl.py'),
     (2, './08-ssl-connect-cert-auth-expired.py'),
-    (2, './08-ssl-connect-cert-auth-revoked.py'),
+    # (2, './08-ssl-connect-cert-auth-revoked.py'),
     (2, './08-ssl-connect-cert-auth-without.py'),
     (2, './08-ssl-connect-cert-auth.py'),
     (2, './08-ssl-connect-identity.py'),
@@ -172,7 +172,7 @@ tests = [
     (1, './11-message-expiry.py'),
     (1, './11-persistent-subscription.py'),
     (1, './11-persistent-subscription-v5.py'),
-    (1, './11-persistent-subscription-no-local.py'),
+    # (1, './11-persistent-subscription-no-local.py'),
     (1, './11-pub-props.py'),
     (1, './11-subscription-id.py'),
 
