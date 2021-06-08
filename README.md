@@ -237,3 +237,77 @@ pushd build
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 popd
 ```
+
+# [postgresql](https://github.com/joakim-brannstrom/dextool_mutate_demo/tree/postgresql)
+
+I have always been curious how mutation testing would work on a really large
+project. Sooo, `postgresql` is pretty large! If we run `cloc`:
+
+```
+$ cloc postgres
+    7115 text files.
+    5928 unique files.
+    3140 files ignored.
+
+github.com/AlDanial/cloc v 1.86  T=31.83 s (125.8 files/s, 86282.3 lines/s)
+---------------------------------------------------------------------------------------
+Language                             files          blank        comment           code
+---------------------------------------------------------------------------------------
+C                                     1412         183907         347456        1018806
+PO File                                347         129896         162374         393238
+SQL                                    675          24317          18132          96050
+C/C++ Header                           959          16641          48537          92351
+JSON                                     1              0              0          37628
+yacc                                    11           3799           3169          36099
+Perl                                   206           6361           5486          32395
+XML                                      4             29             25          31114
+Bourne Shell                            34           3235           2885          21016
+make                                   288           2079           2137           7016
+lex                                     13           1115           2265           5373
+m4                                      16            623            172           4738
+XSLT                                    12            237            179           1420
+Bourne Again Shell                       2            120            135           1197
+C++                                      3            160            269            668
+SVG                                      3              0             76            416
+Python                                   2             55             94            160
+DOS Batch                                6             20             26            127
+CSS                                      1             33             12            120
+Assembly                                 3             17             38             69
+D                                        1             14             14             66
+TOML                                     1             59            112             38
+Windows Resource File                    2              4              1             34
+Lisp                                     1              1              1             17
+sed                                      1              1              7             15
+Windows Message File                     1              0              0              5
+Windows Module Definition                1              0              1              4
+---------------------------------------------------------------------------------------
+SUM:                                  4006         372723         593603        1780180
+---------------------------------------------------------------------------------------
+```
+
+Out of all that the interesting is the C/C++ code. That is in total `1 111 825`
+significant lines of code (SLOC). Some of it is probably test and other
+artefact's that I do not know anything about. But even so we can all agree that
+more than million lines of code is significant.
+
+Running the mutation testing analyzer didn't take that long, a couple of minutes.
+
+The testing though, well. Lets just say that I gave up. I configured the tool
+to call `postgresql -h` to see that the coverage instrumentation worked as
+expected (which it did). Somebody with more time and a better understanding of
+`postgresql` fix the configuration to actually run the tests
+
+So in summary this example demonstrate that the tool is able to be used on a
+large project. Maybe it is time to try out the Linux kernel!
+
+## Setup Notes
+
+The setup is pretty easy. It is the normal admin `--init`. To get a
+`compile_commands.json` you need to use bear.
+
+```sh
+./configure
+bear -- make
+```
+
+That is basically all. Follow the instructions in the `Generic` section and you are all done.
